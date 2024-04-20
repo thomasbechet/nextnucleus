@@ -13,7 +13,10 @@ typedef signed short   nu_i16_t;
 typedef unsigned int   nu_u32_t;
 typedef signed int     nu_i32_t;
 
-typedef nu_u8_t nu_bool_t;
+typedef int nu_int_t;
+
+typedef int nu_bool_t;
+typedef int nu_size_t;
 
 typedef void (*nu_pfn_t)(void);
 
@@ -24,7 +27,14 @@ typedef enum
     NU_TYPE_U16,
     NU_TYPE_I16,
     NU_TYPE_U32,
-    NU_TYPE_I32
+    NU_TYPE_I32,
+    NU_TYPE_BOOL
 } nu_type_t;
+
+typedef enum
+{
+    NU_SUCCESS = 1,
+    NU_FAILURE = 0
+} nu_result_t;
 
 #endif
