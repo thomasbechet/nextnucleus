@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.5.0)
 
-include(CheckCCompilerFlag)
-
 project(basic LANGUAGES C VERSION 0.0.1)
 
 include_directories(../../)
@@ -11,11 +9,12 @@ add_executable(
     main.c
 )
 
-#set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Release)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 90) # C89 standard
 
+include(CheckCCompilerFlag)
 function(enable_c_compiler_flag_if_supported flag)
     string(FIND "${CMAKE_C_FLAGS}" "${flag}" flag_already_set)
     if(flag_already_set EQUAL -1)
@@ -35,4 +34,8 @@ enable_c_compiler_flag_if_supported("-ansi")
 # enable_c_compiler_flag_if_supported("-nostdlib")
 enable_c_compiler_flag_if_supported("-Wstrict-prototypes")
 enable_c_compiler_flag_if_supported("-Wold-style-definition")
-enable_c_compiler_flag_if_supported("-Os")
+enable_c_compiler_flag_if_supported("-fstrict-aliasing")
+enable_c_compiler_flag_if_supported("-Wstrict-aliasing=3")
+# enable_c_compiler_flag_if_supported("-Os")
+# enable_c_compiler_flag_if_supported("-O0")
+# enable_c_compiler_flag_if_supported("-g")

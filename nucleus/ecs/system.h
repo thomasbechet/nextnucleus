@@ -2,29 +2,37 @@
 #define NU_SYSTEM_H
 
 #include <nucleus/types.h>
+#include <nucleus/error.h>
 #include <nucleus/macro.h>
 #include <nucleus/string.h>
 
-NU_DECLARE_HANDLE(nu_system_t);
-NU_DECLARE_HANDLE(nu_api_t);
+typedef struct nu_api    *nu_api_t;
+typedef struct nu_system *nu_system_t;
 
-typedef nu_result_t (*nu_system_init_pfn_t)(void *sys);
-typedef nu_result_t (*nu_system_run_pfn_t)(const void *sys, nu_api_t api);
+#define NU_SYSTEM_MAX    256
+#define NU_COMPONENT_MAX 128
+
+typedef nu_error_t (*nu_system_init_pfn_t)(void *sys);
+typedef nu_error_t (*nu_system_run_pfn_t)(const void *sys, nu_api_t api);
 
 typedef struct
 {
-    const nu_u8_t *ident;
-    nu_size_t size;
+    const nu_char_t     *ident;
+    nu_size_t            size;
     nu_system_init_pfn_t init;
-    nu_system_run_pfn_t run;
+    nu_system_run_pfn_t  run;
 } nu_system_info_t;
 
-typedef struct
+#ifdef NU_IMPLEMENTATION
+
+struct nu_system
 {
-    nu_ident_t ident;
-    nu_size_t size;
+    nu_ident_t           ident;
+    nu_size_t            size;
     nu_system_init_pfn_t init;
-    nu_system_run_pfn_t run;
-} nu__system_t;
+    nu_system_run_pfn_t  run;
+};
+
+#endif
 
 #endif

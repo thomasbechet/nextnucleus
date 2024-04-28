@@ -1,7 +1,7 @@
 #ifndef NU_PLATFORM_H
 #define NU_PLATFORM_H
 
-/* platform */
+/* detect platform */
 #if (defined(__WIN32__) || defined(WIN32) || defined(__MINGW32__) \
      || defined(_WIN32))
 #define NU_PLATFORM_WINDOWS
@@ -11,7 +11,16 @@
 #define NU_PLATFORM_APPLE
 #endif
 
+/* import stdlib */
+#ifdef NU_STDLIB
+#include <assert.h>
+#endif
+
+/**
+ * configure core macos per platform
+ */
 #if defined(NU_PLATFORM_WINDOWS)
+
 /* api */
 #define NU_API_EXPORT __declspec(dllexport)
 #define NU_API_IMPORT __declspec(dllimport)
@@ -27,13 +36,16 @@
 #define NU_API_IMPORT
 /* memory aligment */
 #define NU_ALIGN(X) __attribute((aligned(X)))
+
 #else
+
 /* api */
 #define NU_API_EXPORT
 #define NU_API_IMPORT
 /* memory aligment */
 #define NU_ALIGN(X)
 #pragma warning Unknown linkage directive import / export semantics.
+
 #endif
 
 #define NU_API NU_API_EXPORT

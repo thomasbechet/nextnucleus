@@ -2,24 +2,61 @@
 #define NU_ALLOCATOR_H
 
 #include <nucleus/types.h>
+#include <nucleus/error.h>
+#include <nucleus/macro.h>
+#include <nucleus/memory.h>
+#include <nucleus/math.h>
 
 typedef void *(*nu_allocator_alloc_pfn_t)(nu_size_t size,
                                           nu_size_t align,
                                           void     *userdata);
 typedef void (*nu_allocator_free_pfn_t)(void *ptr, void *userdata);
 
-typedef struct
+typedef enum
 {
-    void                    *userdata;
-    nu_allocator_alloc_pfn_t alloc;
-    nu_allocator_free_pfn_t  free;
-} nu__allocator_t;
+    NU_ALLOC_FLAG_CORE
+} nu__allocator_flag_t;
+
+#ifdef NU_IMPLEMENTATION
 
 typedef struct
 {
-    void                    *userdata;
-    nu_allocator_alloc_pfn_t alloc;
-    nu_allocator_free_pfn_t  free;
-} nu_allocator_info_t;
+    void *start;
+    void *head;
+    void *end;
+} nu__allocator_t;
+
+static nu_error_t
+nu__allocator_init (void *vaddr, nu_size_t capacity, nu__allocator_t *alloc)
+{
+    alloc->start = vaddr;
+    alloc->end   = (void *)((nu_size_t)vaddr + (nu_size_t)capacity);
+    alloc->head  = vaddr;
+    return NU_ERROR_NONE;
+}
+
+static nu_error_t
+nu__malloc (nu__allocator_t     *alloc,
+            nu_size_t            size,
+            nu_size_t            align,
+            nu__allocator_flag_t flag,
+            void               **ptr)
+{
+    (void)flag;
+
+    NU_ASSERT(size > 0);
+
+    *ptr        = nu_memalign(alloc->head, align);
+    alloc->head = (void *)((nu_size_t)*ptr + size);
+
+    if (alloc->head > alloc->end)
+    {
+        return NU_ERROR_OUT_OF_MEMORY;
+    }
+
+    return NU_ERROR_NONE;
+}
+
+#endif
 
 #endif

@@ -1,4 +1,6 @@
+#include <assert.h>
 #include <stdlib.h>
+#include <unistd.h>
 #define NU_IMPLEMENTATION
 #include <nucleus/nucleus.h>
 
@@ -18,47 +20,67 @@ free_callback (void *ptr, void *userdata)
     free(ptr);
 }
 
-static const nu_allocator_info_t allocator = {
-    NU_NULL,
-    alloc_callback,
-    free_callback,
-};
-
-/* typedef struct
+typedef struct
 {
     int dummy;
 } my_system_t;
 
-static nu_result_t
+static nu_error_t
 my_system_init (void *sys)
 {
     (void)sys;
-    return NU_SUCCESS;
+    return NU_ERROR_NONE;
 }
 
-static nu_result_t
-my_system_run (const void *sys)
+static nu_error_t
+my_system_run (const void *sys, nu_api_t api)
 {
+    /* nu_query_iter_t it;
+    nu_size_t       i; */
+
     (void)sys;
-    return NU_SUCCESS;
+    (void)api;
+
+    /* it = nu_query_begin(api, sys->q);
+    while (it = nu_query_next(api, it))
+    {
+        position_t *position = NU_ECS_FIELD(sys->position, position_t);
+        for (i = 0; i < it->count; ++i)
+        {
+            position[i] =
+        }
+    } */
+    return NU_ERROR_NONE;
 }
 
-static const nu_system_info_t my_system_info
-    = { sizeof(my_system_t), my_system_init, my_system_run }; */
-
+const nu_system_info_t my_system_info
+    = { "my_system", sizeof(my_system_t), my_system_init, my_system_run };
+#include <stdio.h>
+typedef struct
+{
+    int a;
+} mystruct;
 int
 main (void)
 {
-    nu_engine_t engine;
-    nu_u32_t    tick = 0;
+    nu_vm_t      vm;
+    nu_vm_info_t info;
+    void        *p = malloc(NU_MEM_1G);
+    NU_ASSERT(p);
+    (void)p;
 
-    nu_engine_init(&allocator, &engine);
-    while (tick < 10)
+    info.userdata  = NU_NULL;
+    info.alloc     = alloc_callback;
+    info.free      = free_callback;
+    info.heap_size = NU_MEM_1G;
+
+    nu_vm_init(&info, &vm);
+    while (1)
     {
-        nu_engine_tick(engine);
-        tick += 1;
+        nu_vm_tick(vm);
+        usleep(16000);
     }
-    nu_engine_free(engine);
+    nu_vm_free(vm);
 
     return 0;
 }
