@@ -17,16 +17,10 @@ typedef struct
 
 typedef nu_u16_t nu__component_id_t;
 
-typedef enum
-{
-    NU_FIELD_BINARY,
-    NU_FIELD_U32
-} nu__field_type_t;
-
 struct nu__field
 {
     nu_ident_t        ident;
-    nu__field_type_t  type;
+    nu_type_t         type;
     struct nu__field *next;
     struct nu__field *prev;
 };
@@ -34,9 +28,20 @@ struct nu__field
 struct nu__component
 {
     nu_ident_t        ident;
-    nu_size_t         size;
     struct nu__field *first_field;
 };
+
+static nu_size_t
+nu__chunk_size (const struct nu__component *component, nu_size_t entry_count)
+{
+    struct nu__field *current = component->first_field;
+    nu_size_t         size    = 0;
+    while (current)
+    {
+        size += nu_type_size(current->type) * entry_count;
+    }
+    return size;
+}
 
 #endif
 

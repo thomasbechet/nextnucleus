@@ -22,13 +22,14 @@ free_callback (void *ptr, void *userdata)
 
 typedef struct
 {
-    int dummy;
+    nu_property_t transform_position;
 } my_system_t;
 
 static nu_error_t
 my_system_init (void *sys)
 {
     (void)sys;
+    sys->transform_position = nu_prop_find("transform", "position", NU_TYPE_VEC3);
     return NU_ERROR_NONE;
 }
 
@@ -41,15 +42,15 @@ my_system_run (const void *sys, nu_api_t api)
     (void)sys;
     (void)api;
 
-    /* it = nu_query_begin(api, sys->q);
+    it = nu_query_begin(api, sys->q);
     while (it = nu_query_next(api, it))
     {
-        position_t *position = NU_ECS_FIELD(sys->position, position_t);
+        nu_vec3_t *positions = nu_prop_vec3(it, sys->transform_position);
         for (i = 0; i < it->count; ++i)
         {
             position[i] =
         }
-    } */
+    }
     return NU_ERROR_NONE;
 }
 

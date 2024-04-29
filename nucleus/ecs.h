@@ -11,6 +11,10 @@ typedef struct
     void              *data;
 } nu__archetype_entry_t;
 
+/*
+ * Chunk Data Layout
+ * :wqa
+
 typedef struct
 {
     nu_size_t             entry_count;
