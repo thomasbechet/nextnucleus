@@ -25,10 +25,23 @@ struct nu__field
     struct nu__field *prev;
 };
 
+typedef enum
+{
+    NU_COMPONENT_SCALAR,
+    NU_COMPONENT_ARRAY
+} nu_component_type_t;
+
+typedef struct
+{
+    nu_size_t size;
+} nu__component_data_t;
+
 struct nu__component
 {
-    nu_ident_t        ident;
-    struct nu__field *first_field;
+    nu_ident_t          ident;
+    struct nu__field   *first_field;
+    nu_component_type_t type;
+    nu__component_data_t data;
 };
 
 static nu_size_t
