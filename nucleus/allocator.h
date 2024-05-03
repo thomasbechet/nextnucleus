@@ -57,6 +57,47 @@ nu__malloc (nu__allocator_t     *alloc,
     return NU_ERROR_NONE;
 }
 
+struct nu__object_footer
+{
+    struct nu__object_footer *prev;
+    struct nu__object_footer *next;
+};
+
+static void *
+nu__object_from_footer (struct nu__object_footer *footer, nu_size_t size)
+{
+    return (void *)((nu_size_t)footer - size);
+}
+
+typedef struct
+{
+    nu_size_t                 size;
+    struct nu__object_footer *head;
+    struct nu__object_footer *tail;
+} nu__object_pool_t;
+
+static void nu__object_pool_init(nu__object_pool_t *pool, nu_size_t obj_size)
+{
+    pool->size = obj_size + sizeof(struct nu__object_footer);
+    pool->head = NU_NULL;
+    pool->tail = NU_NULL;
+}
+
+static void *
+nu__object_acquire (nu__object_pool_t *pool, nu__allocator_t *alloc)
+{
+    if (pool->head)
+    {
+
+    }
+    return NU_NULL;
+}
+
+static void
+nu__object_release (nu__object_pool_t *pool, void *obj)
+{
+}
+
 #endif
 
 #endif

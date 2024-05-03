@@ -38,9 +38,9 @@ typedef struct
 
 struct nu__component
 {
-    nu_ident_t          ident;
-    struct nu__field   *first_field;
-    nu_component_type_t type;
+    nu_ident_t           ident;
+    struct nu__field    *first_field;
+    nu_component_type_t  type;
     nu__component_data_t data;
 };
 
