@@ -12,7 +12,7 @@
 #if defined(NU_DEBUG) && defined(NU_STDLIB)
 #define NU_ASSERT(x) assert(x)
 #else
-#define NU_ASSERT(x) NU_NOOP
+#define NU_ASSERT(x) (void)(x)
 #endif
 
 #define _NU_S(x)      #x

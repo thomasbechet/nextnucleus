@@ -1,12 +1,12 @@
 #ifndef NU_VM_H
 #define NU_VM_H
 
-#include "nucleus/error.h"
 #include <nucleus/platform.h>
 #include <nucleus/types.h>
 #include <nucleus/macro.h>
 #include <nucleus/allocator.h>
 #include <nucleus/renderer.h>
+#include <nucleus/ecs.h>
 
 typedef struct nu__vm *nu_vm_t;
 
@@ -39,14 +39,16 @@ NU_API nu_error_t nu_vm_load_renderer(nu_vm_t                   vm,
 struct nu__vm
 {
     nu__allocator_t allocator;
+    nu__ecs_t       ecs;
     nu__renderer_t  renderer;
 };
 
 nu_error_t
 nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
 {
-    void           *vaddr, *ptr;
+    void           *vaddr;
     nu__allocator_t allocator;
+    struct nu__vm  *data;
     nu_error_t      error;
 
     vaddr = info->alloc(info->heap_size, 16, info->userdata);
@@ -55,13 +57,15 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
     error = nu__allocator_init(vaddr, info->heap_size, &allocator);
     NU_ERROR_CHECK(error, goto cleanup0);
 
-    error = nu__alloc(
-        &allocator, sizeof(struct nu__vm), NU_ALLOC_FLAG_CORE, &ptr);
+    data = nu__alloc(&allocator, sizeof(struct nu__vm), NU_ALLOC_FLAG_CORE);
+    NU_CHECK(data, goto cleanup0);
+
+    data->allocator = allocator;
+
+    error = nu__ecs_init(&data->allocator, &data->ecs);
     NU_ERROR_CHECK(error, goto cleanup0);
 
-    *vm = ptr;
-
-    (*vm)->allocator = allocator;
+    *vm = data;
 
     return NU_ERROR_NONE;
 
@@ -74,7 +78,11 @@ cleanup0:
 nu_error_t
 nu_vm_free (nu_vm_t vm)
 {
-    (void)vm;
+    nu_error_t error;
+
+    error = nu__ecs_free(&vm->ecs);
+    NU_ERROR_CHECK(error, return error);
+
     return NU_ERROR_NONE;
 }
 

@@ -12,14 +12,13 @@ typedef struct
     struct nu__object_header *free;
 } nu__list_t;
 
-void       nu__list_init(nu__list_t *list, nu_size_t obj_size);
-nu_error_t nu__list_append(nu__list_t          *list,
-                           nu__allocator_t     *alloc,
-                           nu__allocator_flag_t flag,
-                           void               **obj);
-void       nu__list_remove(nu__list_t *list, void *obj);
-void      *nu__list_first(nu__list_t *list);
-void      *nu__list_next(nu__list_t *list, void *obj);
+void  nu__list_init(nu__list_t *list, nu_size_t obj_size);
+void *nu__list_append(nu__list_t          *list,
+                      nu__allocator_t     *alloc,
+                      nu__allocator_flag_t flag);
+void  nu__list_remove(nu__list_t *list, void *obj);
+void *nu__list_first(nu__list_t *list);
+void *nu__list_next(nu__list_t *list, void *obj);
 
 #ifdef NU_IMPLEMENTATION
 
@@ -51,14 +50,12 @@ nu__list_init (nu__list_t *list, nu_size_t obj_size)
     list->free     = NU_NULL;
 }
 
-nu_error_t
+void *
 nu__list_append (nu__list_t          *list,
                  nu__allocator_t     *alloc,
-                 nu__allocator_flag_t flag,
-                 void               **obj)
+                 nu__allocator_flag_t flag)
 {
     struct nu__object_header *header;
-    nu_error_t                error;
 
     /* create object */
     if (list->free)
@@ -70,9 +67,8 @@ nu__list_append (nu__list_t          *list,
     else
     {
         /* allocate new object */
-        void *object;
-        error = nu__alloc(alloc, list->size, flag, &object);
-        NU_ERROR_CHECK(error, return error);
+        void *object = nu__alloc(alloc, list->size, flag);
+        NU_CHECK(object, return NU_NULL);
         header = nu__header_from_object(object, list->obj_size);
     }
 
@@ -87,10 +83,11 @@ nu__list_append (nu__list_t          *list,
         header->prev = NU_NULL;
         list->first  = header;
     }
+
     header->next = NU_NULL;
     list->head   = header;
-    *obj         = nu__object_from_header(header, list->obj_size);
-    return NU_ERROR_NONE;
+
+    return nu__object_from_header(header, list->obj_size);
 }
 
 void

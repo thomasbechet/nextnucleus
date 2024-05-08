@@ -27,8 +27,8 @@ main (void)
 
     for (i = 0; i < OBJECT_COUNT; ++i)
     {
-        NU_ERROR_ASSERT(nu__list_append(
-            &list, &allocator, NU_ALLOC_FLAG_CORE, (void **)&objs[i]));
+        objs[i] = nu__list_append(&list, &allocator, NU_ALLOC_FLAG_CORE);
+        NU_ASSERT(objs[i]);
         objs[i]->value = i;
     }
 

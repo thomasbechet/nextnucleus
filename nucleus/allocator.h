@@ -27,15 +27,13 @@ typedef struct
 nu_error_t nu__allocator_init(void            *vaddr,
                               nu_size_t        capacity,
                               nu__allocator_t *alloc);
-nu_error_t nu__alloc(nu__allocator_t     *alloc,
+void      *nu__alloc(nu__allocator_t     *alloc,
                      nu_size_t            size,
-                     nu__allocator_flag_t flag,
-                     void               **ptr);
-nu_error_t nu__aligned_alloc(nu__allocator_t     *alloc,
+                     nu__allocator_flag_t flag);
+void      *nu__aligned_alloc(nu__allocator_t     *alloc,
                              nu_size_t            size,
                              nu_size_t            align,
-                             nu__allocator_flag_t flag,
-                             void               **ptr);
+                             nu__allocator_flag_t flag);
 
 #ifdef NU_IMPLEMENTATION
 
@@ -48,47 +46,45 @@ nu__allocator_init (void *vaddr, nu_size_t capacity, nu__allocator_t *alloc)
     return NU_ERROR_NONE;
 }
 
-nu_error_t
-nu__alloc (nu__allocator_t     *alloc,
-           nu_size_t            size,
-           nu__allocator_flag_t flag,
-           void               **ptr)
+void *
+nu__alloc (nu__allocator_t *alloc, nu_size_t size, nu__allocator_flag_t flag)
 {
+    void *ptr;
     (void)flag;
 
     NU_ASSERT(size > 0);
 
-    *ptr        = alloc->head;
-    alloc->head = (void *)((nu_size_t)*ptr + size);
+    ptr         = alloc->head;
+    alloc->head = (void *)((nu_size_t)ptr + size);
 
     if (alloc->head > alloc->end)
     {
-        return NU_ERROR_OUT_OF_MEMORY;
+        return NU_NULL;
     }
 
-    return NU_ERROR_NONE;
+    return ptr;
 }
 
-nu_error_t
+void *
 nu__aligned_alloc (nu__allocator_t     *alloc,
                    nu_size_t            size,
                    nu_size_t            align,
-                   nu__allocator_flag_t flag,
-                   void               **ptr)
+                   nu__allocator_flag_t flag)
 {
+    void *ptr;
     (void)flag;
 
     NU_ASSERT(size > 0);
 
-    *ptr        = nu_memalign(alloc->head, align);
-    alloc->head = (void *)((nu_size_t)*ptr + size);
+    ptr         = nu_memalign(alloc->head, align);
+    alloc->head = (void *)((nu_size_t)ptr + size);
 
     if (alloc->head > alloc->end)
     {
-        return NU_ERROR_OUT_OF_MEMORY;
+        return NU_NULL;
     }
 
-    return NU_ERROR_NONE;
+    return ptr;
 }
 
 #endif
