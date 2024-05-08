@@ -39,4 +39,6 @@
 #define NU_ERROR_CHECK(error, action) \
     _NU_CHECK(error == NU_ERROR_NONE, action, __FILE__, _NU_S__LINE__)
 
+#define NU_ERROR_ASSERT(error) NU_ASSERT(error == NU_ERROR_NONE)
+
 #endif

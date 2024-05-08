@@ -44,7 +44,7 @@ struct nu__component
     nu__component_data_t data;
 };
 
-static nu_size_t
+/* static nu_size_t
 nu__chunk_size (const struct nu__component *component, nu_size_t entry_count)
 {
     struct nu__field *current = component->first_field;
@@ -54,7 +54,7 @@ nu__chunk_size (const struct nu__component *component, nu_size_t entry_count)
         size += nu_type_size(current->type) * entry_count;
     }
     return size;
-}
+} */
 
 #endif
 

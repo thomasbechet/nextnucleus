@@ -7,13 +7,9 @@
 
 typedef struct
 {
-    nu__component_id_t id;
-    void              *data;
+    /* nu__component_id_t id; */
+    void *data;
 } nu__archetype_entry_t;
-
-/*
- * Chunk Data Layout
- * :wqa
 
 typedef struct
 {
@@ -24,16 +20,14 @@ typedef struct
 struct nu__query
 {
     nu__archetype_t *archetype;
-}
+};
 
-typedef struct
+/* typedef struct
 {
 
-} nu_query_iter_t;
+} nu_query_iter_t; */
 
 #ifdef NU_IMPLEMENTATION
-
-NU_API 
 
 #endif
 

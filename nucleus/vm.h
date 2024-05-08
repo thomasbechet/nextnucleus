@@ -55,8 +55,8 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
     error = nu__allocator_init(vaddr, info->heap_size, &allocator);
     NU_ERROR_CHECK(error, goto cleanup0);
 
-    error = nu__malloc(
-        &allocator, 0, sizeof(struct nu__vm), NU_ALLOC_FLAG_CORE, &ptr);
+    error = nu__alloc(
+        &allocator, sizeof(struct nu__vm), NU_ALLOC_FLAG_CORE, &ptr);
     NU_ERROR_CHECK(error, goto cleanup0);
 
     *vm = ptr;

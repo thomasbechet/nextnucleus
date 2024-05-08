@@ -20,47 +20,6 @@ free_callback (void *ptr, void *userdata)
     free(ptr);
 }
 
-typedef struct
-{
-    nu_property_t transform_position;
-} my_system_t;
-
-static nu_error_t
-my_system_init (void *sys)
-{
-    (void)sys;
-    sys->transform_position = nu_prop_find("transform", "position", NU_TYPE_VEC3);
-    return NU_ERROR_NONE;
-}
-
-static nu_error_t
-my_system_run (const void *sys, nu_api_t api)
-{
-    /* nu_query_iter_t it;
-    nu_size_t       i; */
-
-    (void)sys;
-    (void)api;
-
-    it = nu_query_begin(api, sys->q);
-    while (it = nu_query_next(api, it))
-    {
-        nu_vec3_t *positions = nu_prop_vec3(it, sys->transform_position);
-        for (i = 0; i < it->count; ++i)
-        {
-            position[i] =
-        }
-    }
-    return NU_ERROR_NONE;
-}
-
-const nu_system_info_t my_system_info
-    = { "my_system", sizeof(my_system_t), my_system_init, my_system_run };
-#include <stdio.h>
-typedef struct
-{
-    int a;
-} mystruct;
 int
 main (void)
 {

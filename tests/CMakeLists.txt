@@ -4,10 +4,14 @@ project(tests LANGUAGES C VERSION 0.0.1)
 
 include_directories(../)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 add_executable(indent ident.c)
 add_executable(memory memory.c)
 add_executable(mmap mmap.c)
+add_executable(list list.c)
 
 add_test(indent indent)
 add_test(memory memory)
 add_test(mmap mmap)
+add_test(list list)
