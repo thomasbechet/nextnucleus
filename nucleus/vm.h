@@ -1,6 +1,7 @@
 #ifndef NU_VM_H
 #define NU_VM_H
 
+#include "nucleus/ecs/system.h"
 #include <nucleus/platform.h>
 #include <nucleus/types.h>
 #include <nucleus/macro.h>
@@ -19,6 +20,8 @@ typedef struct
     void                    *vaddr;
 } nu_vm_info_t;
 
+typedef nu_error_t (*nu_vm_exec_pfn_t)(nu_api_t api);
+
 NU_API nu_error_t nu_vm_init(const nu_vm_info_t *info, nu_vm_t *vm);
 
 NU_API nu_error_t nu_vm_free(nu_vm_t vm);
@@ -29,7 +32,7 @@ NU_API nu_error_t nu_vm_save(nu_vm_t vm);
 
 NU_API nu_error_t nu_vm_load(nu_vm_t vm);
 
-NU_API nu_error_t nu_vm_execute(nu_vm_t vm);
+NU_API nu_error_t nu_vm_exec(nu_vm_t vm, nu_vm_exec_pfn_t exec);
 
 NU_API nu_error_t nu_vm_load_renderer(nu_vm_t                   vm,
                                       const nu_renderer_info_t *info);
@@ -94,9 +97,10 @@ nu_vm_tick (nu_vm_t vm)
 }
 
 nu_error_t
-nu_vm_execute (nu_vm_t vm)
+nu_vm_exec (nu_vm_t vm, nu_vm_exec_pfn_t exec)
 {
     (void)vm;
+    (void)exec;
     return NU_ERROR_NONE;
 }
 

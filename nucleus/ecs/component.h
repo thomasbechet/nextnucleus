@@ -2,7 +2,6 @@
 #define NU_COMPONENT_H
 
 #include <nucleus/types.h>
-#include <nucleus/macro.h>
 #include <nucleus/string.h>
 
 typedef struct nu__component *nu_component_t;
@@ -25,6 +24,7 @@ typedef struct
 {
     const nu_char_t          *ident;
     const nu_property_info_t *properties;
+    nu_size_t                 property_count;
 } nu_component_info_t;
 
 #ifdef NU_IMPLEMENTATION
