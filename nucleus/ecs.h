@@ -84,7 +84,7 @@ nu__ecs_register_component (nu__ecs_t                 *ecs,
         {
             return NU_ERROR_DUPLICATED_ENTRY;
         }
-        it = nu__list_next(&ecs->components, it);
+        it = nu__list_next(it);
     }
 
     /* TODO: check duplicated properties name */

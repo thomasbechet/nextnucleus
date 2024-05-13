@@ -37,7 +37,7 @@ main (void)
     {
         NU_ASSERT(it);
         NU_ASSERT(it->value == i);
-        it = nu__list_next(&list, it);
+        it = nu__list_next(it);
     }
 
     for (i = 0; i < OBJECT_COUNT; i += 2)
@@ -50,7 +50,7 @@ main (void)
     {
         NU_ASSERT(it);
         NU_ASSERT(it->value == i);
-        it = nu__list_next(&list, it);
+        it = nu__list_next(it);
     }
 
     for (i = 0; i < OBJECT_COUNT; i += 2)
