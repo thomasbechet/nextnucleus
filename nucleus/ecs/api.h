@@ -28,6 +28,7 @@ nu_register_component (nu_api_t api, const nu_component_info_t *info)
 {
     (void)api;
     (void)info;
+
     return NU_ERROR_NONE;
 }
 

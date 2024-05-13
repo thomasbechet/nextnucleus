@@ -14,6 +14,7 @@ typedef nu_u8_t nu_ident_t[NU_IDENT_SIZE];
 NU_API nu_size_t nu_ident_len(const nu_ident_t ident);
 NU_API void      nu_ident_empty(nu_ident_t ident);
 NU_API void      nu_ident_set(nu_ident_t ident, const nu_u8_t *s, nu_size_t n);
+NU_API void      nu_ident_set_str(nu_ident_t ident, const char *s);
 NU_API const nu_char_t *nu_ident_str(nu_ident_t ident);
 
 NU_API nu_size_t nu_strnlen(const nu_char_t *str, nu_size_t maxlen);

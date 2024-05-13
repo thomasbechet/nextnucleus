@@ -1,7 +1,6 @@
 #ifndef NU_ECS_H
 #define NU_ECS_H
 
-#include "nucleus/macro.h"
 #include <nucleus/ecs/api.h>
 #include <nucleus/ecs/system.h>
 #include <nucleus/ecs/component.h>
@@ -40,6 +39,7 @@ typedef struct
 nu_error_t nu__ecs_init(nu__allocator_t *alloc, nu__ecs_t *ecs);
 nu_error_t nu__ecs_free(nu__ecs_t *ecs);
 nu_error_t nu__ecs_register_component(nu__ecs_t                 *ecs,
+                                      nu__allocator_t           *alloc,
                                       const nu_component_info_t *info,
                                       nu_component_t            *handle);
 
@@ -67,10 +67,14 @@ nu__ecs_free (nu__ecs_t *ecs)
 
 nu_error_t
 nu__ecs_register_component (nu__ecs_t                 *ecs,
+                            nu__allocator_t           *alloc,
                             const nu_component_info_t *info,
                             nu_component_t            *handle)
 {
     struct nu__component *it;
+    struct nu__component *component;
+    struct nu__property  *prev;
+    nu_size_t             i;
 
     /* find duplicated component */
     it = nu__list_first(&ecs->components);
@@ -83,7 +87,33 @@ nu__ecs_register_component (nu__ecs_t                 *ecs,
         it = nu__list_next(&ecs->components, it);
     }
 
-    *handle = NU_NULL;
+    /* TODO: check duplicated properties name */
+
+    /* insert component */
+    component = nu__list_append(&ecs->components, alloc, NU_ALLOC_FLAG_CORE);
+    nu_ident_set_str(component->ident, info->ident);
+    component->first_property = NU_NULL;
+
+    /* insert properties */
+    for (i = 0; i < info->property_count; ++i)
+    {
+        struct nu__property *prop
+            = nu__list_append(&ecs->properties, alloc, NU_ALLOC_FLAG_CORE);
+        nu_ident_set_str(prop->ident, info->properties[i].ident);
+        prop->type = info->properties[i].type;
+        prop->kind = info->properties[i].kind;
+        if (i == 0)
+        {
+            component->first_property = prop;
+        }
+        else
+        {
+            prev->next = prop;
+        }
+        prev = prop;
+    }
+
+    *handle = component;
 
     return NU_ERROR_NONE;
 }

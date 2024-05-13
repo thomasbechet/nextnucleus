@@ -18,6 +18,7 @@ typedef struct
     const nu_char_t   *ident;
     nu_type_t          type;
     nu_property_kind_t kind;
+    nu_size_t          count;
 } nu_property_info_t;
 
 typedef struct
@@ -26,8 +27,6 @@ typedef struct
     const nu_property_info_t *properties;
     nu_size_t                 property_count;
 } nu_component_info_t;
-
-#ifdef NU_IMPLEMENTATION
 
 struct nu__property
 {
@@ -42,6 +41,8 @@ struct nu__component
     nu_ident_t           ident;
     struct nu__property *first_property;
 };
+
+#ifdef NU_IMPLEMENTATION
 
 /* static nu_size_t
 nu__chunk_size (const struct nu__component *component, nu_size_t entry_count)
