@@ -35,6 +35,12 @@ void      *nu__aligned_alloc(nu__allocator_t     *alloc,
                              nu_size_t            align,
                              nu__allocator_flag_t flag);
 
+struct
+{
+    nu_size_t                   free_size;
+    struct nu__bucket_header_t *next;
+} nu__bucket_header_t;
+
 #ifdef NU_IMPLEMENTATION
 
 nu_error_t

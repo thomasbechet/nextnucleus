@@ -5,6 +5,7 @@
 #include <nucleus/string.h>
 
 typedef struct nu__component *nu_component_t;
+typedef struct nu__property  *nu_property_t;
 
 typedef enum
 {
@@ -15,22 +16,20 @@ typedef enum
 
 typedef struct
 {
-    const nu_char_t   *ident;
+    const nu_char_t   *name;
     nu_type_t          type;
     nu_property_kind_t kind;
-    nu_size_t          count;
+    nu_size_t          size;
 } nu_property_info_t;
 
 typedef struct
 {
-    const nu_char_t          *ident;
-    const nu_property_info_t *properties;
-    nu_size_t                 property_count;
+    const nu_char_t *name;
 } nu_component_info_t;
 
 struct nu__property
 {
-    nu_ident_t           ident;
+    nu_ident_t           name;
     nu_type_t            type;
     nu_property_kind_t   kind;
     struct nu__property *next;
@@ -38,7 +37,7 @@ struct nu__property
 
 struct nu__component
 {
-    nu_ident_t           ident;
+    nu_ident_t           name;
     struct nu__property *first_property;
 };
 

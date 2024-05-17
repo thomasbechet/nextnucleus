@@ -1,13 +1,13 @@
 #ifndef NU_VM_H
 #define NU_VM_H
 
-#include "nucleus/ecs/system.h"
 #include <nucleus/platform.h>
 #include <nucleus/types.h>
 #include <nucleus/macro.h>
 #include <nucleus/allocator.h>
 #include <nucleus/renderer.h>
 #include <nucleus/ecs.h>
+#include <nucleus/ecs/api.h>
 
 typedef struct nu__vm *nu_vm_t;
 
@@ -45,6 +45,15 @@ struct nu__vm
     nu__ecs_t       ecs;
     nu__renderer_t  renderer;
 };
+
+static struct nu_api
+nu__build_api (nu_vm_t vm)
+{
+    struct nu_api api;
+    api.allocator = &vm->allocator;
+    api.ecs       = &vm->ecs;
+    return api;
+}
 
 nu_error_t
 nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
@@ -99,9 +108,8 @@ nu_vm_tick (nu_vm_t vm)
 nu_error_t
 nu_vm_exec (nu_vm_t vm, nu_vm_exec_pfn_t exec)
 {
-    (void)vm;
-    (void)exec;
-    return NU_ERROR_NONE;
+    struct nu_api api = nu__build_api(vm);
+    return exec(&api);
 }
 
 #endif

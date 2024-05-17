@@ -14,7 +14,7 @@ typedef nu_error_t (*nu_system_run_pfn_t)(nu_api_t api);
 
 typedef struct
 {
-    const nu_char_t   *ident;
+    const nu_char_t   *name;
     nu_type_t          type;
     nu_property_kind_t kind;
 } nu_system_property_t;
@@ -40,7 +40,7 @@ struct nu__system_query
 
 struct nu_system
 {
-    nu_ident_t                  ident;
+    nu_ident_t                  name;
     nu_size_t                   size;
     nu_system_run_pfn_t         run;
     struct nu__system_property *first_prop;
