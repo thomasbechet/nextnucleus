@@ -1,9 +1,11 @@
 #ifndef NU_ECS_H
 #define NU_ECS_H
 
+#include <nucleus/allocator.h>
 #include <nucleus/ecs/system.h>
 #include <nucleus/ecs/component.h>
 #include <nucleus/list.h>
+#include <nucleus/slotmap.h>
 #include <nucleus/string.h>
 
 typedef struct
@@ -30,37 +32,64 @@ struct nu__query
 
 typedef struct
 {
-    nu__list_t archetypes;
-    nu__list_t components;
-    nu__list_t properties;
+    nu_u16_t max_component_count;
+    nu_u16_t max_property_count;
+} nu_ecs_info_t;
+
+typedef struct
+{
+    nu__slotmap_t  components;
+    nu__slotlist_t component_list;
+    nu__slot_t     first_component;
+    nu__slotmap_t  properties;
+    nu__slotlist_t property_lists;
+    nu_ecs_info_t  info;
 } nu__ecs_t;
 
-nu_error_t     nu__ecs_init(nu__allocator_t *alloc, nu__ecs_t *ecs);
-nu_error_t     nu__ecs_free(nu__ecs_t *ecs);
-nu_error_t     nu__ecs_register_component(nu__ecs_t                 *ecs,
-                                          nu__allocator_t           *alloc,
-                                          const nu_component_info_t *info,
-                                          nu_component_t            *handle);
-nu_component_t nu__ecs_find_component(nu__ecs_t *ecs, const nu_char_t *name);
-nu_error_t     nu__ecs_register_property(nu__ecs_t                *ecs,
-                                         nu__allocator_t          *alloc,
-                                         nu_component_t            component,
-                                         const nu_property_info_t *info,
-                                         nu_property_t            *handle);
-nu_property_t  nu__ecs_find_property(nu_component_t   component,
-                                     const nu_char_t *name);
+nu_error_t nu__ecs_init(const nu_ecs_info_t *info,
+                        nu__allocator_t     *alloc,
+                        nu__ecs_t           *ecs);
+nu_error_t nu__ecs_free(nu__ecs_t *ecs);
+nu_error_t nu__ecs_register_component(nu__ecs_t                 *ecs,
+                                      const nu_component_info_t *info,
+                                      nu__slot_t                *slot);
+nu__slot_t nu__ecs_find_component(nu__ecs_t *ecs, const nu_char_t *name);
+nu_error_t nu__ecs_register_property(nu__ecs_t                *ecs,
+                                     nu__slot_t                component,
+                                     const nu_property_info_t *info,
+                                     nu__slot_t               *slot);
+nu__slot_t nu__ecs_find_property(nu__ecs_t       *ecs,
+                                 nu__slot_t       component,
+                                 const nu_char_t *name);
 
 #ifdef NU_IMPLEMENTATION
 
 nu_error_t
-nu__ecs_init (nu__allocator_t *alloc, nu__ecs_t *ecs)
+nu__ecs_init (const nu_ecs_info_t *info, nu__allocator_t *alloc, nu__ecs_t *ecs)
 {
     (void)alloc;
     (void)ecs;
 
-    nu__list_init(&ecs->archetypes, sizeof(struct nu__property));
-    nu__list_init(&ecs->properties, sizeof(struct nu__property));
-    nu__list_init(&ecs->components, sizeof(struct nu__component));
+    nu__slotmap_init(alloc,
+                     NU_ALLOC_FLAG_CORE,
+                     sizeof(nu__component_entry_t),
+                     info->max_component_count,
+                     &ecs->components);
+    nu__slotlist_init(alloc,
+                      NU_ALLOC_FLAG_CORE,
+                      info->max_component_count,
+                      &ecs->component_list);
+    ecs->first_component = NU_SLOT_NULL;
+    nu__slotmap_init(alloc,
+                     NU_ALLOC_FLAG_CORE,
+                     sizeof(nu__property_entry_t),
+                     info->max_property_count,
+                     &ecs->properties);
+    nu__slotlist_init(alloc,
+                      NU_ALLOC_FLAG_CORE,
+                      info->max_property_count,
+                      &ecs->property_lists);
+    ecs->info = *info;
 
     return NU_ERROR_NONE;
 }
@@ -74,11 +103,10 @@ nu__ecs_free (nu__ecs_t *ecs)
 
 nu_error_t
 nu__ecs_register_component (nu__ecs_t                 *ecs,
-                            nu__allocator_t           *alloc,
                             const nu_component_info_t *info,
-                            nu_component_t            *handle)
+                            nu__slot_t                *slot)
 {
-    struct nu__component *component;
+    nu__component_entry_t *entry;
 
     /* find duplicated component */
     if (nu__ecs_find_component(ecs, info->name))
@@ -89,76 +117,68 @@ nu__ecs_register_component (nu__ecs_t                 *ecs,
     /* TODO: check duplicated properties name */
 
     /* insert component */
-    component = nu__list_append(&ecs->components, alloc, NU_ALLOC_FLAG_CORE);
-    nu_ident_set_str(component->name, info->name);
-    component->first_property = NU_NULL;
-
-    if (handle)
-    {
-        *handle = component;
-    }
+    *slot = nu__slotmap_add(ecs->components);
+    entry = nu__slotmap_get(ecs->components, *slot);
+    nu_ident_set_str(entry->name, info->name);
+    entry->first_property = NU_SLOT_NULL;
 
     return NU_ERROR_NONE;
 }
-nu_component_t
+nu__slot_t
 nu__ecs_find_component (nu__ecs_t *ecs, const nu_char_t *name)
 {
-    struct nu__component *it = nu__list_first(&ecs->components);
+    nu__slot_t it = ecs->first_component;
     while (it)
     {
-        if (nu_strncmp(nu_ident_str(it->name), name, NU_IDENT_MAX))
+        nu__component_entry_t *entry = nu__slotmap_get(ecs->components, it);
+        if (nu_strncmp(nu_ident_str(entry->name), name, NU_IDENT_MAX))
         {
             return it;
         }
-        it = nu__list_next(it);
+        it = nu__slotlist_next(ecs->component_list, it);
     }
-    return NU_NULL;
+    return NU_SLOT_NULL;
 }
 nu_error_t
 nu__ecs_register_property (nu__ecs_t                *ecs,
-                           nu__allocator_t          *alloc,
-                           nu_component_t            component,
+                           nu__slot_t                component,
                            const nu_property_info_t *info,
-                           nu_property_t            *handle)
+                           nu__slot_t               *slot)
 {
-    struct nu__property *prop;
+    nu__property_entry_t  *entry;
+    nu__component_entry_t *component_entry;
 
     /* TODO: check duplicated entry */
 
-    prop       = nu__list_append(&ecs->properties, alloc, NU_ALLOC_FLAG_CORE);
-    prop->type = info->type;
-    prop->kind = info->kind;
-    prop->next = NU_NULL;
+    *slot       = nu__slotmap_add(ecs->properties);
+    entry       = nu__slotmap_get(ecs->properties, *slot);
+    entry->type = info->type;
+    entry->kind = info->kind;
 
-    if (component->first_property)
-    {
-        component->first_property->next = prop;
-    }
-    else
-    {
-        component->first_property = prop;
-    }
-
-    if (handle)
-    {
-        *handle = prop;
-    }
+    component_entry = nu__slotmap_get(ecs->components, component);
+    nu__slotlist_add_first(
+        ecs->property_lists, &component_entry->first_property, *slot);
 
     return NU_ERROR_NONE;
 }
-nu_property_t
-nu__ecs_find_property (nu_component_t component, const nu_char_t *name)
+nu__slot_t
+nu__ecs_find_property (nu__ecs_t       *ecs,
+                       nu__slot_t       component,
+                       const nu_char_t *name)
 {
-    struct nu__property *it = component->first_property;
+    nu__slot_t it
+        = ((nu__component_entry_t *)nu__slotmap_get(ecs->components, component))
+              ->first_property;
     while (it)
     {
-        if (nu_strncmp(nu_ident_str(it->name), name, NU_IDENT_MAX))
+        nu__property_entry_t *entry = nu__slotmap_get(ecs->properties, it);
+        if (nu_strncmp(nu_ident_str(entry->name), name, NU_IDENT_MAX))
         {
             return it;
         }
-        it = it->next;
+        it = nu__slotlist_next(ecs->property_lists, it);
     }
-    return NU_NULL;
+    return NU_SLOT_NULL;
 }
 
 #endif

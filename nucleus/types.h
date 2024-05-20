@@ -15,6 +15,8 @@ typedef signed short   nu_i16_t;
 typedef unsigned int   nu_u32_t;
 typedef signed int     nu_i32_t;
 
+#define NU_U16_MAX 0xFFFF
+
 typedef int  nu_int_t;
 typedef char nu_char_t;
 

@@ -35,12 +35,22 @@ nu_register_component (nu_api_t                   api,
                        const nu_component_info_t *info,
                        nu_component_t            *handle)
 {
-    return nu__ecs_register_component(api->ecs, api->allocator, info, handle);
+    nu__slot_t slot;
+    nu_error_t error;
+    error = nu__ecs_register_component(api->ecs, info, &slot);
+    NU_ERROR_CHECK(error, return error);
+    if (handle)
+    {
+        handle->slot = slot;
+    }
+    return error;
 }
 nu_component_t
 nu_find_component (nu_api_t api, const char *name)
 {
-    return nu__ecs_find_component(api->ecs, name);
+    nu_component_t handle;
+    handle.slot = nu__ecs_find_component(api->ecs, name);
+    return handle;
 }
 nu_error_t
 nu_register_property (nu_api_t                  api,
@@ -48,14 +58,23 @@ nu_register_property (nu_api_t                  api,
                       const nu_property_info_t *info,
                       nu_property_t            *handle)
 {
-    return nu__ecs_register_property(
-        api->ecs, api->allocator, component, info, handle);
+    nu__slot_t slot;
+    nu_error_t error;
+    error = nu__ecs_register_property(api->ecs, component.slot, info, &slot);
+    NU_ERROR_CHECK(error, return error);
+    if (handle)
+    {
+        handle->slot = slot;
+    }
+    return error;
 }
 nu_property_t
 nu_find_property (nu_api_t api, nu_component_t component, const char *name)
 {
+    nu_property_t handle;
     (void)api;
-    return nu__ecs_find_property(component, name);
+    handle.slot = nu__ecs_find_property(api->ecs, component.slot, name);
+    return handle;
 }
 nu_error_t
 nu_register_system (nu_api_t api, const nu_system_info_t *info)

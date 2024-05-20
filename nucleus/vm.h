@@ -18,6 +18,7 @@ typedef struct
     nu_allocator_free_pfn_t  free;
     nu_size_t                heap_size;
     void                    *vaddr;
+    nu_ecs_info_t            ecs;
 } nu_vm_info_t;
 
 typedef nu_error_t (*nu_vm_exec_pfn_t)(nu_api_t api);
@@ -74,7 +75,7 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
 
     data->allocator = allocator;
 
-    error = nu__ecs_init(&data->allocator, &data->ecs);
+    error = nu__ecs_init(&info->ecs, &data->allocator, &data->ecs);
     NU_ERROR_CHECK(error, goto cleanup0);
 
     *vm = data;

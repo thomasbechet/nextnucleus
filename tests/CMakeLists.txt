@@ -8,6 +8,8 @@ set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(indent ident.c)
 add_executable(list list.c)
+add_executable(slotmap slotmap.c)
 
 add_test(indent indent)
 add_test(list list)
+add_test(slotmap slotmap)

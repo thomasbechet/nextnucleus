@@ -1,11 +1,9 @@
 #ifndef NU_COMPONENT_H
 #define NU_COMPONENT_H
 
+#include <nucleus/slotmap.h>
 #include <nucleus/types.h>
 #include <nucleus/string.h>
-
-typedef struct nu__component *nu_component_t;
-typedef struct nu__property  *nu_property_t;
 
 typedef enum
 {
@@ -27,19 +25,28 @@ typedef struct
     const nu_char_t *name;
 } nu_component_info_t;
 
-struct nu__property
+typedef struct
 {
-    nu_ident_t           name;
-    nu_type_t            type;
-    nu_property_kind_t   kind;
-    struct nu__property *next;
-};
+    nu__slot_t slot;
+} nu_property_t;
 
-struct nu__component
+typedef struct
 {
-    nu_ident_t           name;
-    struct nu__property *first_property;
-};
+    nu__slot_t slot;
+} nu_component_t;
+
+typedef struct
+{
+    nu_ident_t         name;
+    nu_type_t          type;
+    nu_property_kind_t kind;
+} nu__property_entry_t;
+
+typedef struct
+{
+    nu_ident_t name;
+    nu__slot_t first_property;
+} nu__component_entry_t;
 
 #ifdef NU_IMPLEMENTATION
 
