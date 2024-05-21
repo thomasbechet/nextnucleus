@@ -71,22 +71,22 @@ nu__ecs_init (const nu_ecs_info_t *info, nu__allocator_t *alloc, nu__ecs_t *ecs)
     (void)ecs;
 
     nu__slotmap_init(alloc,
-                     NU_ALLOC_FLAG_CORE,
+                     NU_MEMORY_USAGE_ECS,
                      sizeof(nu__component_entry_t),
                      info->max_component_count,
                      &ecs->components);
     nu__slotlist_init(alloc,
-                      NU_ALLOC_FLAG_CORE,
+                      NU_MEMORY_USAGE_ECS,
                       info->max_component_count,
                       &ecs->component_list);
     ecs->first_component = NU_SLOT_NULL;
     nu__slotmap_init(alloc,
-                     NU_ALLOC_FLAG_CORE,
+                     NU_MEMORY_USAGE_ECS,
                      sizeof(nu__property_entry_t),
                      info->max_property_count,
                      &ecs->properties);
     nu__slotlist_init(alloc,
-                      NU_ALLOC_FLAG_CORE,
+                      NU_MEMORY_USAGE_ECS,
                       info->max_property_count,
                       &ecs->property_lists);
     ecs->info = *info;

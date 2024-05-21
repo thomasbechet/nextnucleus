@@ -5,19 +5,16 @@
 #include <nucleus/nucleus.h>
 
 void *
-alloc_callback (nu_size_t size, nu_size_t align, void *userdata)
+allocator_callback (nu_size_t         size,
+                    nu_size_t         align,
+                    nu_memory_usage_t usage,
+                    void             *userdata)
 {
     (void)size;
     (void)align;
     (void)userdata;
+    (void)usage;
     return malloc(size);
-}
-
-void
-free_callback (void *ptr, void *userdata)
-{
-    (void)userdata;
-    free(ptr);
 }
 
 /* static nu_system_info_t my_system = {
@@ -65,10 +62,10 @@ main (void)
     NU_ASSERT(p);
     (void)p;
 
-    info.userdata  = NU_NULL;
-    info.alloc     = alloc_callback;
-    info.free      = free_callback;
-    info.heap_size = NU_MEM_1G;
+    info.allocator.userdata      = NU_NULL;
+    info.allocator.callback      = allocator_callback;
+    info.ecs.max_component_count = 256;
+    info.ecs.max_property_count  = 256;
 
     nu_vm_init(&info, &vm);
     nu_vm_exec(vm, bootstrap);

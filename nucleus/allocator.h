@@ -7,90 +7,93 @@
 #include <nucleus/memory.h>
 #include <nucleus/math.h>
 
-typedef void *(*nu_allocator_alloc_pfn_t)(nu_size_t size,
-                                          nu_size_t align,
-                                          void     *userdata);
-typedef void (*nu_allocator_free_pfn_t)(void *ptr, void *userdata);
-
 typedef enum
 {
-    NU_ALLOC_FLAG_CORE
-} nu__allocator_flag_t;
+    NU_MEMORY_USAGE_CORE,
+    NU_MEMORY_USAGE_ECS,
+    NU_MEMORY_USAGE_RENDERER
+} nu_memory_usage_t;
+
+typedef void *(*nu_allocator_callback_pfn_t)(nu_size_t         size,
+                                             nu_size_t         align,
+                                             nu_memory_usage_t usage,
+                                             void             *userdata);
 
 typedef struct
 {
-    void *start;
-    void *head;
-    void *end;
+    nu_allocator_callback_pfn_t callback;
+    void                       *userdata;
 } nu__allocator_t;
 
-nu_error_t nu__allocator_init(void            *vaddr,
-                              nu_size_t        capacity,
-                              nu__allocator_t *alloc);
-void      *nu__alloc(nu__allocator_t     *alloc,
-                     nu_size_t            size,
-                     nu__allocator_flag_t flag);
-void      *nu__aligned_alloc(nu__allocator_t     *alloc,
-                             nu_size_t            size,
-                             nu_size_t            align,
-                             nu__allocator_flag_t flag);
-
-struct
+typedef struct
 {
-    nu_size_t                   free_size;
-    struct nu__bucket_header_t *next;
-} nu__bucket_header_t;
+    nu_allocator_callback_pfn_t callback;
+    void                       *userdata;
+} nu_allocator_info_t;
+
+nu_error_t nu__allocator_init(const nu_allocator_info_t *info,
+                              nu__allocator_t           *alloc);
+void      *nu__alloc(nu__allocator_t  *alloc,
+                     nu_size_t         size,
+                     nu_memory_usage_t usage);
+void      *nu__aligned_alloc(nu__allocator_t  *alloc,
+                             nu_size_t         size,
+                             nu_size_t         align,
+                             nu_memory_usage_t usage);
+#ifdef NU_STDLIB
+NU_API void nu_allocator_use_stdlib(nu_allocator_info_t *info);
+#endif
 
 #ifdef NU_IMPLEMENTATION
 
-nu_error_t
-nu__allocator_init (void *vaddr, nu_size_t capacity, nu__allocator_t *alloc)
+#ifdef NU_STDLIB
+
+#include <stdlib.h>
+
+static void *
+nu__static_allocator_callback (nu_size_t         size,
+                               nu_size_t         align,
+                               nu_memory_usage_t usage,
+                               void             *userdata)
 {
-    alloc->start = vaddr;
-    alloc->end   = (void *)((nu_size_t)vaddr + (nu_size_t)capacity);
-    alloc->head  = vaddr;
+    (void)align;
+    (void)usage;
+    (void)userdata;
+    return malloc(size);
+}
+
+void
+nu_allocator_use_stdlib (nu_allocator_info_t *info)
+{
+    info->userdata = NU_NULL;
+    info->callback = nu__static_allocator_callback;
+}
+
+#endif
+
+nu_error_t
+nu__allocator_init (const nu_allocator_info_t *info, nu__allocator_t *alloc)
+{
+    alloc->callback = info->callback;
+    alloc->userdata = info->userdata;
     return NU_ERROR_NONE;
 }
 
 void *
-nu__alloc (nu__allocator_t *alloc, nu_size_t size, nu__allocator_flag_t flag)
+nu__alloc (nu__allocator_t *alloc, nu_size_t size, nu_memory_usage_t usage)
 {
-    void *ptr;
-    (void)flag;
-
     NU_ASSERT(size > 0);
-
-    ptr         = alloc->head;
-    alloc->head = (void *)((nu_size_t)ptr + size);
-
-    if (alloc->head > alloc->end)
-    {
-        return NU_NULL;
-    }
-
-    return ptr;
+    return alloc->callback(size, 16, usage, alloc->userdata);
 }
 
 void *
-nu__aligned_alloc (nu__allocator_t     *alloc,
-                   nu_size_t            size,
-                   nu_size_t            align,
-                   nu__allocator_flag_t flag)
+nu__aligned_alloc (nu__allocator_t  *alloc,
+                   nu_size_t         size,
+                   nu_size_t         align,
+                   nu_memory_usage_t usage)
 {
-    void *ptr;
-    (void)flag;
-
     NU_ASSERT(size > 0);
-
-    ptr         = nu_memalign(alloc->head, align);
-    alloc->head = (void *)((nu_size_t)ptr + size);
-
-    if (alloc->head > alloc->end)
-    {
-        return NU_NULL;
-    }
-
-    return ptr;
+    return alloc->callback(size, align, usage, alloc->userdata);
 }
 
 #endif

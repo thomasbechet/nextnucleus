@@ -1,4 +1,5 @@
 #define NU_IMPLEMENTATION
+#define NU_STDLIB
 #include <nucleus/nucleus.h>
 
 typedef struct
@@ -8,8 +9,6 @@ typedef struct
 
 #define OBJECT_COUNT 64
 #define REMOVE_COUNT 18
-
-static nu_u8_t memory[NU_MEM_64M];
 
 static nu_u32_t
 nu_random ()
@@ -23,19 +22,21 @@ int
 main (void)
 {
 
-    nu__allocator_t allocator;
-    nu__slotmap_t   sm;
-    nu__slotlist_t  sl;
-    nu__slot_t      first, it;
-    nu_size_t       i;
-    nu__slot_t      removed[REMOVE_COUNT];
-    object_t       *o;
+    nu__allocator_t     allocator;
+    nu_allocator_info_t alloc_info;
+    nu__slotmap_t       sm;
+    nu__slotlist_t      sl;
+    nu__slot_t          first, it;
+    nu_size_t           i;
+    nu__slot_t          removed[REMOVE_COUNT];
+    object_t           *o;
 
-    NU_ERROR_ASSERT(nu__allocator_init(memory, NU_MEM_64M, &allocator));
+    nu_allocator_use_stdlib(&alloc_info);
+    NU_ERROR_ASSERT(nu__allocator_init(&alloc_info, &allocator));
 
     nu__slotmap_init(
-        &allocator, NU_ALLOC_FLAG_CORE, sizeof(object_t), OBJECT_COUNT, &sm);
-    nu__slotlist_init(&allocator, NU_ALLOC_FLAG_CORE, OBJECT_COUNT, &sl);
+        &allocator, NU_MEMORY_USAGE_ECS, sizeof(object_t), OBJECT_COUNT, &sm);
+    nu__slotlist_init(&allocator, NU_MEMORY_USAGE_ECS, OBJECT_COUNT, &sl);
 
     for (i = 0; i < OBJECT_COUNT; ++i)
     {

@@ -12,16 +12,16 @@ typedef struct
 } nu__list_t;
 
 void  nu__list_init(nu__list_t *list, nu_size_t obj_size);
-void *nu__list_append(nu__list_t          *list,
-                      nu__allocator_t     *alloc,
-                      nu__allocator_flag_t flag);
+void *nu__list_append(nu__list_t       *list,
+                      nu__allocator_t  *alloc,
+                      nu_memory_usage_t usage);
 void  nu__list_remove(nu__list_t *list, void *obj);
 void *nu__list_first(nu__list_t *list);
 void *nu__list_next(void *obj);
 
-void *nu__list_alloc_object(nu__allocator_t     *alloc,
-                            nu__allocator_flag_t flag,
-                            nu_size_t            size);
+void *nu__list_alloc_object(nu__allocator_t  *alloc,
+                            nu_memory_usage_t usage,
+                            nu_size_t         size);
 
 #ifdef NU_IMPLEMENTATION
 
@@ -54,9 +54,9 @@ nu__list_init (nu__list_t *list, nu_size_t obj_size)
 }
 
 void *
-nu__list_append (nu__list_t          *list,
-                 nu__allocator_t     *alloc,
-                 nu__allocator_flag_t flag)
+nu__list_append (nu__list_t       *list,
+                 nu__allocator_t  *alloc,
+                 nu_memory_usage_t usage)
 {
     struct nu__list_header *header;
 
@@ -70,7 +70,7 @@ nu__list_append (nu__list_t          *list,
     else
     {
         /* allocate new object */
-        void *object = nu__alloc(alloc, list->size, flag);
+        void *object = nu__alloc(alloc, list->size, usage);
         NU_CHECK(object, return NU_NULL);
         header = nu__header_from_object(object);
     }

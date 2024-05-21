@@ -1,6 +1,7 @@
 #ifndef NU_VM_H
 #define NU_VM_H
 
+#include <nucleus/error.h>
 #include <nucleus/platform.h>
 #include <nucleus/types.h>
 #include <nucleus/macro.h>
@@ -13,12 +14,8 @@ typedef struct nu__vm *nu_vm_t;
 
 typedef struct
 {
-    void                    *userdata;
-    nu_allocator_alloc_pfn_t alloc;
-    nu_allocator_free_pfn_t  free;
-    nu_size_t                heap_size;
-    void                    *vaddr;
-    nu_ecs_info_t            ecs;
+    nu_ecs_info_t       ecs;
+    nu_allocator_info_t allocator;
 } nu_vm_info_t;
 
 typedef nu_error_t (*nu_vm_exec_pfn_t)(nu_api_t api);
@@ -59,33 +56,26 @@ nu__build_api (nu_vm_t vm)
 nu_error_t
 nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
 {
-    void           *vaddr;
-    nu__allocator_t allocator;
-    struct nu__vm  *data;
-    nu_error_t      error;
+    struct nu__vm *data;
+    nu_error_t     error;
 
-    vaddr = info->alloc(info->heap_size, 16, info->userdata);
-    NU_CHECK(vaddr, return NU_ERROR_OUT_OF_MEMORY);
+    NU_ASSERT(info->allocator.callback);
 
-    error = nu__allocator_init(vaddr, info->heap_size, &allocator);
-    NU_ERROR_CHECK(error, goto cleanup0);
+    data = info->allocator.callback(sizeof(struct nu__vm),
+                                    16,
+                                    NU_MEMORY_USAGE_CORE,
+                                    info->allocator.userdata);
+    NU_CHECK(data, return NU_ERROR_OUT_OF_MEMORY);
 
-    data = nu__alloc(&allocator, sizeof(struct nu__vm), NU_ALLOC_FLAG_CORE);
-    NU_CHECK(data, goto cleanup0);
-
-    data->allocator = allocator;
+    error = nu__allocator_init(&info->allocator, &data->allocator);
+    NU_ERROR_CHECK(error, return error);
 
     error = nu__ecs_init(&info->ecs, &data->allocator, &data->ecs);
-    NU_ERROR_CHECK(error, goto cleanup0);
+    NU_ERROR_CHECK(error, return error);
 
     *vm = data;
 
     return NU_ERROR_NONE;
-
-cleanup0:
-    info->free(vaddr, info->userdata);
-
-    return error;
 }
 
 nu_error_t

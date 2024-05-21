@@ -11,21 +11,21 @@ typedef nu_u16_t            nu__slot_t;
 #define NU_SLOT_NULL NU_NULL
 #define NU_SLOT_MAX  NU_U16_MAX - 1
 
-NU_API void       nu__slotmap_init(nu__allocator_t     *alloc,
-                                   nu__allocator_flag_t flags,
-                                   nu_size_t            size,
-                                   nu_u16_t             capacity,
-                                   nu__slotmap_t       *slotmap);
+NU_API void       nu__slotmap_init(nu__allocator_t  *alloc,
+                                   nu_memory_usage_t usage,
+                                   nu_size_t         size,
+                                   nu_u16_t          capacity,
+                                   nu__slotmap_t    *slotmap);
 NU_API void      *nu__slotmap_get(nu__slotmap_t slotmap, nu__slot_t slot);
 NU_API nu__slot_t nu__slotmap_add(nu__slotmap_t slotmap);
 NU_API void       nu__slotmap_remove(nu__slotmap_t slotmap, nu__slot_t slot);
 
 typedef struct nu__slotlist_item *nu__slotlist_t;
 
-NU_API void       nu__slotlist_init(nu__allocator_t     *alloc,
-                                    nu__allocator_flag_t flags,
-                                    nu_u16_t             capacity,
-                                    nu__slotlist_t      *slotlist);
+NU_API void       nu__slotlist_init(nu__allocator_t  *alloc,
+                                    nu_memory_usage_t usage,
+                                    nu_u16_t          capacity,
+                                    nu__slotlist_t   *slotlist);
 NU_API void       nu__slotlist_add_first(nu__slotlist_t slotlist,
                                          nu__slot_t    *first,
                                          nu__slot_t     slot);
@@ -50,11 +50,11 @@ nu__slotmap_data (nu__slotmap_t slotmap)
 }
 
 void
-nu__slotmap_init (nu__allocator_t     *alloc,
-                  nu__allocator_flag_t flags,
-                  nu_size_t            obj_size,
-                  nu_u16_t             capacity,
-                  nu__slotmap_t       *slotmap)
+nu__slotmap_init (nu__allocator_t  *alloc,
+                  nu_memory_usage_t usage,
+                  nu_size_t         obj_size,
+                  nu_u16_t          capacity,
+                  nu__slotmap_t    *slotmap)
 {
     struct nu__slotmap *sm;
     nu_size_t           i;
@@ -64,7 +64,7 @@ nu__slotmap_init (nu__allocator_t     *alloc,
     NU_ASSERT(capacity > 0);
 
     sm = nu__alloc(
-        alloc, sizeof(struct nu__slotmap) + obj_size * capacity, flags);
+        alloc, sizeof(struct nu__slotmap) + obj_size * capacity, usage);
     sm->capacity = capacity;
     sm->obj_size = obj_size;
     sm->free     = 1;
@@ -122,15 +122,15 @@ struct nu__slotlist_item
 };
 
 void
-nu__slotlist_init (nu__allocator_t     *alloc,
-                   nu__allocator_flag_t flags,
-                   nu_u16_t             capacity,
-                   nu__slotlist_t      *slotlist)
+nu__slotlist_init (nu__allocator_t  *alloc,
+                   nu_memory_usage_t usage,
+                   nu_u16_t          capacity,
+                   nu__slotlist_t   *slotlist)
 {
     nu__slotlist_t sl;
     nu_size_t      i;
 
-    sl = nu__alloc(alloc, sizeof(struct nu__slotlist_item) * capacity, flags);
+    sl = nu__alloc(alloc, sizeof(struct nu__slotlist_item) * capacity, usage);
     for (i = 0; i < capacity; ++i)
     {
         sl[i].prev = NU_SLOT_NULL;

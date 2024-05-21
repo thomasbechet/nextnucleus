@@ -9,25 +9,26 @@ typedef struct
     int value;
 } object_t;
 
-static nu_u8_t memory[NU_MEM_64M];
-
 #define OBJECT_COUNT 128
 
 int
 main (void)
 {
-    nu__allocator_t allocator;
-    nu__list_t      list;
-    object_t       *objs[OBJECT_COUNT];
-    object_t       *it;
-    nu_size_t       i;
+    nu__allocator_t     allocator;
+    nu_allocator_info_t alloc_info;
+    nu__list_t          list;
+    object_t           *objs[OBJECT_COUNT];
+    object_t           *it;
+    nu_size_t           i;
 
-    NU_ERROR_ASSERT(nu__allocator_init(memory, NU_MEM_64M, &allocator));
+    nu_allocator_use_stdlib(&alloc_info);
+
+    NU_ERROR_ASSERT(nu__allocator_init(&alloc_info, &allocator));
     nu__list_init(&list, sizeof(object_t));
 
     for (i = 0; i < OBJECT_COUNT; ++i)
     {
-        objs[i] = nu__list_append(&list, &allocator, NU_ALLOC_FLAG_CORE);
+        objs[i] = nu__list_append(&list, &allocator, NU_MEMORY_USAGE_CORE);
         NU_ASSERT(objs[i]);
         objs[i]->value = i;
     }
