@@ -32,9 +32,13 @@ struct nu__query
 
 typedef struct
 {
-    nu_u16_t max_component_count;
-    nu_u16_t max_property_count;
+    nu_u16_t  max_component_count;
+    nu_u16_t  max_property_count;
+    nu_bool_t load_names;
 } nu_ecs_info_t;
+
+#define NU_DEFAULT_MAX_COMPONENT_COUNT 128
+#define NU_DEFAULT_MAX_PROPERTY_COUNT  512
 
 typedef struct
 {
@@ -45,6 +49,8 @@ typedef struct
     nu__slotlist_t property_lists;
     nu_ecs_info_t  info;
 } nu__ecs_t;
+
+NU_API void nu_ecs_info_default(nu_ecs_info_t *info);
 
 nu_error_t nu__ecs_init(const nu_ecs_info_t *info,
                         nu__allocator_t     *alloc,
@@ -63,6 +69,14 @@ nu__slot_t nu__ecs_find_property(nu__ecs_t       *ecs,
                                  const nu_char_t *name);
 
 #ifdef NU_IMPLEMENTATION
+
+void
+nu_ecs_info_default (nu_ecs_info_t *info)
+{
+    info->max_property_count = NU_DEFAULT_MAX_COMPONENT_COUNT;
+    info->max_property_count = NU_DEFAULT_MAX_PROPERTY_COUNT;
+    info->load_names         = NU_TRUE;
+}
 
 nu_error_t
 nu__ecs_init (const nu_ecs_info_t *info, nu__allocator_t *alloc, nu__ecs_t *ecs)

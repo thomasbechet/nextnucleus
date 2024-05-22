@@ -2,7 +2,6 @@
 #define NU_SLOTMAP_H
 
 #include <nucleus/allocator.h>
-#include <nucleus/macro.h>
 #include <nucleus/types.h>
 
 typedef struct nu__slotmap *nu__slotmap_t;
@@ -95,7 +94,7 @@ nu__slotmap_add (nu__slotmap_t slotmap)
     nu__slot_t free = slotmap->free;
     void      *data = nu__slotmap_data(slotmap);
 
-    NU_ASSERT(free < slotmap->capacity);
+    NU_ASSERT(free <= slotmap->capacity);
     slotmap->free
         = *(nu__slot_t *)((nu_size_t)data + slotmap->obj_size * (free - 1));
 
@@ -158,10 +157,10 @@ nu__slotlist_add_first (nu__slotlist_t slotlist,
     }
     else
     {
-        *first     = slot;
         item->next = NU_SLOT_NULL;
     }
     item->prev = NU_SLOT_NULL;
+    *first     = slot;
 }
 void
 nu__slotlist_remove (nu__slotlist_t slotlist,

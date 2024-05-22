@@ -3,7 +3,6 @@
 
 #include <nucleus/types.h>
 #include <nucleus/error.h>
-#include <nucleus/macro.h>
 #include <nucleus/memory.h>
 #include <nucleus/math.h>
 
@@ -41,7 +40,7 @@ void      *nu__aligned_alloc(nu__allocator_t  *alloc,
                              nu_size_t         align,
                              nu_memory_usage_t usage);
 #ifdef NU_STDLIB
-NU_API void nu_allocator_use_stdlib(nu_allocator_info_t *info);
+NU_API void nu_allocator_info_stdlib(nu_allocator_info_t *info);
 #endif
 
 #ifdef NU_IMPLEMENTATION
@@ -63,7 +62,7 @@ nu__static_allocator_callback (nu_size_t         size,
 }
 
 void
-nu_allocator_use_stdlib (nu_allocator_info_t *info)
+nu_allocator_info_stdlib (nu_allocator_info_t *info)
 {
     info->userdata = NU_NULL;
     info->callback = nu__static_allocator_callback;

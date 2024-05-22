@@ -62,10 +62,9 @@ main (void)
     NU_ASSERT(p);
     (void)p;
 
-    info.allocator.userdata      = NU_NULL;
-    info.allocator.callback      = allocator_callback;
-    info.ecs.max_component_count = 256;
-    info.ecs.max_property_count  = 256;
+    info.allocator.userdata = NU_NULL;
+    info.allocator.callback = allocator_callback;
+    nu_ecs_info_default(&info.ecs);
 
     nu_vm_init(&info, &vm);
     nu_vm_exec(vm, bootstrap);

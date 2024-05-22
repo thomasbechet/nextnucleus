@@ -4,6 +4,9 @@
 #include <nucleus/types.h>
 #include <nucleus/platform.h>
 
+#define NU_MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define NU_MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 NU_API nu_bool_t
 nu_is_power_of_two (nu_size_t n)
 {

@@ -11,6 +11,12 @@
 #define NU_PLATFORM_APPLE
 #endif
 
+/* unittests */
+#ifdef NU_TEST
+#define NU_DEBUG
+#define NU_STDLIB
+#endif
+
 /* import stdlib */
 #ifdef NU_STDLIB
 #include <assert.h>

@@ -23,6 +23,11 @@ typedef char nu_char_t;
 typedef int           nu_bool_t;
 typedef unsigned long nu_size_t;
 
+#define NU_TRUE  1
+#define NU_FALSE 0
+#define NU_NULL  0
+#define NU_NOOP
+
 typedef void (*nu_pfn_t)(void);
 
 typedef enum

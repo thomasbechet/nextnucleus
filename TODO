@@ -1,2 +1,2 @@
-[ ] Externalize memory allocator from virtual machine
+[x] Externalize memory allocator from virtual machine
 [ ] Make resource names optional

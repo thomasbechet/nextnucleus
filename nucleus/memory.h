@@ -3,6 +3,7 @@
 
 #include <nucleus/platform.h>
 #include <nucleus/types.h>
+#include <nucleus/error.h>
 
 #define NU_MEM_1G   (1024 * 1024 * 1024)
 #define NU_MEM_512M (1024 * 1024 * 512)

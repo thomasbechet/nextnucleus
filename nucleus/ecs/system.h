@@ -3,7 +3,6 @@
 
 #include <nucleus/types.h>
 #include <nucleus/error.h>
-#include <nucleus/macro.h>
 #include <nucleus/string.h>
 #include <nucleus/ecs/component.h>
 

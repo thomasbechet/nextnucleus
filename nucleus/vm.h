@@ -4,7 +4,6 @@
 #include <nucleus/error.h>
 #include <nucleus/platform.h>
 #include <nucleus/types.h>
-#include <nucleus/macro.h>
 #include <nucleus/allocator.h>
 #include <nucleus/renderer.h>
 #include <nucleus/ecs.h>

@@ -1,7 +1,5 @@
-#include <assert.h>
 #define NU_IMPLEMENTATION
-#define NU_DEBUG
-#define NU_STDLIB
+#define NU_TEST
 #include <nucleus/nucleus.h>
 
 typedef struct
@@ -21,7 +19,7 @@ main (void)
     object_t           *it;
     nu_size_t           i;
 
-    nu_allocator_use_stdlib(&alloc_info);
+    nu_allocator_info_stdlib(&alloc_info);
 
     NU_ERROR_ASSERT(nu__allocator_init(&alloc_info, &allocator));
     nu__list_init(&list, sizeof(object_t));
