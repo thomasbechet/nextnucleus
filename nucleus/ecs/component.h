@@ -14,19 +14,6 @@ typedef enum
 
 typedef struct
 {
-    const nu_char_t   *name;
-    nu_type_t          type;
-    nu_property_kind_t kind;
-    nu_size_t          size;
-} nu_property_info_t;
-
-typedef struct
-{
-    const nu_char_t *name;
-} nu_component_info_t;
-
-typedef struct
-{
     nu__slot_t slot;
 } nu_property_t;
 
@@ -37,14 +24,14 @@ typedef struct
 
 typedef struct
 {
-    nu_ident_t         name;
+    nu_uid_t           uid;
     nu_type_t          type;
     nu_property_kind_t kind;
 } nu__property_entry_t;
 
 typedef struct
 {
-    nu_ident_t name;
+    nu_uid_t   uid;
     nu__slot_t first_property;
 } nu__component_entry_t;
 

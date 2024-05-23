@@ -24,29 +24,19 @@ allocator_callback (nu_size_t         size,
 nu_error_t
 bootstrap (nu_api_t api)
 {
-    nu_error_t          error;
-    nu_component_info_t info;
-    nu_property_info_t  prop;
-    nu_component_t      component;
+    nu_error_t     error;
+    nu_component_t component;
 
-    info.name = "transform";
-    error     = nu_register_component(api, &info, &component);
+    error = nu_register_component(api, "transform", &component);
     NU_ERROR_CHECK(error, return error);
 
-    prop.name = "position";
-    prop.type = NU_TYPE_U32;
-    prop.kind = NU_PROPERTY_SCALAR;
-    error     = nu_register_property(api, component, &prop, NU_NULL);
+    error = nu_register_property(
+        api, component, "position", NU_TYPE_U32, NU_NULL);
     NU_ERROR_CHECK(error, return error);
-    prop.name = "rotation";
-    prop.type = NU_TYPE_U32;
-    prop.kind = NU_PROPERTY_SCALAR;
-    error     = nu_register_property(api, component, &prop, NU_NULL);
+    error = nu_register_property(
+        api, component, "rotation", NU_TYPE_U32, NU_NULL);
     NU_ERROR_CHECK(error, return error);
-    prop.name = "scale";
-    prop.type = NU_TYPE_U32;
-    prop.kind = NU_PROPERTY_SCALAR;
-    error     = nu_register_property(api, component, &prop, NU_NULL);
+    error = nu_register_property(api, component, "scale", NU_TYPE_U32, NU_NULL);
     NU_ERROR_CHECK(error, return error);
 
     return NU_ERROR_NONE;

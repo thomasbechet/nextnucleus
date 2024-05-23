@@ -10,6 +10,8 @@ typedef nu_u16_t            nu__slot_t;
 #define NU_SLOT_NULL NU_NULL
 #define NU_SLOT_MAX  NU_U16_MAX - 1
 
+NU_API nu_u16_t nu_slot_index(nu__slot_t index);
+
 NU_API void       nu__slotmap_init(nu__allocator_t  *alloc,
                                    nu_memory_usage_t usage,
                                    nu_size_t         size,
@@ -46,6 +48,13 @@ static void *
 nu__slotmap_data (nu__slotmap_t slotmap)
 {
     return (void *)((nu_size_t)slotmap + sizeof(struct nu__slotmap));
+}
+
+nu_u16_t
+nu_slot_index (nu__slot_t index)
+{
+    NU_ASSERT(index);
+    return index - 1;
 }
 
 void
