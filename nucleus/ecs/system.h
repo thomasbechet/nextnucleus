@@ -6,44 +6,59 @@
 #include <nucleus/string.h>
 #include <nucleus/ecs/component.h>
 
-typedef struct nu_api    *nu_api_t;
-typedef struct nu_system *nu_system_t;
+#define NU_SYSTEM_COMPONENT_CAPACITY 32
 
-typedef nu_error_t (*nu_system_run_pfn_t)(nu_api_t api);
+typedef void *nu_api_t;
+typedef nu_error_t (*nu_system_callback_pfn_t)(nu_api_t api);
+
+typedef enum
+{
+    NU_COMPONENT_READ,
+    NU_COMPONENT_WRITE
+} nu_component_access_t;
 
 typedef struct
 {
-    const nu_char_t   *name;
-    nu_type_t          type;
-    nu_property_kind_t kind;
-} nu_system_property_t;
+    nu_u16_t              slot;
+    nu_handle_t           handle;
+    nu_component_access_t access;
+} nu_system_component_t;
 
 typedef struct
 {
-    nu_system_property_t *components;
-    nu_size_t             component_count;
-    nu_size_t             query_count;
+    const char                  *name;
+    nu_system_callback_pfn_t     callback;
+    const nu_system_component_t *components;
+    nu_size_t                    component_count;
 } nu_system_info_t;
 
 #ifdef NU_IMPLEMENTATION
 
-struct nu__system_property
+typedef struct
 {
-    struct nu__system_property *next;
-};
+    nu__slot_t            slot;
+    nu_component_access_t access;
+} nu__system_component_t;
 
-struct nu__system_query
+typedef struct
 {
-    struct nu__system_query *next;
-};
+    nu__slot_t slot;
+    nu__slot_t archetype;
+} nu__system_entites_t;
 
-struct nu_system
+typedef struct
 {
-    nu_ident_t                  name;
-    nu_size_t                   size;
-    nu_system_run_pfn_t         run;
-    struct nu__system_property *first_prop;
-};
+    nu_uid_t                 uid;
+    nu_system_callback_pfn_t callback;
+    nu__system_component_t   components[NU_SYSTEM_COMPONENT_CAPACITY];
+    nu_u16_t                 component_count;
+} nu__system_entry_t;
+
+static nu_handle_t
+nu__system_handle (nu__slot_t slot)
+{
+    return slot;
+}
 
 #endif
 

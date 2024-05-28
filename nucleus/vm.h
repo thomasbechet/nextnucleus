@@ -43,10 +43,10 @@ struct nu__vm
     nu__renderer_t  renderer;
 };
 
-static struct nu_api
+static nu__api_t
 nu__build_api (nu_vm_t vm)
 {
-    struct nu_api api;
+    nu__api_t api;
     api.allocator = &vm->allocator;
     api.ecs       = &vm->ecs;
     return api;
@@ -80,11 +80,7 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
 nu_error_t
 nu_vm_free (nu_vm_t vm)
 {
-    nu_error_t error;
-
-    error = nu__ecs_free(&vm->ecs);
-    NU_ERROR_CHECK(error, return error);
-
+    (void)vm;
     return NU_ERROR_NONE;
 }
 
@@ -98,7 +94,7 @@ nu_vm_tick (nu_vm_t vm)
 nu_error_t
 nu_vm_exec (nu_vm_t vm, nu_vm_exec_pfn_t exec)
 {
-    struct nu_api api = nu__build_api(vm);
+    nu__api_t api = nu__build_api(vm);
     return exec(&api);
 }
 

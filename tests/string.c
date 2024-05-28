@@ -1,5 +1,4 @@
 #define NU_IMPLEMENTATION
-#define NU_TEST
 #include <nucleus/nucleus.h>
 
 int

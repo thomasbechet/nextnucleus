@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [ "-DNU_IMPLEMENTATION" ]
+  Add: [ "-DNU_IMPLEMENTATION -DNU_DEBUG -DNU_STDLIB" ]

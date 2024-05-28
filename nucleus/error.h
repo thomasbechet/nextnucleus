@@ -3,9 +3,11 @@
 
 typedef enum
 {
-    NU_ERROR_NONE             = 0,
-    NU_ERROR_OUT_OF_MEMORY    = 1,
-    NU_ERROR_DUPLICATED_ENTRY = 2
+    NU_ERROR_NONE               = 0,
+    NU_ERROR_OUT_OF_MEMORY      = 1,
+    NU_ERROR_RESOURCE_NOT_FOUND = 2,
+    NU_ERROR_DUPLICATED_ENTRY   = 3,
+    NU_ERROR_OUT_OF_SYSTEM_ITEM = 4
 } nu_error_t;
 
 #if defined(NU_DEBUG) && defined(NU_STDLIB)

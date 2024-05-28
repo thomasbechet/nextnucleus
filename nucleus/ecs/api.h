@@ -6,102 +6,91 @@
 #include <nucleus/platform.h>
 #include <nucleus/ecs.h>
 
-NU_API nu_error_t     nu_register_component(nu_api_t         api,
-                                            const nu_char_t *name,
-                                            nu_component_t  *handle);
-NU_API nu_component_t nu_find_component(nu_api_t api, const nu_char_t *name);
-NU_API nu_component_t nu_find_component_uid(nu_api_t api, nu_uid_t uid);
+NU_API nu_error_t  nu_register_component(nu_api_t                   api,
+                                         const nu_component_info_t *info,
+                                         nu_handle_t               *handle);
+NU_API nu_handle_t nu_find_component(nu_api_t api, nu_uid_t uid);
 
-NU_API nu_error_t    nu_register_property(nu_api_t         api,
-                                          nu_component_t   component,
-                                          const nu_char_t *name,
-                                          nu_type_t        type,
-                                          nu_property_t   *handle);
-NU_API nu_property_t nu_find_property_uid(nu_api_t       api,
-                                          nu_component_t component,
-                                          nu_uid_t       uid);
-NU_API nu_property_t nu_find_property(nu_api_t       api,
-                                      nu_component_t component,
-                                      const char    *name);
+NU_API nu_error_t nu_register_archetype(nu_api_t                   api,
+                                        const nu_archetype_info_t *info,
+                                        nu_handle_t               *handle);
 
-NU_API nu_error_t nu_register_system(nu_api_t                api,
-                                     const nu_system_info_t *info);
+NU_API nu_error_t  nu_register_system(nu_api_t                api,
+                                      const nu_system_info_t *info,
+                                      nu_handle_t            *handle);
+NU_API nu_handle_t nu_find_system(nu_api_t api, nu_uid_t uid);
 
 NU_API nu_error_t nu_draw(nu_api_t api);
 
 #ifdef NU_IMPLEMENTATION
 
-struct nu_api
+typedef struct
 {
     nu__allocator_t *allocator;
     nu__ecs_t       *ecs;
-};
+} nu__api_t;
 
-NU_API nu_error_t
-nu_register_component (nu_api_t         api,
-                       const nu_char_t *name,
-                       nu_component_t  *handle)
+nu_error_t
+nu_register_component (nu_api_t                   api,
+                       const nu_component_info_t *info,
+                       nu_handle_t               *handle)
 {
     nu__slot_t slot;
     nu_error_t error;
-    error = nu__ecs_register_component(api->ecs, name, &slot);
+    nu__api_t *papi = api;
+    error           = nu__ecs_register_component(papi->ecs, info, &slot);
     NU_ERROR_CHECK(error, return error);
     if (handle)
     {
-        handle->slot = slot;
+        *handle = nu__component_handle(slot);
     }
     return error;
 }
-nu_component_t
-nu_find_component (nu_api_t api, const char *name)
+nu_handle_t
+nu_find_component (nu_api_t api, nu_uid_t uid)
 {
-    return nu_find_component_uid(api, nu_uid(name));
-}
-nu_component_t
-nu_find_component_uid (nu_api_t api, nu_uid_t uid)
-{
-    nu_component_t handle;
-    handle.slot = nu__ecs_find_component(api->ecs, uid);
-    return handle;
+    nu__api_t *papi = api;
+    return nu__component_handle(nu__ecs_find_component(papi->ecs, uid));
 }
 
 nu_error_t
-nu_register_property (nu_api_t         api,
-                      nu_component_t   component,
-                      const nu_char_t *name,
-                      nu_type_t        type,
-                      nu_property_t   *handle)
+nu_register_archetype (nu_api_t                   api,
+                       const nu_archetype_info_t *info,
+                       nu_handle_t               *handle)
 {
     nu__slot_t slot;
     nu_error_t error;
-    error = nu__ecs_register_property(
-        api->ecs, component.slot, name, type, &slot);
+    nu__api_t *papi = api;
+    error           = nu__ecs_register_archetype(papi->ecs, papi->allocator, info, &slot);
     NU_ERROR_CHECK(error, return error);
     if (handle)
     {
-        handle->slot = slot;
+        *handle = nu__archetype_handle(slot);
     }
     return error;
 }
-nu_property_t
-nu_find_property (nu_api_t api, nu_component_t component, const nu_char_t *name)
-{
-    return nu_find_property_uid(api, component, nu_uid(name));
-}
-nu_property_t
-nu_find_property_uid (nu_api_t api, nu_component_t component, nu_uid_t uid)
-{
-    nu_property_t handle;
-    handle.slot = nu__ecs_find_property(api->ecs, component.slot, uid);
-    return handle;
-}
 
 nu_error_t
-nu_register_system (nu_api_t api, const nu_system_info_t *info)
+nu_register_system (nu_api_t                api,
+                    const nu_system_info_t *info,
+                    nu_handle_t            *handle)
 {
-    (void)api;
-    (void)info;
-    return NU_ERROR_NONE;
+    nu__slot_t slot;
+    nu_error_t error;
+    nu__api_t *papi = api;
+    error           = nu__ecs_register_system(papi->ecs, info, &slot);
+    NU_ERROR_CHECK(error, return error);
+    if (handle)
+    {
+        *handle = nu__system_handle(slot);
+    }
+    return error;
+}
+nu_handle_t
+nu_find_system (nu_api_t api, nu_uid_t uid)
+{
+    nu__api_t *papi = api;
+    return nu__system_handle(nu__ecs_find_system(papi->ecs, uid));
 }
 
 nu_error_t
