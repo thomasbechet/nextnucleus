@@ -11,6 +11,13 @@
 
 typedef struct nu__vm *nu_vm_t;
 
+typedef enum
+{
+    NU_VM_STATE_STOPPED,
+    NU_VM_STATE_RUNNING,
+    NU_VM_STATE_FAILURE
+} nu_vm_state_t;
+
 typedef struct
 {
     nu_ecs_info_t       ecs;
@@ -20,6 +27,10 @@ typedef struct
 typedef nu_error_t (*nu_vm_exec_pfn_t)(nu_api_t api);
 
 NU_API nu_error_t nu_vm_init(const nu_vm_info_t *info, nu_vm_t *vm);
+
+NU_API nu_error_t nu_vm_start(nu_vm_t vm);
+
+NU_API nu_error_t nu_vm_stop(nu_vm_t vm);
 
 NU_API nu_error_t nu_vm_free(nu_vm_t vm);
 
@@ -34,10 +45,21 @@ NU_API nu_error_t nu_vm_exec(nu_vm_t vm, nu_vm_exec_pfn_t exec);
 NU_API nu_error_t nu_vm_bind_renderer(nu_vm_t                   vm,
                                       const nu_renderer_info_t *info);
 
+NU_API nu_error_t nu_register_component(nu_vm_t                    vm,
+                                        const nu_component_info_t *info,
+                                        nu_handle_t               *handle);
+NU_API nu_error_t nu_register_archetype(nu_vm_t                    vm,
+                                        const nu_archetype_info_t *info,
+                                        nu_handle_t               *handle);
+NU_API nu_error_t nu_register_system(nu_vm_t                 vm,
+                                     const nu_system_info_t *info,
+                                     nu_handle_t            *handle);
+
 #ifdef NU_IMPLEMENTATION
 
 struct nu__vm
 {
+    nu_vm_state_t   state;
     nu__allocator_t allocator;
     nu__ecs_t       ecs;
     nu__renderer_t  renderer;
@@ -66,6 +88,8 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
                                     info->allocator.userdata);
     NU_CHECK(data, return NU_ERROR_OUT_OF_MEMORY);
 
+    data->state = NU_VM_STATE_STOPPED;
+
     error = nu__allocator_init(&info->allocator, &data->allocator);
     NU_ERROR_CHECK(error, return error);
 
@@ -74,6 +98,20 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
 
     *vm = data;
 
+    return NU_ERROR_NONE;
+}
+
+nu_error_t
+nu_vm_start (nu_vm_t vm)
+{
+    (void)vm;
+    return NU_ERROR_NONE;
+}
+
+nu_error_t
+nu_vm_stop (nu_vm_t vm)
+{
+    (void)vm;
     return NU_ERROR_NONE;
 }
 

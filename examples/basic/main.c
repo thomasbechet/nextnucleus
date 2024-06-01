@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <nucleus/ecs/api.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -27,6 +28,20 @@ my_system (nu_api_t api)
 {
     (void)api;
 
+    const nu_component_t components[] = { 0, 1 };
+    nu_query_t           q            = nu_query(api, components, 2);
+    nu_query_it_t        it           = nu_query_iter(api, q);
+
+    while (nu_query_next(&it))
+    {
+        nu_size_t i;
+        nu_u32_t *positions = nu_field(api, it, 0);
+        nu for (i = 0; i < it.len; ++i)
+        {
+            positions[i * NU_V3_SIZE] = 0;
+        }
+    }
+
     return NU_ERROR_NONE;
 }
 
@@ -37,15 +52,14 @@ register_my_system (nu_api_t api)
     nu_error_t            error;
     nu_system_component_t components[2];
 
-    NU_CHECK(components[0].handle = nu_find_component(api, nu_uid("position")),
-             return NU_ERROR_RESOURCE_NOT_FOUND);
-    components[0].access = NU_COMPONENT_READ;
-    components[0].slot   = 0;
+    nu_handle_t position = nu_find_component(api, nu_uid("position"));
+    nu_handle_t rotation = nu_find_component(api, nu_uid("rotation"));
 
-    NU_CHECK(components[1].handle = nu_find_component(api, nu_uid("rotation")),
-             return NU_ERROR_RESOURCE_NOT_FOUND);
+    components[0].handle = position;
+    components[0].access = NU_COMPONENT_READ;
+
+    components[1].handle = rotation;
     components[1].access = NU_COMPONENT_READ;
-    components[1].slot   = 1;
 
     info.name            = "my_system";
     info.callback        = my_system;
@@ -107,6 +121,7 @@ main (void)
     nu_ecs_info_default(&info.ecs);
 
     nu_vm_init(&info, &vm);
+    nu_vm_start(vm);
     NU_ERROR_ASSERT(nu_vm_exec(vm, bootstrap));
     tick = 60;
     while (--tick)
@@ -114,6 +129,7 @@ main (void)
         nu_vm_tick(vm);
         usleep(16000);
     }
+    nu_vm_stop(vm);
     nu_vm_free(vm);
 
     return 0;

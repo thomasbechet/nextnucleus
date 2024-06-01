@@ -23,7 +23,8 @@ typedef enum
     NU_TYPE_ENTITY,
     NU_TYPE_QUAT,
     NU_TYPE_COMPONENT,
-    NU_TYPE_PROPERTY,
+    NU_TYPE_ARCHETYPE,
+    NU_TYPE_SYSTEM,
     NU_TYPE_TEXTURE,
     NU_TYPE_MESH,
     NU_TYPE_ANIMATION
@@ -34,6 +35,7 @@ typedef struct
     const nu_char_t    *name;
     nu_component_type_t type;
     nu_u16_t            size;
+    nu_u16_t            capacity;
 } nu_component_info_t;
 
 NU_API nu_size_t nu_component_type_size(nu_component_type_t t);
@@ -62,7 +64,8 @@ typedef struct
 {
     nu_uid_t            uid;
     nu_component_type_t type;
-    nu_u16_t            size;
+    nu_u16_t            data_size;
+    nu_size_t           array_size;
 } nu__component_entry_t;
 
 static nu_handle_t

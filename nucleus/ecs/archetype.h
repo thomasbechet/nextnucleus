@@ -11,7 +11,6 @@ typedef struct
     const nu_char_t   *name;
     const nu_handle_t *components;
     nu_u16_t           component_count;
-    nu_u16_t           entity_capacity;
 } nu_archetype_info_t;
 
 #ifdef NU_IMPLEMENTATION
@@ -20,18 +19,17 @@ typedef struct
 {
     nu_uid_t            uid;
     nu_component_type_t type;
-    void               *data;
-} nu__archetype_data_header_t;
+    nu_size_t           data_size;
+    nu_size_t           offset;
+} nu__archetype_component_t;
 
 typedef struct
 {
-    nu_uid_t                     uid;
-    nu_u16_t                     component_count;
-    nu_u16_t                     entity_capacity;
-    nu_u16_t                     entity_count;
-    nu_entity_t                 *entities;
-    nu_u16_t                    *entity_to_index;
-    nu__archetype_data_header_t *headers;
+    nu_uid_t                  uid;
+    nu_u16_t                  component_count;
+    nu_size_t                 entry_size;
+    nu__slot_t                first_group;
+    nu__archetype_component_t components[1];
 } nu__archetype_entry_t;
 
 #define NU_ARCHETYPE_BITS_BLOCK_SIZE 32
@@ -41,11 +39,11 @@ nu__archetype_handle (nu__slot_t slot)
 {
     return slot;
 }
-/* static nu__slot_t
+static nu__slot_t
 nu__archetype_slot (nu_handle_t handle)
 {
     return handle;
-} */
+}
 
 static nu_u32_t *
 nu__archetype_bits_alloc (nu__allocator_t *alloc,
