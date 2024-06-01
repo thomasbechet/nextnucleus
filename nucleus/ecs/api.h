@@ -51,34 +51,42 @@ nu_find_system (nu_api_t api, nu_uid_t uid)
 nu_group_t
 nu_create_group (nu_api_t api, nu_archetype_t archetype, nu_u16_t capacity)
 {
-    nu__api_t  *papi = api;
-    nu_handle_t handle
-        = nu__ecs_create_group(papi->ecs, papi->allocator, archetype, capacity);
-    return NU_NULL;
+    nu__api_t *papi = api;
+    return nu__ecs_create_group(
+        papi->ecs, papi->allocator, archetype, capacity);
 }
 nu_entity_t
 nu_spawn (nu_api_t api, nu_group_t group)
 {
-    return NU_NULL;
+    nu__api_t *papi = api;
+    return nu__ecs_spawn(papi->ecs, group);
 }
 void *
 nu_field (nu_api_t api, nu_entity_t e, nu_component_t c)
 {
-    return NU_NULL;
+    nu__api_t *papi = api;
+    return nu__ecs_field(papi->ecs, e, c);
 }
 nu_query_t
 nu_query (nu_api_t api, const nu_component_t components, nu_u16_t count)
 {
+    (void)api;
+    (void)components;
+    (void)count;
     return NU_NULL;
 }
 nu_bool_t
 nu_group_next (nu_api_t api, nu_entity_t *entity)
 {
+    (void)api;
+    (void)entity;
     return NU_FALSE;
 }
 nu_bool_t
 nu_query_next (nu_api_t api, nu_entity_t *it)
 {
+    (void)api;
+    (void)it;
     return NU_FALSE;
 }
 

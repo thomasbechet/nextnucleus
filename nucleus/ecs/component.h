@@ -35,7 +35,6 @@ typedef struct
     const nu_char_t    *name;
     nu_component_type_t type;
     nu_u16_t            size;
-    nu_u16_t            capacity;
 } nu_component_info_t;
 
 NU_API nu_size_t nu_component_type_size(nu_component_type_t t);

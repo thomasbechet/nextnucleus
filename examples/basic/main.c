@@ -1,5 +1,8 @@
 #include <assert.h>
 #include <nucleus/ecs/api.h>
+#include <nucleus/ecs/component.h>
+#include <nucleus/error.h>
+#include <nucleus/vm.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -109,26 +112,46 @@ bootstrap (nu_api_t api)
 int
 main (void)
 {
-    nu_vm_t      vm;
-    nu_vm_info_t info;
-    void        *p = malloc(NU_MEM_1G);
-    nu_size_t    tick;
-    NU_ASSERT(p);
-    (void)p;
+    nu_vm_t             vm;
+    nu_vm_info_t        info;
+    nu_component_info_t component;
+    nu_archetype_info_t archetype;
+    nu_component_t      position, rotation;
+    nu_error_t          error;
+    nu_size_t           tick;
 
     info.allocator.userdata = NU_NULL;
     info.allocator.callback = allocator_callback;
     nu_ecs_info_default(&info.ecs);
 
     nu_vm_init(&info, &vm);
+
+    component.name = "position";
+    component.size = 1;
+    component.type = NU_TYPE_IV3;
+    error          = nu_register_component(vm, &component, &position);
+    NU_ERROR_ASSERT(error);
+
+    component.name = "rotation";
+    component.size = 1;
+    component.type = NU_TYPE_QUAT;
+    error          = nu_register_component(vm, &component, &rotation);
+    NU_ERROR_ASSERT(error);
+
+    archetype.name            = "player";
+    archetype.components      = (nu_component_t[]) { position, rotation };
+    archetype.component_count = 2;
+
     nu_vm_start(vm);
     NU_ERROR_ASSERT(nu_vm_exec(vm, bootstrap));
+
     tick = 60;
     while (--tick)
     {
         nu_vm_tick(vm);
         usleep(16000);
     }
+
     nu_vm_stop(vm);
     nu_vm_free(vm);
 
