@@ -304,6 +304,21 @@ nu__ecs_register_archetype (nu__ecs_t                 *ecs,
 
     return NU_ERROR_NONE;
 }
+static nu__slot_t
+nu__ecs_find_archetype (nu__ecs_t *ecs, nu_uid_t uid)
+{
+    nu__slot_t it = ecs->first_archetype;
+    while (it)
+    {
+        nu__archetype_entry_t *entry = nu__slotmap_get(ecs->archetypes, it);
+        if (entry->uid == uid)
+        {
+            return it;
+        }
+        it = nu__slotlist_next(ecs->archetype_list, it);
+    }
+    return NU_SLOT_NULL;
+}
 
 static nu__slot_t
 nu__ecs_find_system (nu__ecs_t *ecs, nu_uid_t uid)
@@ -437,7 +452,7 @@ nu__ecs_create_group (nu__ecs_t       *ecs,
         = nu__alloc(alloc, capacity * sizeof(nu_u32_t), NU_MEMORY_USAGE_ECS);
     NU_ASSERT(entry->version_index);
     entry->free_reverse
-        = nu__alloc(alloc, sizeof(nu_u16_t), NU_MEMORY_USAGE_ECS);
+        = nu__alloc(alloc, capacity * sizeof(nu_u16_t), NU_MEMORY_USAGE_ECS);
     NU_ASSERT(entry->free_reverse);
 
     for (i = 0; i < capacity; ++i)
@@ -445,6 +460,10 @@ nu__ecs_create_group (nu__ecs_t       *ecs,
         entry->free_reverse[i] = i + 1;
     }
     entry->free = 0;
+
+    /* add to archetype group list */
+    nu__slotlist_add_first(
+        ecs->archetype_group_lists, &archetype_entry->first_group, slot);
 
     return slot;
 }
@@ -464,6 +483,24 @@ nu__ecs_field (nu__ecs_t *ecs, nu_entity_t e, nu_handle_t c)
     component = &entry->components[nu_slot_index(c)]; /* 2 indirection */
     return (void *)((nu_size_t)entry->data + component->offset * entry->capacity
                     + component->data_size * index); /* 3 indirection */
+}
+
+static nu_error_t
+nu__ecs_tick (nu__ecs_t *ecs, void *api)
+{
+    nu__slot_t system;
+    nu_error_t error;
+
+    system = ecs->first_system;
+    while (system)
+    {
+        nu__system_entry_t *entry = nu__slotmap_get(ecs->systems, system);
+        error                     = entry->callback(api);
+        NU_ERROR_CHECK(error, return error);
+        system = nu__slotlist_next(ecs->system_list, system);
+    }
+
+    return NU_ERROR_NONE;
 }
 
 #endif

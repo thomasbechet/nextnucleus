@@ -9,8 +9,8 @@ add_executable(
     main.c
 )
 
-set(CMAKE_BUILD_TYPE Debug)
-# set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 90) # C89 standard
 

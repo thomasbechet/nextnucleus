@@ -104,14 +104,14 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
 nu_error_t
 nu_vm_start (nu_vm_t vm)
 {
-    (void)vm;
+    vm->state = NU_VM_STATE_RUNNING;
     return NU_ERROR_NONE;
 }
 
 nu_error_t
 nu_vm_stop (nu_vm_t vm)
 {
-    (void)vm;
+    vm->state = NU_VM_STATE_STOPPED;
     return NU_ERROR_NONE;
 }
 
@@ -125,15 +125,79 @@ nu_vm_free (nu_vm_t vm)
 nu_error_t
 nu_vm_tick (nu_vm_t vm)
 {
-    (void)vm;
-    return NU_ERROR_NONE;
+    nu__api_t api = nu__build_api(vm);
+    if (vm->state != NU_VM_STATE_RUNNING)
+    {
+        return NU_ERROR_INVALID_STATE;
+    }
+    return nu__ecs_tick(&vm->ecs, &api);
 }
 
 nu_error_t
 nu_vm_exec (nu_vm_t vm, nu_vm_exec_pfn_t exec)
 {
     nu__api_t api = nu__build_api(vm);
+    if (vm->state != NU_VM_STATE_RUNNING)
+    {
+        return NU_ERROR_INVALID_STATE;
+    }
     return exec(&api);
+}
+
+nu_error_t
+nu_register_component (nu_vm_t                    vm,
+                       const nu_component_info_t *info,
+                       nu_handle_t               *handle)
+{
+    nu__slot_t component;
+    nu_error_t error;
+    if (vm->state != NU_VM_STATE_STOPPED)
+    {
+        return NU_ERROR_INVALID_STATE;
+    }
+    error = nu__ecs_register_component(&vm->ecs, info, &component);
+    if (handle)
+    {
+        *handle = component;
+    }
+    return error;
+}
+nu_error_t
+nu_register_archetype (nu_vm_t                    vm,
+                       const nu_archetype_info_t *info,
+                       nu_handle_t               *handle)
+{
+
+    nu__slot_t archetype;
+    nu_error_t error;
+    if (vm->state != NU_VM_STATE_STOPPED)
+    {
+        return NU_ERROR_INVALID_STATE;
+    }
+    error = nu__ecs_register_archetype(&vm->ecs, info, &archetype);
+    if (handle)
+    {
+        *handle = archetype;
+    }
+    return error;
+}
+nu_error_t
+nu_register_system (nu_vm_t                 vm,
+                    const nu_system_info_t *info,
+                    nu_handle_t            *handle)
+{
+    nu__slot_t system;
+    nu_error_t error;
+    if (vm->state != NU_VM_STATE_STOPPED)
+    {
+        return NU_ERROR_INVALID_STATE;
+    }
+    error = nu__ecs_register_system(&vm->ecs, info, &system);
+    if (handle)
+    {
+        *handle = system;
+    }
+    return error;
 }
 
 #endif
