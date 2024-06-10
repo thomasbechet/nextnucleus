@@ -1,40 +1,36 @@
 #ifndef NU_API_H
 #define NU_API_H
 
-#include <nucleus/ecs/component.h>
 #include <nucleus/slotmap.h>
 #include <nucleus/types.h>
 #include <nucleus/error.h>
 #include <nucleus/platform.h>
 #include <nucleus/ecs.h>
 
-typedef nu_handle_t nu_component_t;
 typedef nu_handle_t nu_archetype_t;
+typedef nu_handle_t nu_field_t;
 typedef nu_handle_t nu_group_t;
 typedef nu_handle_t nu_query_t;
 
-NU_API nu_bool_t        nu_next_component(nu_api_t api, nu_component_t *it);
-NU_API nu_bool_t        nu_next_archetype(nu_api_t api, nu_archetype_t *it);
-NU_API nu_bool_t        nu_next_system(nu_api_t api, nu_archetype_t *it);
-NU_API nu_component_t   nu_find_component(nu_api_t api, nu_uid_t uid);
-NU_API nu_archetype_t   nu_find_archetype(nu_api_t api, nu_uid_t uid);
-NU_API nu_component_t   nu_find_system(nu_api_t api, nu_uid_t uid);
-NU_API nu_error_t       nu_component_info(nu_api_t             api,
-                                          nu_component_t       component,
-                                          nu_component_info_t *info);
-NU_API const nu_char_t *nu_archetype_name(nu_api_t       api,
-                                          nu_archetype_t archetype);
+NU_API nu_bool_t      nu_next_archetype(nu_api_t api, nu_archetype_t *it);
+NU_API nu_bool_t      nu_next_system(nu_api_t api, nu_archetype_t *it);
+NU_API nu_error_t     nu_create_archetype(nu_api_t                   api,
+                                          const nu_archetype_info_t *info,
+                                          nu_archetype_t            *archetype);
+NU_API nu_archetype_t nu_find_archetype(nu_api_t api, nu_uid_t uid);
+NU_API nu_field_t     nu_find_field(nu_api_t       api,
+                                    nu_archetype_t archetype,
+                                    nu_uid_t       uid);
+NU_API nu_error_t     nu_archetype_info(nu_api_t             api,
+                                        nu_archetype_t       archetype,
+                                        nu_archetype_info_t *info);
+NU_API nu_group_t     nu_create_group(nu_api_t       api,
+                                      nu_archetype_t archetype,
+                                      nu_u16_t       capacity);
+NU_API nu_entity_t    nu_spawn(nu_api_t api, nu_group_t group);
+NU_API void          *nu_field(nu_api_t api, nu_entity_t e, nu_field_t f);
 
-NU_API nu_group_t  nu_create_group(nu_api_t       api,
-                                   nu_archetype_t archetype,
-                                   nu_u16_t       capacity);
-NU_API nu_entity_t nu_spawn(nu_api_t api, nu_group_t group);
-NU_API void       *nu_field(nu_api_t api, nu_entity_t e, nu_component_t c);
-NU_API nu_query_t  nu_query(nu_api_t              api,
-                            const nu_component_t *components,
-                            nu_u16_t              count);
-NU_API nu_bool_t   nu_group_next(nu_api_t api, nu_entity_t *entity);
-NU_API nu_bool_t nu_query_next(nu_api_t api, nu_query_t query, nu_entity_t *it);
+NU_API nu_error_t nu_load_bundle(nu_api_t api, )
 
 NU_API nu_error_t nu_draw(nu_api_t api);
 
@@ -52,12 +48,12 @@ nu_next_component (nu_api_t api, nu_component_t *it)
     nu__api_t *papi = api;
     if (*it)
     {
-        return (*it = nu__slotlist_next(papi->ecs->component_list,
+        return (*it = nu__slotlist_next(papi->ecs->field_list,
                                         nu__component_slot(*it)));
     }
     else
     {
-        return (*it = nu__component_handle(papi->ecs->first_component));
+        return (*it = nu__component_handle(papi->ecs->first_field));
     }
 }
 nu_bool_t
@@ -108,12 +104,11 @@ nu_component_info (nu_api_t             api,
 {
     nu__api_t             *papi  = api;
     nu__slot_t             slot  = nu__component_slot(component);
-    nu__component_entry_t *entry = nu__slotmap_get(papi->ecs->components, slot);
+    nu__component_entry_t *entry = nu__slotmap_get(papi->ecs->fields, slot);
     info->name                   = NU_NULL;
     if (papi->ecs->info.load_names)
     {
-        info->name
-            = nu_ident_str(papi->ecs->component_names[nu_slot_index(slot)]);
+        info->name = nu_ident_str(papi->ecs->field_names[nu_slot_index(slot)]);
     }
     info->type = entry->type;
     info->size = entry->array_size;

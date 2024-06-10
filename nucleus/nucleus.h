@@ -9,8 +9,6 @@
 #include <nucleus/slotmap.h>
 #include <nucleus/string.h>
 #include <nucleus/math.h>
-#include <nucleus/ecs.h>
 #include <nucleus/vm.h>
-#include <nucleus/ecs/api.h>
 
 #endif

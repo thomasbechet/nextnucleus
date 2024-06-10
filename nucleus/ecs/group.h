@@ -8,14 +8,14 @@
 
 typedef struct
 {
-    nu__slot_t                 archetype;
-    nu_u16_t                   count;
-    nu_u16_t                   capacity;
-    nu_u32_t                  *version_index;
-    nu_u16_t                  *free_reverse;
-    nu_u16_t                   free;
-    nu__archetype_component_t *components;
-    void                      *data;
+    nu__slot_t             archetype;
+    nu_u16_t               count;
+    nu_u16_t               capacity;
+    nu_u32_t              *version_index;
+    nu_u16_t              *free_reverse;
+    nu_u16_t               free;
+    nu__archetype_field_t *components;
+    void                  *data;
 } nu__group_entry_t;
 
 static nu__slot_t
