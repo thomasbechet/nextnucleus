@@ -60,7 +60,8 @@ typedef struct
 
 typedef struct
 {
-    nu_u16_t capacity_per_chunk;
+    nu_u16_t capacity;
+    nu_u16_t entry_size;
     nu_u16_t first_chunk;
     nu_u16_t first_field;
     nu_u16_t field_count;
@@ -98,20 +99,20 @@ typedef struct
 static nu_u16_t
 nu__entity_index (nu_entity_t e)
 {
-    return e & 0xffff;
+    return (e - 1) & 0xffff;
 }
 
 static nu_u16_t
 nu__entity_chunk (nu_entity_t e)
 {
-    return e >> 16;
+    return (e - 1) >> 16;
 }
 
-/* static nu_entity_t
+static nu_entity_t
 nu__entity_build (nu_u16_t chunk, nu_u16_t index)
 {
-    return ((nu_u32_t)chunk << 16) | index;
-} */
+    return (((nu_u32_t)chunk << 16) | index) + 1;
+}
 
 static nu_u16_t
 nu__field_offset (nu_field_t f)
@@ -167,24 +168,27 @@ nu__field_type_size (nu_field_type_t t)
         case NU_TYPE_QUAT:
             return 4 * 4;
         default:
-            return 0;
+            return 4;
     }
 }
 
 static nu_u16_t
-nu__table_entry_capacity (const nu_field_info_t *fields, nu_u16_t field_count)
+nu__table_entry_size (const nu_field_info_t *fields, nu_u16_t field_count)
 {
-    nu_size_t i, entry_size;
-
-    entry_size = 0;
-    /* data size */
+    nu_size_t i, entry_size = 0;
     for (i = 0; i < field_count; ++i)
     {
         entry_size += nu__field_type_size(fields[i].type) * fields[i].count;
     }
-    /* entity list */
+    return entry_size;
+}
+static nu_u16_t
+nu__table_entry_capacity (const nu_field_info_t *fields, nu_u16_t field_count)
+{
+    nu_size_t entry_size;
+
+    entry_size = nu__table_entry_size(fields, field_count);
     entry_size += sizeof(nu_entity_t);
-    /* reverse list */
     entry_size += sizeof(nu_u16_t);
 
     return NU_TABLE_CHUNK_SIZE / entry_size;
@@ -204,11 +208,13 @@ nu__table_create (nu__table_manager_t   *manager,
 
     (void)name;
 
+    *table = NU_NULL;
+
     /* check capacity */
     if (manager->table_count + 1 > manager->table_capacity
         || manager->field_count + field_count > manager->field_capacity)
     {
-        return NU_NULL;
+        return NU_ERROR_OUT_OF_MEMORY;
     }
 
     /* insert fields */
@@ -224,14 +230,17 @@ nu__table_create (nu__table_manager_t   *manager,
     }
 
     /* insert table */
-    handle                    = manager->table_count;
-    entry                     = &manager->tables[handle];
-    entry->first_chunk        = NU_TABLE_NONE;
-    entry->capacity_per_chunk = nu__table_entry_capacity(fields, field_count);
-    entry->first_field        = first_field;
-    entry->field_count        = field_count;
-    entry->next               = manager->first_table;
-    manager->first_table      = handle;
+    handle             = manager->table_count;
+    entry              = &manager->tables[handle];
+    entry->first_chunk = NU_TABLE_NONE;
+    entry->entry_size  = nu__table_entry_size(fields, field_count);
+    entry->capacity    = nu__table_entry_capacity(fields, field_count);
+    entry->first_field = first_field;
+    entry->field_count = field_count;
+    entry->next        = manager->first_table;
+
+    manager->first_table = handle;
+    manager->table_count++;
 
     *table = handle;
 
@@ -254,18 +263,36 @@ nu__table_find_chunk (nu__chunk_entry_t *chunks, nu_u16_t first_chunk)
 }
 
 static nu_entity_t *
-nu__chunk_entities (nu__table_manager_t *manager, nu_u16_t chunk)
+nu__chunk_entities (nu__table_manager_t     *manager,
+                    const nu__table_entry_t *table,
+                    nu_u16_t                 chunk)
 {
-    return NU_NULL;
+    return (nu_entity_t *)((nu_size_t)manager->data
+                           + chunk * NU_TABLE_CHUNK_SIZE
+                           + table->entry_size * table->capacity);
+}
+static nu_u16_t *
+nu__chunk_indices (nu__table_manager_t     *manager,
+                   const nu__table_entry_t *table,
+                   nu_u16_t                 chunk)
+{
+    return (nu_u16_t *)((nu_size_t)manager->data + chunk * NU_TABLE_CHUNK_SIZE
+                        + (table->entry_size + sizeof(nu_entity_t))
+                              * table->capacity);
 }
 
 static nu_entity_t
 nu__table_spawn (nu__table_manager_t *manager, nu_table_t table)
 {
     nu__chunk_entry_t *chunk_entry;
-    nu_u16_t           entity_count;
+    nu_u16_t           entity_count, index;
+    nu_entity_t        entity;
+    nu_u16_t          *indices;
+    nu_entity_t       *entities;
+
     nu__table_entry_t *entry = &manager->tables[table];
     nu_u16_t chunk = nu__table_find_chunk(manager->chunks, entry->first_chunk);
+
     if (chunk != NU_TABLE_NONE)
     {
         chunk_entry = &manager->chunks[chunk];
@@ -274,15 +301,25 @@ nu__table_spawn (nu__table_manager_t *manager, nu_table_t table)
     {
         /* create a new chunk */
         /* TODO: check out of chunk */
-        chunk_entry         = &manager->chunks[manager->free_chunk];
+        NU_ASSERT(manager->free_chunk != NU_TABLE_NONE);
+        chunk               = manager->free_chunk;
+        chunk_entry         = &manager->chunks[chunk];
         manager->free_chunk = chunk_entry->next;
-        chunk_entry->free   = entry->capacity_per_chunk;
+        chunk_entry->free   = entry->capacity;
     }
+    indices  = nu__chunk_indices(manager, entry, chunk);
+    entities = nu__chunk_entities(manager, entry, chunk);
 
-    entity_count = entry->capacity_per_chunk - chunk_entry->free;
+    entity_count = entry->capacity - chunk_entry->free;
     chunk_entry->free--;
 
-    return NU_NULL;
+    index = entities[entity_count]; /* interpret entity as free index */
+    indices[index] = entity_count;
+    entity         = nu__entity_build(chunk, index);
+
+    /* TODO: initialize entry */
+
+    return entity;
 }
 
 static nu_error_t
@@ -292,7 +329,9 @@ nu__table_manager_init (nu__table_manager_t *manager,
                         nu_u16_t             field_capacity,
                         nu_u16_t             chunk_capacity)
 {
-    NU_ASSERT(table_capacity & field_capacity & chunk_capacity);
+    nu_size_t i;
+
+    NU_ASSERT(table_capacity && field_capacity && chunk_capacity);
 
     manager->tables = nu__alloc(
         alloc, sizeof(nu__table_entry_t) * table_capacity, NU_MEMORY_USAGE_ECS);
@@ -310,13 +349,20 @@ nu__table_manager_init (nu__table_manager_t *manager,
         alloc, NU_TABLE_CHUNK_SIZE * chunk_capacity, NU_MEMORY_USAGE_ECS);
     NU_CHECK(manager->data, return NU_ERROR_OUT_OF_MEMORY);
 
-    manager->table_count    = table_capacity;
+    manager->table_capacity = table_capacity;
     manager->field_capacity = field_capacity;
     manager->chunk_capacity = chunk_capacity;
     manager->table_count    = 0;
     manager->field_count    = 0;
     manager->first_table    = NU_TABLE_NONE;
-    manager->free_chunk     = NU_TABLE_NONE;
+    manager->free_chunk     = 0;
+
+    for (i = 0; i < chunk_capacity; ++i)
+    {
+        manager->chunks[i].next = i + 1;
+    }
+    manager->chunks[chunk_capacity - 1].next
+        = NU_TABLE_NONE; /* out of chunks */
 
     return NU_ERROR_NONE;
 }

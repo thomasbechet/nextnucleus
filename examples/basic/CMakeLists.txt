@@ -9,8 +9,8 @@ add_executable(
     main.c
 )
 
-#set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Release)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 90) # C89 standard
 
@@ -37,6 +37,8 @@ enable_c_compiler_flag_if_supported("-Wold-style-definition")
 enable_c_compiler_flag_if_supported("-fstrict-aliasing")
 enable_c_compiler_flag_if_supported("-Wstrict-aliasing=3")
 enable_c_compiler_flag_if_supported("-fno-eliminate-unused-debug-types")
+# Temporary to remove unused lua functions
+enable_c_compiler_flag_if_supported("-Wno-unused-function")
 # enable_c_compiler_flag_if_supported("-Os")
 # enable_c_compiler_flag_if_supported("-O0")
 # enable_c_compiler_flag_if_supported("-g")

@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <nucleus/error.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -27,11 +26,20 @@ nu_error_t
 bootstrap (nu_api_t api)
 {
     nu_error_t      error;
+    nu_table_t      table;
+    nu_entity_t     e;
     nu_field_info_t fields[]
         = { { "position", NU_TYPE_U32, 1 }, { "rotation", NU_TYPE_U32, 1 } };
 
-    error = nu_create_table(api, "player", fields, 2, NU_NULL);
+    error = nu_create_table(api, "player", fields, 2, &table);
     NU_ERROR_ASSERT(error);
+
+    e = nu_spawn(api, table);
+    NU_ASSERT(e);
+
+    (void)error;
+    (void)e;
+    (void)table;
 
     return NU_ERROR_NONE;
 }
@@ -47,10 +55,17 @@ load_properties (void *userdata, nu_vm_properties_t *properties)
 int
 main (void)
 {
+    lua_State   *l;
     nu_vm_t      vm;
     nu_vm_info_t info;
     nu_error_t   error;
     nu_size_t    tick;
+
+    l = luaL_newstate();
+    luaL_openlibs(l);
+    (void)luaL_dostring(l, "return 123");
+    printf("%f\n", lua_tonumber(l, -1));
+    lua_close(l);
 
     info.allocator.userdata        = NU_NULL;
     info.allocator.callback        = allocator_callback;
@@ -58,10 +73,10 @@ main (void)
     info.cartridge.load_properties = load_properties;
 
     error = nu_vm_init(&info, &vm);
-    NU_ERROR_CHECK(error, return 0);
+    NU_ERROR_CHECK(error, return 123);
 
     error = nu_vm_exec(vm, bootstrap);
-    NU_ERROR_CHECK(error, return 0);
+    NU_ERROR_CHECK(error, return 124);
 
     tick = 10;
     while (--tick)

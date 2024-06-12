@@ -1,0 +1,5 @@
+- remove second "typedef struct CallInfo CallInfo;" definition 
+- change LUA_API to static
+- remove includes
+- replace l_mathop(x) to l_mathop(nu_x)
+- remove os lib section

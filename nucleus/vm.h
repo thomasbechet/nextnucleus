@@ -1,6 +1,7 @@
 #ifndef NU_VM_H
 #define NU_VM_H
 
+#include <nucleus/lua.h>
 #include <nucleus/property.h>
 #include <nucleus/error.h>
 #include <nucleus/platform.h>

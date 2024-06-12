@@ -26,4 +26,119 @@ nu_log2 (nu_size_t n)
     return result;
 }
 
+NU_API float
+nu_pow (float a, float b)
+{
+    (void)a;
+    (void)b;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_floor (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_ceil (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_exp (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_log (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_log10 (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_sqrt (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_fmod (float a, float b)
+{
+    (void)a;
+    (void)b;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_sin (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_cos (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_tan (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_acos (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_asin (float a)
+{
+    (void)a;
+    /* TODO */
+    return 0.0;
+}
+
+NU_API float
+nu_atan2 (float a, float b)
+{
+    (void)a;
+    (void)b;
+    /* TODO */
+    return 0.0;
+}
+
 #endif
