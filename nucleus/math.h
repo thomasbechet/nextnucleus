@@ -4,6 +4,41 @@
 #include <nucleus/types.h>
 #include <nucleus/platform.h>
 
+#define NU_F32_FRAC 16
+
+typedef nu_i32_t nu_f32_t;
+
+NU_API nu_f32_t
+nu_fadd (nu_f32_t a, nu_f32_t b)
+{
+    return a + b;
+}
+NU_API nu_f32_t
+nu_fsub (nu_f32_t a, nu_f32_t b)
+{
+    return a - b;
+}
+NU_API nu_f32_t
+nu_fmul (nu_f32_t a, nu_f32_t b)
+{
+    return (nu_f32_t)(((nu_u64_t)a * (nu_u64_t)b) >> NU_F32_FRAC);
+}
+NU_API nu_f32_t
+nu_fdiv (nu_f32_t a, nu_f32_t b)
+{
+    return (nu_f32_t)(((nu_i64_t)a << NU_F32_FRAC) / (nu_i64_t)b);
+}
+NU_API nu_f32_t
+nu_itof (nu_i32_t a)
+{
+    return (nu_f32_t)(a << NU_F32_FRAC);
+}
+NU_API nu_i32_t
+nu_ftoi (nu_f32_t a)
+{
+    return (nu_i32_t)(a >> NU_F32_FRAC);
+}
+
 #define NU_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define NU_MAX(a, b) (((a) > (b)) ? (a) : (b))
 
