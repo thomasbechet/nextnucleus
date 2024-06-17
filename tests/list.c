@@ -1,5 +1,5 @@
 #define NU_IMPLEMENTATION
-#include <nucleus/nucleus.h>
+#include <nucleus/vm.h>
 
 typedef struct
 {

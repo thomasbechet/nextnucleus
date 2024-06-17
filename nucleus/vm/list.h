@@ -1,7 +1,7 @@
 #ifndef NU_LIST_H
 #define NU_LIST_H
 
-#include <nucleus/allocator.h>
+#include <nucleus/vm/allocator.h>
 
 typedef struct
 {

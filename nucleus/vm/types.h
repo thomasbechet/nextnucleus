@@ -1,7 +1,7 @@
 #ifndef NU_TYPES_H
 #define NU_TYPES_H
 
-#include <nucleus/platform.h>
+#include <nucleus/vm/platform.h>
 
 /**
  * This is not a complete implementation, each
@@ -33,5 +33,23 @@ typedef unsigned long nu_size_t;
 typedef nu_u32_t nu_handle_t;
 
 typedef void (*nu_pfn_t)(void);
+
+typedef enum
+{
+    NU_TYPE_BOOL,
+    NU_TYPE_INT,
+    NU_TYPE_FLOAT,
+    NU_TYPE_UV2,
+    NU_TYPE_IV2,
+    NU_TYPE_FV2,
+    NU_TYPE_UV3,
+    NU_TYPE_IV3,
+    NU_TYPE_FV3,
+    NU_TYPE_ENTITY,
+    NU_TYPE_QUAT,
+    NU_TYPE_TEXTURE,
+    NU_TYPE_MESH,
+    NU_TYPE_ANIMATION
+} nu_type_t;
 
 #endif

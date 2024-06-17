@@ -1,13 +1,14 @@
 #ifndef NU_STRING_H
 #define NU_STRING_H
 
-#include <nucleus/types.h>
-#include <nucleus/platform.h>
-#include <nucleus/memory.h>
-#include <nucleus/math.h>
+#include <nucleus/vm/types.h>
+#include <nucleus/vm/platform.h>
+#include <nucleus/vm/memory.h>
+#include <nucleus/vm/math.h>
 
-#define NU_IDENT_MAX  30
-#define NU_IDENT_SIZE (NU_IDENT_MAX + 2)
+#define NU_IDENT_MAX   30
+#define NU_IDENT_SIZE  (NU_IDENT_MAX + 2)
+#define NU_MATCH(a, b) (nu_strcmp(a, b) == 0)
 
 typedef nu_u8_t  nu_ident_t[NU_IDENT_SIZE];
 typedef nu_u32_t nu_uid_t;
@@ -24,6 +25,7 @@ NU_API nu_size_t nu_strlen(const nu_char_t *str);
 NU_API nu_size_t nu_strncmp(const nu_char_t *s1,
                             const nu_char_t *s2,
                             nu_size_t        n);
+NU_API nu_size_t nu_strcmp(const nu_char_t *s1, const nu_char_t *s2);
 
 NU_API nu_uid_t nu_uid(const nu_char_t *str);
 
@@ -41,7 +43,7 @@ NU_API nu_u32_t nu_fnv1a_hash_32(const nu_u8_t *bytes, nu_size_t len);
  * Change the ident size. len must be in [0, NU_IDENT_MAX[ range.
  * If the string is expanded, filled data is undefined.
  */
-static inline void
+static void
 nu__ident_set_len (nu_ident_t ident, nu_size_t len)
 {
     ident[NU_IDENT_MAX + 1] = (nu_u8_t)len;
@@ -128,6 +130,16 @@ nu_strncmp (const nu_char_t *s1, const nu_char_t *s2, nu_size_t n)
     {
         return (*(nu_char_t *)s1 - *(nu_char_t *)s2);
     }
+}
+nu_size_t
+nu_strcmp (const nu_char_t *s1, const nu_char_t *s2)
+{
+    while (*s1 && (*s1 == *s2))
+    {
+        s1++;
+        s2++;
+    }
+    return *(nu_char_t *)s1 - *(nu_char_t *)s2;
 }
 
 nu_uid_t

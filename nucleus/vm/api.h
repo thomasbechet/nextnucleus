@@ -1,10 +1,10 @@
 #ifndef NU_API_H
 #define NU_API_H
 
-#include <nucleus/error.h>
-#include <nucleus/platform.h>
-#include <nucleus/types.h>
-#include <nucleus/table.h>
+#include <nucleus/vm/error.h>
+#include <nucleus/vm/platform.h>
+#include <nucleus/vm/types.h>
+#include <nucleus/vm/table.h>
 
 typedef struct nu__api *nu_api_t;
 

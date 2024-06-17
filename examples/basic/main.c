@@ -5,7 +5,7 @@
 #define NU_IMPLEMENTATION
 #define NU_DEBUG
 #define NU_STDLIB
-#include <nucleus/nucleus.h>
+#include <nucleus/vm.h>
 
 static nu_size_t mem_total = 0;
 
@@ -29,7 +29,7 @@ bootstrap (nu_api_t api)
     nu_table_t      table;
     nu_entity_t     e;
     nu_field_info_t fields[]
-        = { { "position", NU_TYPE_U32, 1 }, { "rotation", NU_TYPE_U32, 1 } };
+        = { { "position", NU_TYPE_INT, 1 }, { "rotation", NU_TYPE_INT, 1 } };
 
     error = nu_create_table(api, "player", fields, 2, &table);
     NU_ERROR_ASSERT(error);
@@ -55,7 +55,6 @@ load_properties (void *userdata, nu_vm_properties_t *properties)
 int
 main (void)
 {
-    lua_State   *l;
     nu_vm_t      vm;
     nu_vm_info_t info;
     nu_error_t   error;
@@ -70,12 +69,6 @@ main (void)
         (void)c;
         c = b;
     }
-
-    l = luaL_newstate();
-    luaL_openlibs(l);
-    (void)luaL_dostring(l, "return 123");
-    printf("%f\n", lua_tonumber(l, -1));
-    lua_close(l);
 
     info.allocator.userdata        = NU_NULL;
     info.allocator.callback        = allocator_callback;

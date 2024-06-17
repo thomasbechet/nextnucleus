@@ -1,7 +1,7 @@
 #ifndef NU_PROPERTY_H
 #define NU_PROPERTY_H
 
-#include <nucleus/types.h>
+#include <nucleus/vm/types.h>
 
 typedef struct
 {

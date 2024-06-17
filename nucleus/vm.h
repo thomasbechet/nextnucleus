@@ -1,16 +1,16 @@
 #ifndef NU_VM_H
 #define NU_VM_H
 
-#include <nucleus/lua.h>
-#include <nucleus/property.h>
-#include <nucleus/error.h>
-#include <nucleus/platform.h>
-#include <nucleus/table.h>
-#include <nucleus/types.h>
-#include <nucleus/allocator.h>
-#include <nucleus/renderer.h>
-#include <nucleus/cartridge.h>
-#include <nucleus/api.h>
+#include <nucleus/vm/property.h>
+#include <nucleus/vm/error.h>
+#include <nucleus/vm/platform.h>
+#include <nucleus/vm/table.h>
+#include <nucleus/vm/allocator.h>
+#include <nucleus/vm/renderer.h>
+#include <nucleus/vm/cartridge.h>
+#include <nucleus/vm/api.h>
+#include <nucleus/vm/list.h>
+#include <nucleus/vm/slotmap.h>
 
 typedef struct nu__vm *nu_vm_t;
 

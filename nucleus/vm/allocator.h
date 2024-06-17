@@ -1,10 +1,10 @@
 #ifndef NU_ALLOCATOR_H
 #define NU_ALLOCATOR_H
 
-#include <nucleus/types.h>
-#include <nucleus/error.h>
-#include <nucleus/memory.h>
-#include <nucleus/math.h>
+#include <nucleus/vm/types.h>
+#include <nucleus/vm/error.h>
+#include <nucleus/vm/memory.h>
+#include <nucleus/vm/math.h>
 
 typedef enum
 {

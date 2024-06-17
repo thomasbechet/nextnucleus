@@ -1,9 +1,9 @@
 #ifndef NU_MEMORY_H
 #define NU_MEMORY_H
 
-#include <nucleus/platform.h>
-#include <nucleus/types.h>
-#include <nucleus/error.h>
+#include <nucleus/vm/platform.h>
+#include <nucleus/vm/types.h>
+#include <nucleus/vm/error.h>
 
 #define NU_MEM_1G   (1024 * 1024 * 1024)
 #define NU_MEM_512M (1024 * 1024 * 512)

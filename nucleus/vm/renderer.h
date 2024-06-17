@@ -1,7 +1,7 @@
 #ifndef NU_RENDERER_H
 #define NU_RENDERER_H
 
-#include <nucleus/error.h>
+#include <nucleus/vm/error.h>
 
 typedef struct
 {
@@ -12,13 +12,13 @@ typedef struct
 
 typedef struct
 {
-    void *userdata;
+    void             *userdata;
     nu_renderer_api_t api;
 } nu_renderer_info_t;
 
 typedef struct
 {
-    void *userdata;
+    void             *userdata;
     nu_renderer_api_t api;
 } nu__renderer_t;
 

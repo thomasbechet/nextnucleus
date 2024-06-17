@@ -1,8 +1,8 @@
 #ifndef NU_SLOTMAP_H
 #define NU_SLOTMAP_H
 
-#include <nucleus/allocator.h>
-#include <nucleus/types.h>
+#include <nucleus/vm/allocator.h>
+#include <nucleus/vm/types.h>
 
 typedef struct nu__slotmap *nu__slotmap_t;
 typedef nu_u16_t            nu__slot_t;

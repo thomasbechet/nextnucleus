@@ -1,10 +1,10 @@
 #ifndef NU_TABLE_H
 #define NU_TABLE_H
 
-#include <nucleus/allocator.h>
-#include <nucleus/error.h>
-#include <nucleus/string.h>
-#include <nucleus/types.h>
+#include <nucleus/vm/allocator.h>
+#include <nucleus/vm/error.h>
+#include <nucleus/vm/string.h>
+#include <nucleus/vm/types.h>
 
 #define NU_TABLE_CHUNK_SIZE         4096      /* 4096 */
 #define NU_TABLE_CHUNK_MAX_CAPACITY (1 >> 10) /* 1024 */
@@ -26,33 +26,10 @@ typedef nu_u32_t nu_field_t;
 typedef nu_u32_t nu_entity_t;
 typedef nu_u32_t nu_table_t;
 
-typedef enum
-{
-    NU_TYPE_BOOL,
-    NU_TYPE_U8,
-    NU_TYPE_I8,
-    NU_TYPE_U16,
-    NU_TYPE_I16,
-    NU_TYPE_U32,
-    NU_TYPE_I32,
-    NU_TYPE_UV2,
-    NU_TYPE_IV2,
-    NU_TYPE_FV2,
-    NU_TYPE_UV3,
-    NU_TYPE_IV3,
-    NU_TYPE_FV3,
-    NU_TYPE_ENTITY,
-    NU_TYPE_QUAT,
-    NU_TYPE_SYSTEM,
-    NU_TYPE_TEXTURE,
-    NU_TYPE_MESH,
-    NU_TYPE_ANIMATION
-} nu_field_type_t;
-
 typedef struct
 {
     const nu_char_t *name;
-    nu_field_type_t  type;
+    nu_type_t        type;
     nu_u16_t         count;
 } nu_field_info_t;
 
@@ -70,9 +47,9 @@ typedef struct
 
 typedef struct
 {
-    nu_ident_t      name;
-    nu_field_type_t type;
-    nu_u16_t        count;
+    nu_ident_t name;
+    nu_type_t  type;
+    nu_u16_t   count;
 } nu__field_entry_t;
 
 typedef struct
@@ -159,7 +136,7 @@ nu__table_field (nu__table_manager_t *manager, nu_entity_t e, nu_field_t f)
 }
 
 static nu_size_t
-nu__field_type_size (nu_field_type_t t)
+nu__field_type_size (nu_type_t t)
 {
     switch (t)
     {

@@ -1,5 +1,5 @@
 #define NU_IMPLEMENTATION
-#include <nucleus/nucleus.h>
+#include <nucleus/vm.h>
 
 typedef struct
 {
@@ -7,7 +7,7 @@ typedef struct
 } object_t;
 
 #define OBJECT_COUNT 64
-#define REMOVE_COUNT 4 
+#define REMOVE_COUNT 4
 
 static nu_u32_t
 nu_random ()

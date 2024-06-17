@@ -1,9 +1,9 @@
 #ifndef NU_CARTRIDGE_H
 #define NU_CARTRIDGE_H
 
-#include <nucleus/property.h>
-#include <nucleus/types.h>
-#include <nucleus/error.h>
+#include <nucleus/vm/property.h>
+#include <nucleus/vm/types.h>
+#include <nucleus/vm/error.h>
 
 typedef nu_handle_t nu_bundle_t;
 
