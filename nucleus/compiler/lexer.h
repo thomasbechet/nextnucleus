@@ -14,6 +14,9 @@ typedef struct
 } nu_source_location_t;
 
 #define NU_FOREACH_TOKEN(TOKEN) \
+    TOKEN(TOKEN_IDENTIFIER)     \
+    TOKEN(TOKEN_TYPE)           \
+    TOKEN(TOKEN_LITERAL)        \
     TOKEN(TOKEN_IMPORT)         \
     TOKEN(TOKEN_FROM)           \
     TOKEN(TOKEN_EXPORT)         \
@@ -26,9 +29,6 @@ typedef struct
     TOKEN(TOKEN_COMMA)          \
     TOKEN(TOKEN_DOT)            \
     TOKEN(TOKEN_COLON)          \
-    TOKEN(TOKEN_IDENTIFIER)     \
-    TOKEN(TOKEN_TYPE)           \
-    TOKEN(TOKEN_LITERAL)        \
     TOKEN(TOKEN_ADD)            \
     TOKEN(TOKEN_SUB)            \
     TOKEN(TOKEN_MUL)            \
@@ -75,7 +75,7 @@ typedef struct
 {
     nu_source_location_t start;
     nu_source_location_t stop;
-} nu__token_span_t;
+} nu__source_span_t;
 
 typedef struct
 {
@@ -116,7 +116,7 @@ typedef union
 typedef struct
 {
     nu__token_type_t  type;
-    nu__token_span_t  span;
+    nu__source_span_t  span;
     nu__token_value_t value;
 } nu__token_t;
 

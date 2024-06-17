@@ -1,7 +1,7 @@
 #ifndef NU_COMPILER_H
 #define NU_COMPILER_H
 
-#include <nucleus/compiler/lexer.h>
+#include <nucleus/compiler/parser.h>
 
 typedef struct
 {

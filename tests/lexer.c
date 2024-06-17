@@ -44,6 +44,8 @@ main (void)
                    (int)token.value.literal.value.s.n,
                    token.value.literal.value.s.p);
         }
+
+        printf("%s\n", NU_AST_NAMES[AST_PROGRAM]);
     }
 
     return 0;
