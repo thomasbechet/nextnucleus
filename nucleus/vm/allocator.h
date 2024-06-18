@@ -22,13 +22,19 @@ typedef struct
 {
     nu_allocator_callback_pfn_t callback;
     void                       *userdata;
-} nu__allocator_t;
+} nu_allocator_info_t;
+
+#ifdef NU_STDLIB
+NU_API void nu_allocator_info_stdlib(nu_allocator_info_t *info);
+#endif
+
+#ifdef NU_IMPLEMENTATION
 
 typedef struct
 {
     nu_allocator_callback_pfn_t callback;
     void                       *userdata;
-} nu_allocator_info_t;
+} nu__allocator_t;
 
 nu_error_t nu__allocator_init(const nu_allocator_info_t *info,
                               nu__allocator_t           *alloc);
@@ -39,11 +45,6 @@ void      *nu__aligned_alloc(nu__allocator_t  *alloc,
                              nu_size_t         size,
                              nu_size_t         align,
                              nu_memory_usage_t usage);
-#ifdef NU_STDLIB
-NU_API void nu_allocator_info_stdlib(nu_allocator_info_t *info);
-#endif
-
-#ifdef NU_IMPLEMENTATION
 
 #ifdef NU_STDLIB
 

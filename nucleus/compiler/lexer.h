@@ -1,6 +1,7 @@
 #ifndef NU_LEXER_H
 #define NU_LEXER_H
 
+#include "nucleus/compiler/error.h"
 #include "nucleus/vm/string.h"
 #include <nucleus/vm/math.h>
 #include <nucleus/vm/types.h>
@@ -116,7 +117,7 @@ typedef union
 typedef struct
 {
     nu__token_type_t  type;
-    nu__source_span_t  span;
+    nu__source_span_t span;
     nu__token_value_t value;
 } nu__token_t;
 
@@ -137,14 +138,6 @@ typedef struct
     }
 
 #define NU_LEXER_MAX_PEEKS 5
-
-typedef enum
-{
-    NU_LEXERR_INVALID,
-    NU_LEXERR_ILLEGAL_CHARACTER,
-    NU_LEXERR_UNTERMINATED_STRING,
-    NU_LEXERR_NONE
-} nu_lexer_error_t;
 
 typedef struct
 {
@@ -249,7 +242,7 @@ nu__consume_char (nu__lexer_t *lexer)
     nu_source_location_t dloc;
     nu__lexer_next_char(lexer, &c, &dloc);
 }
-static nu_lexer_error_t
+static nu__compiler_error_t
 nu__consume_single_char_token (nu__lexer_t         *lexer,
                                nu__token_type_t     type,
                                nu_source_location_t loc,
@@ -257,7 +250,7 @@ nu__consume_single_char_token (nu__lexer_t         *lexer,
 {
     nu__consume_char(lexer);
     *token = NU_TOKEN_SINGLE(type, loc);
-    return NU_LEXERR_NONE;
+    return NU_COMPERR_NONE;
 }
 static void
 nu__consume_comment (nu__lexer_t *lexer)
@@ -294,7 +287,7 @@ nu__consume_spaces (nu__lexer_t *lexer)
     (NU_NUMERIC_CHAR(c) || (c >= 'a' && c <= 'z') || c == '_')
 #define NU_MATCH_TOKEN(s, t, n) (n == nu_strlen(t) && nu_strncmp(s, t, n) == 0)
 
-static nu_lexer_error_t
+static nu__compiler_error_t
 nu__consume_string (nu__lexer_t *lexer, nu__token_t *token)
 {
     nu_source_location_t start_loc, stop_loc, loc;
@@ -315,14 +308,14 @@ nu__consume_string (nu__lexer_t *lexer, nu__token_t *token)
             token->value.literal.type      = LITERAL_STRING;
             token->value.literal.value.s.p = s;
             token->value.literal.value.s.n = n;
-            return NU_LEXERR_NONE;
+            return NU_COMPERR_NONE;
         }
         n++;
         nu__consume_char(lexer);
     }
-    return NU_LEXERR_UNTERMINATED_STRING;
+    return NU_COMPERR_UNTERMINATED_STRING;
 }
-static nu_lexer_error_t
+static nu__compiler_error_t
 nu__consume_number (nu__lexer_t *lexer, nu__token_t *token)
 {
     nu_source_location_t start_loc, stop_loc, loc;
@@ -344,7 +337,7 @@ nu__consume_number (nu__lexer_t *lexer, nu__token_t *token)
             {
                 if (has_dot)
                 {
-                    return NU_LEXERR_ILLEGAL_CHARACTER;
+                    return NU_COMPERR_ILLEGAL_CHARACTER;
                 }
                 has_dot = NU_TRUE;
             }
@@ -353,7 +346,7 @@ nu__consume_number (nu__lexer_t *lexer, nu__token_t *token)
         }
         else if (NU_IDENTIFIER_CHAR(c))
         {
-            return NU_LEXERR_ILLEGAL_CHARACTER;
+            return NU_COMPERR_ILLEGAL_CHARACTER;
         }
         else
         {
@@ -367,7 +360,7 @@ nu__consume_number (nu__lexer_t *lexer, nu__token_t *token)
         nu_f32_t v;
         if (nu_fparse(s, n, &v) != NU_ERROR_NONE)
         {
-            return NU_LEXERR_ILLEGAL_CHARACTER;
+            return NU_COMPERR_ILLEGAL_CHARACTER;
         }
         token->type                  = TOKEN_LITERAL;
         token->value.literal.type    = LITERAL_FLOAT;
@@ -378,15 +371,15 @@ nu__consume_number (nu__lexer_t *lexer, nu__token_t *token)
         nu_i32_t v;
         if (nu_iparse(s, n, &v) != NU_ERROR_NONE)
         {
-            return NU_LEXERR_ILLEGAL_CHARACTER;
+            return NU_COMPERR_ILLEGAL_CHARACTER;
         }
         token->type                  = TOKEN_LITERAL;
         token->value.literal.type    = LITERAL_INT;
         token->value.literal.value.i = v;
     }
-    return NU_LEXERR_NONE;
+    return NU_COMPERR_NONE;
 }
-static nu_lexer_error_t
+static nu__compiler_error_t
 nu__consume_identifier (nu__lexer_t *lexer, nu__token_t *token)
 {
     nu_source_location_t start_loc, stop_loc, loc;
@@ -499,7 +492,7 @@ nu__consume_identifier (nu__lexer_t *lexer, nu__token_t *token)
     }
     if (token->type != TOKEN_EOF)
     {
-        return NU_LEXERR_NONE;
+        return NU_COMPERR_NONE;
     }
 
     /* check if token is a literal */
@@ -522,7 +515,7 @@ nu__consume_identifier (nu__lexer_t *lexer, nu__token_t *token)
     }
     if (token->type == TOKEN_LITERAL)
     {
-        return NU_LEXERR_NONE;
+        return NU_COMPERR_NONE;
     }
 
     /* check primitive */
@@ -554,7 +547,7 @@ nu__consume_identifier (nu__lexer_t *lexer, nu__token_t *token)
     }
     if (token->type == TOKEN_PRIMITIVE)
     {
-        return NU_LEXERR_NONE;
+        return NU_COMPERR_NONE;
     }
 
     /* check identifier */
@@ -562,10 +555,10 @@ nu__consume_identifier (nu__lexer_t *lexer, nu__token_t *token)
     token->value.identifier.p = s;
     token->value.identifier.n = n;
 
-    return NU_LEXERR_NONE;
+    return NU_COMPERR_NONE;
 }
 
-static nu_lexer_error_t
+static nu__compiler_error_t
 nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
 {
     nu_char_t            c, next;
@@ -589,13 +582,13 @@ nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
                     else
                     {
                         *token = NU_TOKEN_SINGLE(TOKEN_SUB, loc);
-                        return NU_LEXERR_NONE;
+                        return NU_COMPERR_NONE;
                     }
                 }
                 else
                 {
                     *token = NU_TOKEN_SINGLE(TOKEN_SUB, loc);
-                    return NU_LEXERR_NONE;
+                    return NU_COMPERR_NONE;
                 }
                 break;
             case '*':
@@ -633,11 +626,11 @@ nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
                     {
                         nu__consume_char(lexer);
                         *token = NU_TOKEN_DOUBLE(TOKEN_EQUAL, loc);
-                        return NU_LEXERR_NONE;
+                        return NU_COMPERR_NONE;
                     }
                 }
                 *token = NU_TOKEN_SINGLE(TOKEN_ASSIGN, loc);
-                return NU_LEXERR_NONE;
+                return NU_COMPERR_NONE;
             case '<':
                 nu__consume_char(lexer);
                 if (nu__lexer_peek_char(lexer, &next, &loc2))
@@ -646,11 +639,11 @@ nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
                     {
                         nu__consume_char(lexer);
                         *token = NU_TOKEN_DOUBLE(TOKEN_LEQUAL, loc);
-                        return NU_LEXERR_NONE;
+                        return NU_COMPERR_NONE;
                     }
                 }
                 *token = NU_TOKEN_SINGLE(TOKEN_LESS, loc);
-                return NU_LEXERR_NONE;
+                return NU_COMPERR_NONE;
             case '>':
                 nu__consume_char(lexer);
                 if (nu__lexer_peek_char(lexer, &next, &loc2))
@@ -659,11 +652,11 @@ nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
                     {
                         nu__consume_char(lexer);
                         *token = NU_TOKEN_DOUBLE(TOKEN_GEQUAL, loc);
-                        return NU_LEXERR_NONE;
+                        return NU_COMPERR_NONE;
                     }
                 }
                 *token = NU_TOKEN_SINGLE(TOKEN_GREATER, loc);
-                return NU_LEXERR_NONE;
+                return NU_COMPERR_NONE;
             case '!':
                 nu__consume_char(lexer);
                 if (nu__lexer_peek_char(lexer, &next, &loc2))
@@ -672,10 +665,10 @@ nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
                     {
                         nu__consume_char(lexer);
                         *token = NU_TOKEN_DOUBLE(TOKEN_NEQUAL, loc);
-                        return NU_LEXERR_NONE;
+                        return NU_COMPERR_NONE;
                     }
                 }
-                return NU_LEXERR_ILLEGAL_CHARACTER;
+                return NU_COMPERR_ILLEGAL_CHARACTER;
             case ' ':
                 nu__consume_spaces(lexer);
                 break;
@@ -698,10 +691,10 @@ nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
         }
     }
     *token = NU_TOKEN_EOF;
-    return NU_LEXERR_NONE;
+    return NU_COMPERR_NONE;
 }
 
-static nu_lexer_error_t
+static nu__compiler_error_t
 nu__lexer_next (nu__lexer_t *lexer, nu__token_t *token)
 {
     if (lexer->peek_count)
@@ -712,7 +705,7 @@ nu__lexer_next (nu__lexer_t *lexer, nu__token_t *token)
         {
             lexer->peeks[i - 1] = lexer->peeks[i];
         }
-        return NU_LEXERR_NONE;
+        return NU_COMPERR_NONE;
     }
     else
     {
@@ -720,21 +713,21 @@ nu__lexer_next (nu__lexer_t *lexer, nu__token_t *token)
     }
 }
 
-static nu_lexer_error_t
+static nu__compiler_error_t
 nu__lexer_peek (nu__lexer_t *lexer, nu_size_t lookahead, nu__token_t *token)
 {
-    nu_lexer_error_t error;
+    nu__compiler_error_t error;
     while (lexer->peek_count <= lookahead)
     {
         error = nu__lexer_parse_token(lexer, token);
-        if (error != NU_LEXERR_NONE)
+        if (error != NU_COMPERR_NONE)
         {
             return error;
         }
         lexer->peeks[lexer->peek_count++] = *token;
     }
     *token = lexer->peeks[lookahead];
-    return NU_LEXERR_NONE;
+    return NU_COMPERR_NONE;
 }
 
 #endif
