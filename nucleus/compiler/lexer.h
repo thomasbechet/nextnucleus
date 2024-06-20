@@ -82,14 +82,14 @@ typedef struct
 {
     const nu_char_t *p;
     nu_size_t        n;
-} nu__lit_string_value_t;
+} nu__source_string_t;
 
 typedef union
 {
-    nu_bool_t              b;
-    nu_f32_t               f;
-    nu_i32_t               i;
-    nu__lit_string_value_t s;
+    nu_bool_t           b;
+    nu_f32_t            f;
+    nu_i32_t            i;
+    nu__source_string_t s;
 } nu__lit_value_t;
 
 typedef enum
@@ -109,9 +109,9 @@ typedef struct
 
 typedef union
 {
-    nu_type_t              primitive;
-    nu__lit_t              literal;
-    nu__lit_string_value_t identifier;
+    nu_type_t           primitive;
+    nu__lit_t           literal;
+    nu__source_string_t identifier;
 } nu__token_value_t;
 
 typedef struct
@@ -286,6 +286,9 @@ nu__consume_spaces (nu__lexer_t *lexer)
 #define NU_IDENTIFIER_CHAR(c) \
     (NU_NUMERIC_CHAR(c) || (c >= 'a' && c <= 'z') || c == '_')
 #define NU_MATCH_TOKEN(s, t, n) (n == nu_strlen(t) && nu_strncmp(s, t, n) == 0)
+
+#define NU_SOURCE_STRING_EQUALS(a, b) \
+    (a.n == b.n && nu_strncmp(a.p, b.p, a.n) == 0)
 
 static nu__compiler_error_t
 nu__consume_string (nu__lexer_t *lexer, nu__token_t *token)

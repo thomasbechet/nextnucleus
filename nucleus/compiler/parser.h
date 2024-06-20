@@ -1,11 +1,10 @@
 #ifndef NU_PARSER_H
 #define NU_PARSER_H
 
-#include "nucleus/vm/types.h"
 #include <nucleus/compiler/error.h>
 #include <nucleus/compiler/allocator.h>
-#include <nucleus/vm/error.h>
 #include <nucleus/compiler/lexer.h>
+#include <nucleus/vm/error.h>
 
 #ifdef NU_IMPLEMENTATION
 
@@ -75,7 +74,12 @@ typedef union
 } nu__ast_value_t;
 
 typedef nu_u32_t nu__ast_node_id_t;
+typedef nu_u32_t nu__symbol_id_t;
+typedef nu_u32_t nu__block_id_t;
 #define NU_AST_NODE_NULL 0xffffffff
+#define NU_SYMBOL_NULL   0xffffffff
+#define NU_BLOCK_NULL    0xffffffff
+#define NU_BLOCK_GLOBAL  0
 
 typedef struct
 {
@@ -102,7 +106,8 @@ typedef struct
     SYMBOL(SYMBOL_CONSTANT)       \
     SYMBOL(SYMBOL_LOCAL)          \
     SYMBOL(SYMBOL_MODULE)         \
-    SYMBOL(SYMBOL_EXTERNAL)
+    SYMBOL(SYMBOL_EXTERNAL)       \
+    SYMBOL(SYMBOL_UNKNOWN)
 typedef enum
 {
     NU_FOREACH_SYMBOL(NU_GENERATE_ENUM)
@@ -110,8 +115,19 @@ typedef enum
 static const nu_char_t *NU_SYMBOL_NAMES[]
     = { NU_FOREACH_SYMBOL(NU_GENERATE_NAME) };
 
-typedef nu_u32_t nu__symbol_id_t;
-#define NU_SYMBOL_NULL 0xffffffff
+#define NU_FOREACH_BLOCK(BLOCK) \
+    BLOCK(BLOCK_GLOBAL)         \
+    BLOCK(BLOCK_FUNCTION)       \
+    BLOCK(BLOCK_WHILE)          \
+    BLOCK(BLOCK_FOR)            \
+    BLOCK(BLOCK_IF)             \
+    BLOCK(BLOCK_LOOP)
+typedef enum
+{
+    NU_FOREACH_BLOCK(NU_GENERATE_ENUM)
+} nu__block_type_t;
+static const nu_char_t *NU_BLOCK_NAMES[]
+    = { NU_FOREACH_BLOCK(NU_GENERATE_NAME) };
 
 typedef struct
 {
@@ -140,6 +156,7 @@ typedef struct
 
 typedef union
 {
+    int                   ub;
     nu__symbol_function_t function;
     nu__symbol_argument_t argument;
     nu__symbol_constant_t constant;
@@ -149,13 +166,31 @@ typedef union
 
 typedef struct
 {
-    nu__symbol_type_t  type;
-    nu__symbol_value_t value;
+    nu__block_type_t type;
+    nu__block_id_t   parent;
+    nu__block_id_t   last;
+    nu__block_id_t   previous_scope_symbol;
+} nu__block_t;
+
+typedef struct
+{
+    nu__symbol_type_t   type;
+    nu__symbol_value_t  value;
+    nu__source_string_t ident;
+    nu__source_span_t   span;
+    nu__block_id_t      block;
+    nu__symbol_id_t     previous_in_block;
+    nu__symbol_id_t     previous_in_scope;
 } nu__symbol_t;
 
 typedef struct
 {
-
+    nu__symbol_t *symbols;
+    nu_size_t     symbol_count;
+    nu_size_t     symbol_capacity;
+    nu__block_t  *blocks;
+    nu_size_t     block_count;
+    nu_size_t     block_capacity;
 } nu__symbol_table_t;
 
 typedef struct
@@ -164,10 +199,15 @@ typedef struct
     nu__token_type_t  expect;
     nu__token_type_t  got;
 } nu__parser_unexpected_token_t;
+typedef struct
+{
+    nu__source_span_t span;
+} nu__parser_symbol_already_defined_t;
 
 typedef struct
 {
-    nu__parser_unexpected_token_t unexpected_token;
+    nu__parser_unexpected_token_t       unexpected_token;
+    nu__parser_symbol_already_defined_t symbol_already_defined;
 } nu__parser_error_t;
 
 typedef struct
@@ -176,6 +216,259 @@ typedef struct
     nu__lexer_t       *lexer;
     nu__ast_t         *ast;
 } nu__parser_t;
+
+static nu__compiler_error_t
+nu__symbol_table_init (nu_size_t                 symbol_capacity,
+                       nu_size_t                 block_capacity,
+                       nu__compiler_allocator_t *alloc,
+                       nu__symbol_table_t       *table)
+{
+    table->symbols
+        = nu__compiler_alloc(alloc, sizeof(nu__symbol_t) * symbol_capacity);
+    if (!table->symbols)
+    {
+        return NU_COMPERR_OUT_OF_MEMORY;
+    }
+    table->symbol_capacity = symbol_capacity;
+    table->symbol_count    = 0;
+    table->blocks
+        = nu__compiler_alloc(alloc, sizeof(nu__block_t) * block_capacity);
+    if (!table->blocks)
+    {
+        return NU_COMPERR_OUT_OF_MEMORY;
+    }
+    table->block_capacity = block_capacity;
+    table->block_count    = 0;
+
+    return NU_COMPERR_NONE;
+}
+static nu__compiler_error_t
+nu__symbol_add (nu__symbol_table_t *table,
+                nu__symbol_type_t   type,
+                nu__symbol_value_t  value,
+                nu__source_string_t ident,
+                nu__source_span_t   span,
+                nu__block_id_t      block,
+                nu__symbol_id_t    *id)
+{
+    nu__block_id_t last_block;
+    if (table->symbol_count >= table->symbol_capacity)
+    {
+        return NU_COMPERR_OUT_OF_SYMBOL;
+    }
+    *id                       = table->symbol_count++;
+    table->symbols[*id].type  = type;
+    table->symbols[*id].value = value;
+    table->symbols[*id].ident = ident;
+    table->symbols[*id].span  = span;
+
+    /* update previous in scope */
+    last_block = table->blocks[block].last;
+    if (last_block != NU_BLOCK_NULL)
+    {
+        table->symbols[*id].previous_in_scope = last_block;
+    }
+    else
+    {
+        table->symbols[*id].previous_in_scope
+            = table->symbols[block].previous_in_scope;
+    }
+
+    /* update block list */
+    table->symbols[*id].previous_in_block = table->blocks[block].last;
+    table->blocks[block].last             = *id;
+
+    return NU_COMPERR_NONE;
+}
+static nu_bool_t
+nu__find_symbol_in_block (const nu__symbol_table_t *table,
+                          nu__block_id_t            block,
+                          nu__source_string_t       name,
+                          nu__symbol_id_t          *id)
+{
+    nu__symbol_id_t symbol;
+    symbol = table->blocks[block].last;
+    while (symbol != NU_SYMBOL_NULL)
+    {
+        if (NU_SOURCE_STRING_EQUALS(table->symbols[symbol].ident, name))
+        {
+            *id = symbol;
+            return NU_TRUE;
+        }
+        symbol = table->symbols[symbol].previous_in_block;
+    }
+    return NU_FALSE;
+}
+static void
+nu__find_symbol_in_scope (const nu__symbol_table_t *table,
+                          nu__block_id_t            block,
+                          nu__source_string_t       name,
+                          nu__symbol_id_t          *id)
+{
+    nu__symbol_id_t symbol;
+    symbol = table->blocks[block].last;
+    if (symbol == NU_BLOCK_NULL)
+    {
+        symbol = table->blocks[block].previous_scope_symbol;
+    }
+    while (symbol != NU_SYMBOL_NULL)
+    {
+        if (NU_SOURCE_STRING_EQUALS(table->symbols[symbol].ident, name))
+        {
+            *id = symbol;
+        }
+        symbol = table->symbols[symbol].previous_in_scope;
+    }
+    *id = NU_SYMBOL_NULL;
+}
+static nu_bool_t
+nu__check_in_loop (const nu__symbol_table_t *table, nu__block_id_t block)
+{
+    static nu__block_type_t types[] = { BLOCK_LOOP, BLOCK_WHILE, BLOCK_FOR };
+    while (block != NU_BLOCK_NULL)
+    {
+        nu_size_t        i;
+        nu__block_type_t type = table->blocks[block].type;
+        for (i = 0; i < NU_ARRAY_SIZE(types); ++i)
+        {
+            if (types[i] == type)
+            {
+                return NU_TRUE;
+            }
+        }
+        block = table->blocks[block].parent;
+    }
+    return NU_FALSE;
+}
+static nu_bool_t
+nu__check_in_function (const nu__symbol_table_t *table, nu__block_id_t block)
+{
+    while (block != NU_BLOCK_NULL)
+    {
+        if (table->blocks[block].type == BLOCK_FUNCTION)
+        {
+            block = table->blocks[block].parent;
+        }
+    }
+    return NU_FALSE;
+}
+static nu__compiler_error_t
+nu__add_block (nu__symbol_table_t *table,
+               nu__block_type_t    type,
+               nu__block_id_t      parent,
+               nu__block_id_t     *id)
+{
+    nu__symbol_id_t previous_scope_symbol;
+
+    if (table->block_count >= table->block_capacity)
+    {
+        return NU_COMPERR_OUT_OF_BLOCK;
+    }
+
+    *id = table->block_count++;
+
+    previous_scope_symbol = NU_SYMBOL_NULL;
+    if (parent != NU_BLOCK_NULL)
+    {
+        previous_scope_symbol = table->blocks[parent].last;
+        if (previous_scope_symbol == NU_SYMBOL_NULL)
+        {
+            previous_scope_symbol = table->blocks[parent].previous_scope_symbol;
+        }
+    }
+
+    table->blocks[*id].type                  = type;
+    table->blocks[*id].parent                = parent;
+    table->blocks[*id].last                  = NU_SYMBOL_NULL;
+    table->blocks[*id].previous_scope_symbol = previous_scope_symbol;
+
+    return NU_COMPERR_NONE;
+}
+static nu__compiler_error_t
+nu__lookup_symbol (nu__symbol_table_t *table,
+                   nu__source_string_t ident,
+                   nu__source_span_t   span,
+                   nu__block_id_t      block,
+                   nu__symbol_id_t    *id)
+{
+    nu__compiler_error_t error;
+    nu__find_symbol_in_scope(table, block, ident, id);
+    if (*id == NU_SYMBOL_NULL)
+    {
+        nu__symbol_value_t unknown_value;
+        unknown_value.ub = 0;
+        error            = nu__symbol_add(table,
+                               SYMBOL_UNKNOWN,
+                               unknown_value,
+                               ident,
+                               span,
+                               NU_BLOCK_GLOBAL,
+                               id);
+        NU_COMPERR_CHECK(error);
+    }
+    return NU_COMPERR_NONE;
+}
+
+static nu__compiler_error_t
+nu__define_symbol (nu__symbol_table_t *table,
+                   nu__symbol_type_t   type,
+                   nu__symbol_value_t  value,
+                   nu__source_string_t ident,
+                   nu__source_span_t   span,
+                   nu__block_id_t      block,
+                   nu__parser_error_t *error_data,
+                   nu__symbol_id_t    *id)
+{
+    nu__compiler_error_t error;
+    nu__symbol_id_t      found;
+    /* check existing symbol */
+    nu__find_symbol_in_scope(table, block, ident, &found);
+    switch (type)
+    {
+        case SYMBOL_FUNCTION:
+            /* fall-through */
+        case SYMBOL_CONSTANT:
+            /* fall-through */
+        case SYMBOL_MODULE:
+            /* fall-through */
+        case SYMBOL_EXTERNAL:
+            /* fall-through */
+        case SYMBOL_LOCAL:
+            NU_ASSERT(block == BLOCK_GLOBAL);
+            if (found != NU_SYMBOL_NULL)
+            {
+                /* constant and function shadowing is not allowed, we must check
+                 * definition */
+                if (table->symbols[found].type != SYMBOL_UNKNOWN)
+                {
+                    error_data->symbol_already_defined.span = span;
+                    return NU_COMPERR_SYMBOL_ALREADY_DEFINED;
+                }
+                else
+                {
+                    /*update symbol */
+                    table->symbols[found].type  = type;
+                    table->symbols[found].value = value;
+                }
+            }
+            else
+            {
+                /* not defined or declared */
+                error = nu__symbol_add(
+                    table, type, value, ident, span, block, id);
+                NU_COMPERR_CHECK(error);
+            }
+            break;
+        case SYMBOL_ARGUMENT:
+            /* fall-through */
+        case SYMBOL_UNKNOWN:
+            /* may shadow previous symbol */
+            error = nu__symbol_add(table, type, value, ident, span, block, id);
+            NU_COMPERR_CHECK(error);
+            break;
+    }
+    return NU_COMPERR_NONE;
+}
 
 static nu__compiler_error_t
 nu__ast_add_node (nu__ast_t *ast, nu__ast_node_id_t *id)
@@ -222,7 +515,7 @@ nu__ast_is_statement (nu__ast_type_t t)
     static const nu__ast_type_t statements[]
         = { AST_COMPOUND, AST_RETURN,  AST_IF,        AST_FOR,   AST_WHILE,
             AST_LOOP,     AST_VARDECL, AST_CONSTDECL, AST_ASSIGN };
-    for (i = 0; i < sizeof(statements) / sizeof(statements[0]); ++i)
+    for (i = 0; i < NU_ARRAY_SIZE(statements); ++i)
     {
         if (t == statements[i])
         {
@@ -238,7 +531,7 @@ nu__ast_is_expression (nu__ast_type_t t)
     static const nu__ast_type_t expressions[]
         = { AST_LITERAL, AST_IDENTIFIER, AST_FIELDLOOKUP,
             AST_CALL,    AST_BINOP,      AST_UNOP };
-    for (i = 0; i < sizeof(expressions) / sizeof(expressions[0]); ++i)
+    for (i = 0; i < NU_ARRAY_SIZE(expressions); ++i)
     {
         if (t == expressions[i])
         {
@@ -252,7 +545,7 @@ nu__ast_is_loop (nu__ast_type_t t)
 {
     nu_size_t                   i;
     static const nu__ast_type_t loops[] = { AST_FOR, AST_WHILE, AST_LOOP };
-    for (i = 0; i < sizeof(loops) / sizeof(loops[0]); ++i)
+    for (i = 0; i < NU_ARRAY_SIZE(loops); ++i)
     {
         if (t == loops[i])
         {

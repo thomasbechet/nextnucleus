@@ -52,4 +52,6 @@ typedef enum
     NU_TYPE_ANIMATION
 } nu_type_t;
 
+#define NU_ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
 #endif
