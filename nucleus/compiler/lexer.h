@@ -242,7 +242,7 @@ nu__consume_char (nu__lexer_t *lexer)
     nu_source_location_t dloc;
     nu__lexer_next_char(lexer, &c, &dloc);
 }
-static nu__compiler_error_t
+static nu_compiler_error_t
 nu__consume_single_char_token (nu__lexer_t         *lexer,
                                nu__token_type_t     type,
                                nu_source_location_t loc,
@@ -290,7 +290,7 @@ nu__consume_spaces (nu__lexer_t *lexer)
 #define NU_SOURCE_STRING_EQUALS(a, b) \
     (a.n == b.n && nu_strncmp(a.p, b.p, a.n) == 0)
 
-static nu__compiler_error_t
+static nu_compiler_error_t
 nu__consume_string (nu__lexer_t *lexer, nu__token_t *token)
 {
     nu_source_location_t start_loc, stop_loc, loc;
@@ -318,7 +318,7 @@ nu__consume_string (nu__lexer_t *lexer, nu__token_t *token)
     }
     return NU_COMPERR_UNTERMINATED_STRING;
 }
-static nu__compiler_error_t
+static nu_compiler_error_t
 nu__consume_number (nu__lexer_t *lexer, nu__token_t *token)
 {
     nu_source_location_t start_loc, stop_loc, loc;
@@ -382,7 +382,7 @@ nu__consume_number (nu__lexer_t *lexer, nu__token_t *token)
     }
     return NU_COMPERR_NONE;
 }
-static nu__compiler_error_t
+static nu_compiler_error_t
 nu__consume_identifier (nu__lexer_t *lexer, nu__token_t *token)
 {
     nu_source_location_t start_loc, stop_loc, loc;
@@ -561,7 +561,7 @@ nu__consume_identifier (nu__lexer_t *lexer, nu__token_t *token)
     return NU_COMPERR_NONE;
 }
 
-static nu__compiler_error_t
+static nu_compiler_error_t
 nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
 {
     nu_char_t            c, next;
@@ -697,7 +697,7 @@ nu__lexer_parse_token (nu__lexer_t *lexer, nu__token_t *token)
     return NU_COMPERR_NONE;
 }
 
-static nu__compiler_error_t
+static nu_compiler_error_t
 nu__lexer_next (nu__lexer_t *lexer, nu__token_t *token)
 {
     if (lexer->peek_count)
@@ -716,10 +716,10 @@ nu__lexer_next (nu__lexer_t *lexer, nu__token_t *token)
     }
 }
 
-static nu__compiler_error_t
+static nu_compiler_error_t
 nu__lexer_peek (nu__lexer_t *lexer, nu_size_t lookahead, nu__token_t *token)
 {
-    nu__compiler_error_t error;
+    nu_compiler_error_t error;
     while (lexer->peek_count <= lookahead)
     {
         error = nu__lexer_parse_token(lexer, token);
