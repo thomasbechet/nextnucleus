@@ -1,6 +1,7 @@
 #include <stdio.h>
 #define NU_IMPLEMENTATION
-#include <nucleus/compiler.h>
+#define NULANG_IMPLEMENTATION
+#include <nucleus/lang.h>
 
 static const nu_char_t *source
     = "local abc = 0\n"
@@ -11,25 +12,25 @@ static const nu_char_t *source
 int
 main (void)
 {
-    nu__lexer_t          lexer;
-    nu_char_t            c;
-    nu_source_location_t loc;
-    nu_bool_t            has;
-    nu__token_t          token;
-    nu_lexer_error_t     error;
+    nulang__lexer_t   lexer;
+    nu_char_t         c;
+    nulang_location_t loc;
+    nu_bool_t         has;
+    nulang__token_t   token;
+    nulang_error_t    error;
 
-    nu__lexer_init(source, &lexer);
+    nulang__lexer_init(source, &lexer);
 
     for (;;)
     {
-        error = nu__lexer_next(&lexer, &token);
-        NU_ASSERT(error == NU_LEXERR_NONE);
+        error = nulang__lexer_next(&lexer, &token);
+        NU_ASSERT(error == NULANG_ERROR_NONE);
         if (token.type == TOKEN_EOF)
         {
             break;
         }
         printf("%s %d:%d %d:%d\n",
-               NU_TOKEN_NAMES[token.type],
+               NULANG_TOKEN_NAMES[token.type],
                token.span.start.line,
                token.span.start.column,
                token.span.stop.line,
@@ -45,7 +46,7 @@ main (void)
                    token.value.literal.value.s.p);
         }
 
-        printf("%s\n", NU_AST_NAMES[AST_PROGRAM]);
+        printf("%s\n", NULANG_AST_NAMES[AST_ROOT]);
     }
 
     return 0;

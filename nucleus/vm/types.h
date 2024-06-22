@@ -34,23 +34,29 @@ typedef nu_u32_t nu_handle_t;
 
 typedef void (*nu_pfn_t)(void);
 
+#define NU_FOREACH_TYPE(TYPE) \
+    TYPE(BOOL)                \
+    TYPE(INT)                 \
+    TYPE(FIX)                 \
+    TYPE(IV2)                 \
+    TYPE(IV3)                 \
+    TYPE(IV4)                 \
+    TYPE(FV2)                 \
+    TYPE(FV3)                 \
+    TYPE(FV4)                 \
+    TYPE(ENTITY)              \
+    TYPE(QUAT)                \
+    TYPE(TEXTURE)             \
+    TYPE(MESH)                \
+    TYPE(ANIMATION)
+#define NU_GENERATE_TYPE_ENUM(TYPE) NU_TYPE_##TYPE,
+#define NU_GENERATE_TYPE_NAME(TYPE) #TYPE,
 typedef enum
 {
-    NU_TYPE_BOOL,
-    NU_TYPE_INT,
-    NU_TYPE_FLOAT,
-    NU_TYPE_UV2,
-    NU_TYPE_IV2,
-    NU_TYPE_FV2,
-    NU_TYPE_UV3,
-    NU_TYPE_IV3,
-    NU_TYPE_FV3,
-    NU_TYPE_ENTITY,
-    NU_TYPE_QUAT,
-    NU_TYPE_TEXTURE,
-    NU_TYPE_MESH,
-    NU_TYPE_ANIMATION
+    NU_FOREACH_TYPE(NU_GENERATE_TYPE_ENUM) NU_TYPE_UNKNOWN
 } nu_type_t;
+const nu_char_t *NU_TYPE_NAMES[]
+    = { NU_FOREACH_TYPE(NU_GENERATE_TYPE_NAME) "UNKNOWN" };
 
 #define NU_ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
