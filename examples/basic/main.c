@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#define NU_IMPLEMENTATION
+#define NU_IMPL
 #define NU_DEBUG
 #define NU_STDLIB
 #include <nucleus/vm.h>
@@ -28,8 +28,8 @@ bootstrap (nu_api_t api)
     nu_error_t      error;
     nu_table_t      table;
     nu_entity_t     e;
-    nu_field_info_t fields[]
-        = { { "position", NU_TYPE_INT, 1 }, { "rotation", NU_TYPE_INT, 1 } };
+    nu_field_info_t fields[] = { { "position", NU_PRIMITIVE_INT, 1 },
+                                 { "rotation", NU_PRIMITIVE_INT, 1 } };
 
     error = nu_create_table(api, "player", fields, 2, &table);
     NU_ERROR_ASSERT(error);

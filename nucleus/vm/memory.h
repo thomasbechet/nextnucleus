@@ -18,7 +18,7 @@ NU_API void *nu_memset(void *dst, nu_int_t c, nu_size_t n);
 NU_API void  nu_memcpy(void *dst, const void *src, nu_size_t n);
 NU_API void *nu_memalign(void *ptr, nu_size_t align);
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 void *
 nu_memset (void *dst, nu_int_t c, nu_size_t n)

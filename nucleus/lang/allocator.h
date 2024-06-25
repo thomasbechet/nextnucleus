@@ -12,7 +12,7 @@ typedef struct
     void                           *userdata;
 } nulang_allocator_info_t;
 
-#ifdef NULANG_IMPLEMENTATION
+#ifdef NULANG_IMPL
 
 typedef struct
 {

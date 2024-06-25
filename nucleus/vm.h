@@ -11,6 +11,7 @@
 #include <nucleus/vm/api.h>
 #include <nucleus/vm/list.h>
 #include <nucleus/vm/slotmap.h>
+#include <nucleus/vm/interpreter.h>
 
 typedef struct nu__vm *nu_vm_t;
 
@@ -37,7 +38,7 @@ NU_API nu_error_t nu_vm_exec(nu_vm_t vm, nu_vm_exec_pfn_t exec);
 NU_API nu_error_t nu_vm_bind_renderer(nu_vm_t                   vm,
                                       const nu_renderer_info_t *info);
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 struct nu__vm
 {

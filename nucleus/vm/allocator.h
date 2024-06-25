@@ -28,7 +28,7 @@ typedef struct
 NU_API void nu_allocator_info_stdlib(nu_allocator_info_t *info);
 #endif
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 typedef struct
 {

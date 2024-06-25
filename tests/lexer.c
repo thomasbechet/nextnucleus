@@ -1,6 +1,6 @@
 #include <stdio.h>
-#define NU_IMPLEMENTATION
-#define NULANG_IMPLEMENTATION
+#define NU_IMPL
+#define NULANG_IMPL
 #include <nucleus/lang.h>
 
 static const nu_char_t *source

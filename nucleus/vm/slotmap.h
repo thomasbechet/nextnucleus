@@ -35,7 +35,7 @@ NU_API void       nu__slotlist_remove(nu__slotlist_t slotlist,
                                       nu__slot_t     slot);
 NU_API nu__slot_t nu__slotlist_next(nu__slotlist_t slotlist, nu__slot_t slot);
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 struct nu__slotmap
 {

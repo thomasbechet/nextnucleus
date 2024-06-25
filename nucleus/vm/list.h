@@ -23,7 +23,7 @@ void *nu__list_alloc_object(nu__allocator_t  *alloc,
                             nu_memory_usage_t usage,
                             nu_size_t         size);
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 struct nu__list_header
 {

@@ -12,6 +12,7 @@ typedef struct
 
 #define NULANG_FOREACH_TOKEN(TOKEN) \
     TOKEN(TOKEN_IDENTIFIER)         \
+    TOKEN(TOKEN_PRIMITIVE)          \
     TOKEN(TOKEN_TYPE)               \
     TOKEN(TOKEN_LITERAL)            \
     TOKEN(TOKEN_IMPORT)             \
@@ -40,7 +41,7 @@ typedef struct
     TOKEN(TOKEN_AND)                \
     TOKEN(TOKEN_OR)                 \
     TOKEN(TOKEN_NOT)                \
-    TOKEN(TOKEN_LOCAL)              \
+    TOKEN(TOKEN_LET)                \
     TOKEN(TOKEN_CONST)              \
     TOKEN(TOKEN_IF)                 \
     TOKEN(TOKEN_THEN)               \
@@ -55,7 +56,6 @@ typedef struct
     TOKEN(TOKEN_BREAK)              \
     TOKEN(TOKEN_CONTINUE)           \
     TOKEN(TOKEN_RETURN)             \
-    TOKEN(TOKEN_PRIMITIVE)          \
     TOKEN(TOKEN_EOF)
 #define NULANG_GENERATE_ENUM(ENUM) ENUM,
 #define NULANG_GENERATE_NAME(ENUM) #ENUM,
@@ -105,7 +105,7 @@ typedef struct
 
 typedef union
 {
-    nu_type_t        primitive;
+    nu_primitive_t   primitive;
     nulang__lit_t    literal;
     nulang__string_t identifier;
 } nulang__token_value_t;

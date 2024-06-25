@@ -22,7 +22,7 @@ NU_API void       *nu_field(nu_api_t api, nu_entity_t e, nu_field_t f);
 
 NU_API nu_error_t nu_draw(nu_api_t api);
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 struct nu__api
 {

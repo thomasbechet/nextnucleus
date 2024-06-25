@@ -1,4 +1,4 @@
-#define NU_IMPLEMENTATION
+#define NU_IMPL
 #include <nucleus/vm.h>
 
 int

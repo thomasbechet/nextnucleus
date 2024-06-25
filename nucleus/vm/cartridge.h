@@ -38,7 +38,7 @@ typedef struct
     nu_error_t (*load_texture)(nu_u32_t id, void *userdata, void *data);
 } nu_cartridge_info_t;
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 #endif
 

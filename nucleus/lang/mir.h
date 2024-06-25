@@ -10,7 +10,8 @@
     AST(AST_ROOT)               \
     AST(AST_COMPOUND)           \
     AST(AST_LITERAL)            \
-    AST(AST_IDENTIFIER)         \
+    AST(AST_SYMBOL)             \
+    AST(AST_TYPE)               \
     AST(AST_PRIMITIVE)          \
     AST(AST_FIELDLOOKUP)        \
     AST(AST_BREAK)              \
@@ -64,20 +65,76 @@ typedef enum
 static const nu_char_t *NULANG_UNOP_NAMES[]
     = { NULANG_FOREACH_UNOP(NULANG_GENERATE_NAME) };
 
+#define NULANG_FOREACH_SYMBOL(SYMBOL) \
+    SYMBOL(SYMBOL_FUNCTION)           \
+    SYMBOL(SYMBOL_ARGUMENT)           \
+    SYMBOL(SYMBOL_CONSTANT)           \
+    SYMBOL(SYMBOL_VARIABLE)           \
+    SYMBOL(SYMBOL_MODULE)             \
+    SYMBOL(SYMBOL_EXTERNAL)           \
+    SYMBOL(SYMBOL_UNKNOWN)
+typedef enum
+{
+    NULANG_FOREACH_SYMBOL(NULANG_GENERATE_ENUM)
+} nulang__symbol_type_t;
+static const nu_char_t *NULANG_SYMBOL_NAMES[]
+    = { NULANG_FOREACH_SYMBOL(NULANG_GENERATE_NAME) };
+
+#define NULANG_FOREACH_BLOCK(BLOCK) \
+    BLOCK(BLOCK_GLOBAL)             \
+    BLOCK(BLOCK_FUNCTION)           \
+    BLOCK(BLOCK_WHILE)              \
+    BLOCK(BLOCK_FOR)                \
+    BLOCK(BLOCK_IF)                 \
+    BLOCK(BLOCK_LOOP)
+typedef enum
+{
+    NULANG_FOREACH_BLOCK(NULANG_GENERATE_ENUM)
+} nulang__block_type_t;
+static const nu_char_t *NULANG_BLOCK_NAMES[]
+    = { NULANG_FOREACH_BLOCK(NULANG_GENERATE_NAME) };
+
+#define NULANG_FOREACH_VARTYPE(VARTYPE) \
+    VARTYPE(VARTYPE_ENTITY)             \
+    VARTYPE(VARTYPE_PRIMITIVE)          \
+    VARTYPE(VARTYPE_UNKNOWN)
+typedef enum
+{
+    NULANG_FOREACH_VARTYPE(NULANG_GENERATE_ENUM)
+} nulang__vartype_type_t;
+static const nu_char_t *NULANG_VARTYPE_NAMES[]
+    = { NULANG_FOREACH_VARTYPE(NULANG_GENERATE_NAME) };
+
 typedef nu_u32_t nulang__node_id_t;
 typedef nu_u32_t nulang__symbol_id_t;
+typedef nu_u32_t nulang__type_id_t;
 typedef nu_u32_t nulang__block_id_t;
 #define NULANG_NODE_NULL    0xffffffff
 #define NULANG_SYMBOL_NULL  0xffffffff
+#define NULANG_TYPE_NULL    0xffffffff
 #define NULANG_BLOCK_NULL   0xffffffff
 #define NULANG_BLOCK_GLOBAL 0
+
+typedef union
+{
+    nu_primitive_t    primitive;
+    nulang__type_id_t type;
+} nulang__vartype_value_t;
+
+typedef struct
+{
+    nulang__vartype_type_t  type;
+    nulang__vartype_value_t value;
+} nulang__vartype_t;
 
 typedef union
 {
     nulang__lit_t       literal;
     nulang__binop_t     binop;
     nulang__unop_t      unop;
-    nu_type_t           primitive;
+    nulang__vartype_t   vartype;
+    nu_primitive_t      primitive;
+    nulang__type_id_t   type;
     nulang__symbol_id_t symbol;
     nulang__string_t    fieldlookup;
 } nulang__node_value_t;
@@ -101,59 +158,29 @@ typedef struct
     nu_u32_t          node_count;
 } nulang__ast_t;
 
-#define NULANG_FOREACH_SYMBOL(SYMBOL) \
-    SYMBOL(SYMBOL_FUNCTION)           \
-    SYMBOL(SYMBOL_ARGUMENT)           \
-    SYMBOL(SYMBOL_CONSTANT)           \
-    SYMBOL(SYMBOL_VARIABLE)           \
-    SYMBOL(SYMBOL_MODULE)             \
-    SYMBOL(SYMBOL_EXTERNAL)           \
-    SYMBOL(SYMBOL_TABLE)              \
-    SYMBOL(SYMBOL_UNKNOWN)
-typedef enum
-{
-    NULANG_FOREACH_SYMBOL(NULANG_GENERATE_ENUM)
-} nulang__symbol_type_t;
-static const nu_char_t *NULANG_SYMBOL_NAMES[]
-    = { NULANG_FOREACH_SYMBOL(NULANG_GENERATE_NAME) };
-
-#define NULANG_FOREACH_BLOCK(BLOCK) \
-    BLOCK(BLOCK_GLOBAL)             \
-    BLOCK(BLOCK_FUNCTION)           \
-    BLOCK(BLOCK_WHILE)              \
-    BLOCK(BLOCK_FOR)                \
-    BLOCK(BLOCK_IF)                 \
-    BLOCK(BLOCK_LOOP)
-typedef enum
-{
-    NULANG_FOREACH_BLOCK(NULANG_GENERATE_ENUM)
-} nulang__block_type_t;
-static const nu_char_t *NULANG_BLOCK_NAMES[]
-    = { NULANG_FOREACH_BLOCK(NULANG_GENERATE_NAME) };
-
 typedef struct
 {
-    nu_type_t           return_type;
+    nulang__vartype_t   return_type;
     nulang__symbol_id_t first_arg;
     nu_bool_t           exported;
 } nulang__symbol_function_t;
 typedef struct
 {
-    nu_type_t           type;
+    nulang__vartype_t   vartype;
     nulang__symbol_id_t next;
 } nulang__symbol_argument_t;
 typedef struct
 {
-    nu_type_t type;
-    nu_bool_t exported;
+    nulang__vartype_t vartype;
+    nu_bool_t         exported;
 } nulang__symbol_constant_t;
 typedef struct
 {
-    nu_type_t type;
+    nulang__vartype_t vartype;
 } nulang__symbol_variable_t;
 typedef struct
 {
-    nulang__symbol_id_t symbol;
+    int todo;
 } nulang__symbol_external_t;
 
 typedef union
@@ -187,18 +214,28 @@ typedef struct
 
 typedef struct
 {
+    nulang__string_t ident;
+    nulang__span_t   span;
+} nulang__type_t;
+
+typedef struct
+{
     nulang__symbol_t *symbols;
     nu_size_t         symbol_count;
     nu_size_t         symbol_capacity;
+    nulang__type_t   *types;
+    nu_size_t         type_count;
+    nu_size_t         type_capacity;
     nulang__block_t  *blocks;
     nu_size_t         block_count;
     nu_size_t         block_capacity;
 } nulang__symbol_table_t;
 
-#ifdef NULANG_IMPLEMENTATION
+#ifdef NULANG_IMPL
 
 static nulang_error_t
 nulang__symbol_table_init (nu_size_t               symbol_capacity,
+                           nu_size_t               type_capacity,
                            nu_size_t               block_capacity,
                            nulang__allocator_t    *alloc,
                            nulang__symbol_table_t *table)
@@ -211,6 +248,13 @@ nulang__symbol_table_init (nu_size_t               symbol_capacity,
     }
     table->symbol_capacity = symbol_capacity;
     table->symbol_count    = 0;
+    table->types = nulang__alloc(alloc, sizeof(nulang__type_t) * type_capacity);
+    if (!table->types)
+    {
+        return NULANG_ERROR_OUT_OF_MEMORY;
+    }
+    table->type_capacity = type_capacity;
+    table->type_count    = 0;
     table->blocks
         = nulang__alloc(alloc, sizeof(nulang__block_t) * block_capacity);
     if (!table->blocks)
@@ -225,8 +269,9 @@ nulang__symbol_table_init (nu_size_t               symbol_capacity,
 static void
 nulang__symbol_table_clear (nulang__symbol_table_t *table)
 {
-    table->block_count  = 0;
     table->symbol_count = 0;
+    table->type_count   = 0;
+    table->block_count  = 0;
 }
 static nulang_error_t
 nulang__symbol_add (nulang__symbol_table_t *table,
@@ -242,11 +287,14 @@ nulang__symbol_add (nulang__symbol_table_t *table,
     {
         return NULANG_ERROR_OUT_OF_SYMBOL;
     }
-    *id                       = table->symbol_count++;
-    table->symbols[*id].type  = type;
-    table->symbols[*id].value = value;
-    table->symbols[*id].ident = ident;
-    table->symbols[*id].span  = span;
+    *id                                   = table->symbol_count++;
+    table->symbols[*id].type              = type;
+    table->symbols[*id].value             = value;
+    table->symbols[*id].ident             = ident;
+    table->symbols[*id].span              = span;
+    table->symbols[*id].block             = block;
+    table->symbols[*id].previous_in_scope = NULANG_SYMBOL_NULL;
+    table->symbols[*id].previous_in_block = NULANG_SYMBOL_NULL;
 
     /* update previous in scope */
     last_block = table->blocks[block].last;
@@ -293,7 +341,7 @@ nulang__find_symbol_in_scope (const nulang__symbol_table_t *table,
 {
     nulang__symbol_id_t symbol;
     symbol = table->blocks[block].last;
-    if (symbol == NULANG_BLOCK_NULL)
+    if (symbol == NULANG_SYMBOL_NULL)
     {
         symbol = table->blocks[block].previous_scope_symbol;
     }
@@ -399,6 +447,31 @@ nulang__lookup_symbol (nulang__symbol_table_t *table,
     }
     return NULANG_ERROR_NONE;
 }
+static nulang_error_t
+nulang__lookup_type (nulang__symbol_table_t *table,
+                     nulang__string_t        ident,
+                     nulang__span_t          span,
+                     nulang__type_id_t      *type)
+{
+    nu_size_t i;
+    for (i = 0; i < table->type_count; ++i)
+    {
+        if (NULANG_SOURCE_STRING_EQUALS(table->types[i].ident, ident))
+        {
+            *type = i;
+            return NULANG_ERROR_NONE;
+        }
+    }
+    *type = NULANG_TYPE_NULL;
+    if (table->type_count >= table->type_capacity)
+    {
+        return NULANG_ERROR_OUT_OF_SYMBOL;
+    }
+    *type                     = table->type_count++;
+    table->types[*type].ident = ident;
+    table->types[*type].span  = span;
+    return NULANG_ERROR_NONE;
+}
 
 static nulang_error_t
 nulang__define_symbol (nulang__symbol_table_t *table,
@@ -424,7 +497,6 @@ nulang__define_symbol (nulang__symbol_table_t *table,
         case SYMBOL_EXTERNAL:
             /* fall-through */
         case SYMBOL_VARIABLE:
-            NU_ASSERT(block == BLOCK_GLOBAL);
             if (found != NULANG_SYMBOL_NULL)
             {
                 /* constant and function shadowing is not allowed, we must check
@@ -554,8 +626,8 @@ nulang__ast_is_expression (nulang_node_type_t t)
 {
     nu_size_t                       i;
     static const nulang_node_type_t expressions[]
-        = { AST_LITERAL, AST_IDENTIFIER, AST_FIELDLOOKUP,
-            AST_CALL,    AST_BINOP,      AST_UNOP };
+        = { AST_LITERAL, AST_SYMBOL, AST_FIELDLOOKUP,
+            AST_CALL,    AST_BINOP,  AST_UNOP };
     for (i = 0; i < NU_ARRAY_SIZE(expressions); ++i)
     {
         if (t == expressions[i])

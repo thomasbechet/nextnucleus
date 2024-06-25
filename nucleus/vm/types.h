@@ -34,29 +34,29 @@ typedef nu_u32_t nu_handle_t;
 
 typedef void (*nu_pfn_t)(void);
 
-#define NU_FOREACH_TYPE(TYPE) \
-    TYPE(BOOL)                \
-    TYPE(INT)                 \
-    TYPE(FIX)                 \
-    TYPE(IV2)                 \
-    TYPE(IV3)                 \
-    TYPE(IV4)                 \
-    TYPE(FV2)                 \
-    TYPE(FV3)                 \
-    TYPE(FV4)                 \
-    TYPE(ENTITY)              \
-    TYPE(QUAT)                \
-    TYPE(TEXTURE)             \
-    TYPE(MESH)                \
-    TYPE(ANIMATION)
-#define NU_GENERATE_TYPE_ENUM(TYPE) NU_TYPE_##TYPE,
-#define NU_GENERATE_TYPE_NAME(TYPE) #TYPE,
+#define NU_FOREACH_PRIMITIVE(PRIMITIVE) \
+    PRIMITIVE(BOOL)                     \
+    PRIMITIVE(INT)                      \
+    PRIMITIVE(FIX)                      \
+    PRIMITIVE(IV2)                      \
+    PRIMITIVE(IV3)                      \
+    PRIMITIVE(IV4)                      \
+    PRIMITIVE(FV2)                      \
+    PRIMITIVE(FV3)                      \
+    PRIMITIVE(FV4)                      \
+    PRIMITIVE(QUAT)                     \
+    PRIMITIVE(ENTITY)                   \
+    PRIMITIVE(TEXTURE)                  \
+    PRIMITIVE(MESH)                     \
+    PRIMITIVE(ANIMATION)
+#define NU_GENERATE_PRIMITIVE_ENUM(PRIMITIVE) NU_PRIMITIVE_##PRIMITIVE,
+#define NU_GENERATE_PRIMITIVE_NAME(PRIMITIVE) #PRIMITIVE,
 typedef enum
 {
-    NU_FOREACH_TYPE(NU_GENERATE_TYPE_ENUM) NU_TYPE_UNKNOWN
-} nu_type_t;
-const nu_char_t *NU_TYPE_NAMES[]
-    = { NU_FOREACH_TYPE(NU_GENERATE_TYPE_NAME) "UNKNOWN" };
+    NU_FOREACH_PRIMITIVE(NU_GENERATE_PRIMITIVE_ENUM) NU_PRIMITIVE_UNKNOWN
+} nu_primitive_t;
+const nu_char_t *NU_PRIMITIVE_NAMES[]
+    = { NU_FOREACH_PRIMITIVE(NU_GENERATE_PRIMITIVE_NAME) "UNKNOWN" };
 
 #define NU_ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 

@@ -12,7 +12,7 @@ typedef struct
 
 NU_API void nu_vm_properties_default(nu_vm_properties_t *props);
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 typedef struct
 {

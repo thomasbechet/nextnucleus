@@ -1,20 +1,26 @@
 #ifndef NU_INTERPRETER_H
 #define NU_INTERPRETER_H
 
-#include <nucleus/types.h>
-#include <nucleus/math.h>
+#include <nucleus/vm/types.h>
+#include <nucleus/vm/math.h>
 
+#define NU_FOREACH_OP(OP) \
+    OP(ADD)               \
+    OP(SUB)               \
+    OP(MULI)              \
+    OP(MULF)              \
+    OP(DIVI)              \
+    OP(DIVF)
+#define NU_GENERATE_OP_ENUM(OP) NU_OP_##OP,
+#define NU_GENERATE_OP_NAME(OP) #OP,
 typedef enum
 {
-    OP_ADD  = 0,
-    OP_SUB  = 1,
-    OP_MULI = 2,
-    OP_MULF = 3,
-    OP_DIVI = 4,
-    OP_DIVF = 5
+    NU_FOREACH_OP(NU_GENERATE_OP_ENUM) NU_OP_UNKNOWN
 } nu_opcode_t;
+const nu_char_t *NU_OP_NAMES[]
+    = { NU_FOREACH_OP(NU_GENERATE_OP_NAME) "UNKNOWN" };
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 #define NU_STACK_SIZE 256
 
@@ -57,32 +63,32 @@ nu__interpreter_exec (nu__interpreter_t *inte)
     nu__instruction_t instruction = inte->instructions[inte->pc++];
     switch (NU_GET_OPCODE(instruction))
     {
-        case OP_ADD:
+        case NU_OP_ADD:
             a                       = inte->stack[--inte->sp];
             b                       = inte->stack[--inte->sp];
             inte->stack[inte->sp++] = a + b;
             break;
-        case OP_SUB:
+        case NU_OP_SUB:
             a                       = inte->stack[--inte->sp];
             b                       = inte->stack[--inte->sp];
             inte->stack[inte->sp++] = a - b;
             break;
-        case OP_MULI:
+        case NU_OP_MULI:
             a                       = inte->stack[--inte->sp];
             b                       = inte->stack[--inte->sp];
             inte->stack[inte->sp++] = a * b;
             break;
-        case OP_MULF:
+        case NU_OP_MULF:
             a                       = inte->stack[--inte->sp];
             b                       = inte->stack[--inte->sp];
             inte->stack[inte->sp++] = nu_fmul(a, b);
             break;
-        case OP_DIVI:
+        case NU_OP_DIVI:
             a                       = inte->stack[--inte->sp];
             b                       = inte->stack[--inte->sp];
             inte->stack[inte->sp++] = a / b;
             break;
-        case OP_DIVF:
+        case NU_OP_DIVF:
             a                       = inte->stack[--inte->sp];
             b                       = inte->stack[--inte->sp];
             inte->stack[inte->sp++] = nu_fdiv(a, b);

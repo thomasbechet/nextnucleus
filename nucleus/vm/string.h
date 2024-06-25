@@ -37,7 +37,7 @@ NU_API nu_uid_t nu_uid(const nu_char_t *str);
 
 NU_API nu_u32_t nu_fnv1a_hash_32(const nu_u8_t *bytes, nu_size_t len);
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 /*
  * Change the ident size. len must be in [0, NU_IDENT_MAX[ range.

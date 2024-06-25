@@ -29,11 +29,11 @@ typedef nu_u32_t nu_table_t;
 typedef struct
 {
     const nu_char_t *name;
-    nu_type_t        type;
+    nu_primitive_t   primitive;
     nu_u16_t         count;
 } nu_field_info_t;
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 typedef struct
 {
@@ -47,9 +47,9 @@ typedef struct
 
 typedef struct
 {
-    nu_ident_t name;
-    nu_type_t  type;
-    nu_u16_t   count;
+    nu_ident_t     name;
+    nu_primitive_t primitive;
+    nu_u16_t       count;
 } nu__field_entry_t;
 
 typedef struct
@@ -136,13 +136,13 @@ nu__table_field (nu__table_manager_t *manager, nu_entity_t e, nu_field_t f)
 }
 
 static nu_size_t
-nu__field_type_size (nu_type_t t)
+nu__field_type_size (nu_primitive_t t)
 {
     switch (t)
     {
-        case NU_TYPE_FV3:
+        case NU_PRIMITIVE_FV3:
             return 4 * 3;
-        case NU_TYPE_QUAT:
+        case NU_PRIMITIVE_QUAT:
             return 4 * 4;
         default:
             return 4;
@@ -155,7 +155,8 @@ nu__table_entry_size (const nu_field_info_t *fields, nu_u16_t field_count)
     nu_size_t i, entry_size = 0;
     for (i = 0; i < field_count; ++i)
     {
-        entry_size += nu__field_type_size(fields[i].type) * fields[i].count;
+        entry_size
+            += nu__field_type_size(fields[i].primitive) * fields[i].count;
     }
     return entry_size;
 }
@@ -201,8 +202,8 @@ nu__table_create (nu__table_manager_t   *manager,
     {
         nu_ident_set_str(manager->fields[manager->field_count].name,
                          fields[i].name);
-        manager->fields[manager->field_count].type  = fields[i].type;
-        manager->fields[manager->field_count].count = fields[i].count;
+        manager->fields[manager->field_count].primitive = fields[i].primitive;
+        manager->fields[manager->field_count].count     = fields[i].count;
         manager->field_count++;
     }
 

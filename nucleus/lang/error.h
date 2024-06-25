@@ -8,6 +8,7 @@ typedef enum
     NULANG_ERROR_NONE,
     NULANG_ERROR_OUT_OF_NODE,
     NULANG_ERROR_OUT_OF_SYMBOL,
+    NULANG_ERROR_OUT_OF_TYPE,
     NULANG_ERROR_OUT_OF_BLOCK,
     NULANG_ERROR_OUT_OF_MEMORY,
     NULANG_ERROR_INVALID,
@@ -18,7 +19,8 @@ typedef enum
     NULANG_ERROR_INVALID_ATOM_EXPRESSION,
     NULANG_ERROR_UNEXPECTED_BINOP,
     NULANG_ERROR_NON_STATEMENT_TOKEN,
-    NULANG_ERROR_IDENTIFIER_AS_STATEMENT
+    NULANG_ERROR_IDENTIFIER_AS_STATEMENT,
+    NULANG_ERROR_EMPTY_TYPE
 } nulang_error_t;
 
 #define NULANG_ERROR_CHECK(error)   \
@@ -34,7 +36,7 @@ typedef struct
     nulang__token_type_t got;
 } nulang__error_data_t;
 
-#ifdef NULANG_IMPLEMENTATION
+#ifdef NULANG_IMPL
 
 #ifdef NU_STDLIB
 
@@ -50,6 +52,7 @@ nulang__error_print (nulang_error_t        code,
         case NULANG_ERROR_OUT_OF_NODE:
             printf("Out of node error");
         case NULANG_ERROR_OUT_OF_SYMBOL:
+        case NULANG_ERROR_OUT_OF_TYPE:
         case NULANG_ERROR_OUT_OF_BLOCK:
         case NULANG_ERROR_OUT_OF_MEMORY:
         case NULANG_ERROR_INVALID:
@@ -61,6 +64,7 @@ nulang__error_print (nulang_error_t        code,
         case NULANG_ERROR_UNEXPECTED_BINOP:
         case NULANG_ERROR_NON_STATEMENT_TOKEN:
         case NULANG_ERROR_IDENTIFIER_AS_STATEMENT:
+        case NULANG_ERROR_EMPTY_TYPE:
             break;
     }
 }

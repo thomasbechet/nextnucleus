@@ -39,7 +39,7 @@ NU_API double     nu_ftodouble(nu_f32_t a);
 NU_API nu_error_t nu_fparse(const nu_char_t *s, nu_size_t n, nu_f32_t *v);
 NU_API nu_error_t nu_iparse(const nu_char_t *s, nu_size_t n, nu_i32_t *v);
 
-#ifdef NU_IMPLEMENTATION
+#ifdef NU_IMPL
 
 nu_bool_t
 nu_is_power_of_two (nu_size_t n)
