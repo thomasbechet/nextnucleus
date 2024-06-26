@@ -9,6 +9,7 @@ NU_API nulang_error_t nulang_source_print_tokens(const nu_char_t *source);
 NU_API void nulang_compiler_print_symbols(const nulang_compiler_t *compiler);
 NU_API void nulang_compiler_print_types(const nulang_compiler_t *compiler);
 NU_API void nulang_compiler_print_ast(const nulang_compiler_t *compiler);
+NU_API void nulang_compiler_print_status(const nulang_compiler_t *compiler);
 
 #endif
 
@@ -18,6 +19,33 @@ NU_API void nulang_compiler_print_ast(const nulang_compiler_t *compiler);
 
 #include <stdio.h>
 
+void
+nulang_compiler_print_status (const nulang_compiler_t *compiler)
+{
+    switch (compiler->error)
+    {
+        case NULANG_ERROR_NONE:
+            printf("No compilation error");
+            break;
+        case NULANG_ERROR_OUT_OF_NODE:
+            printf("Out of node error");
+        case NULANG_ERROR_OUT_OF_SYMBOL:
+        case NULANG_ERROR_OUT_OF_TYPE:
+        case NULANG_ERROR_OUT_OF_BLOCK:
+        case NULANG_ERROR_OUT_OF_MEMORY:
+        case NULANG_ERROR_ILLEGAL_CHARACTER:
+        case NULANG_ERROR_UNTERMINATED_STRING:
+        case NULANG_ERROR_UNEXPECTED_TOKEN:
+        case NULANG_ERROR_SYMBOL_ALREADY_DEFINED:
+        case NULANG_ERROR_INVALID_ATOM_EXPRESSION:
+        case NULANG_ERROR_UNEXPECTED_BINOP:
+        case NULANG_ERROR_NON_STATEMENT_TOKEN:
+        case NULANG_ERROR_IDENTIFIER_AS_STATEMENT:
+        case NULANG_ERROR_EMPTY_TYPE:
+            break;
+    }
+    printf("\n");
+}
 static void
 nulang__print_string (nulang__string_t s)
 {

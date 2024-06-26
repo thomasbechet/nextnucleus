@@ -15,18 +15,20 @@ static const nu_char_t *source
 int
 main (void)
 {
+    nulang_error_t         error;
     nulang_compiler_info_t info;
     nulang_compiler_t      compiler;
-    nulang_error_t         error;
     nulang_source_print_tokens(source);
     NU_ASSERT(error == NULANG_ERROR_NONE);
     nulang_compiler_info_default(&info);
     error = nulang_compiler_init(&info, &compiler);
     NU_ASSERT(error == NULANG_ERROR_NONE);
     error = nulang_compiler_load(&compiler, source);
+    nulang_compiler_print_status(&compiler);
     NU_ASSERT(error == NULANG_ERROR_NONE);
     nulang_compiler_print_symbols(&compiler);
     nulang_compiler_print_types(&compiler);
     nulang_compiler_print_ast(&compiler);
+    nulang_compiler_free(&compiler);
     return 0;
 }

@@ -20,6 +20,7 @@ typedef struct
     nulang__symbol_table_t symbols;
     nulang__type_table_t   types;
     nulang__ast_t          ast;
+    nulang_error_t         error;
 } nulang_compiler_t;
 
 NU_API void nulang_compiler_info_default(nulang_compiler_info_t *info);
@@ -114,15 +115,9 @@ nulang_compiler_load (nulang_compiler_t *compiler, const nu_char_t *source)
                         &compiler->types,
                         &error_data,
                         &parser);
-    error = nulang__parse(&parser);
-
-#ifdef NU_STDLIB
-    if (error != NULANG_ERROR_NONE)
-    {
-        nulang__error_print(error, &error_data, source);
-        return error;
-    }
-#endif
+    error           = nulang__parse(&parser);
+    compiler->error = error;
+    NULANG_ERROR_CHECK(error);
 
     return NULANG_ERROR_NONE;
 }
