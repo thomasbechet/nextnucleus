@@ -214,28 +214,32 @@ typedef struct
 
 typedef struct
 {
+    nulang__symbol_t *symbols;
+    nu_size_t         symbol_count;
+    nu_size_t         symbol_capacity;
+    nulang__block_t  *blocks;
+    nu_size_t         block_count;
+    nu_size_t         block_capacity;
+} nulang__symbol_table_t;
+
+typedef struct
+{
     nulang__string_t ident;
     nulang__span_t   span;
 } nulang__type_t;
 
 typedef struct
 {
-    nulang__symbol_t *symbols;
-    nu_size_t         symbol_count;
-    nu_size_t         symbol_capacity;
-    nulang__type_t   *types;
-    nu_size_t         type_count;
-    nu_size_t         type_capacity;
-    nulang__block_t  *blocks;
-    nu_size_t         block_count;
-    nu_size_t         block_capacity;
-} nulang__symbol_table_t;
+
+    nulang__type_t *types;
+    nu_size_t       type_count;
+    nu_size_t       type_capacity;
+} nulang__type_table_t;
 
 #ifdef NULANG_IMPL
 
 static nulang_error_t
 nulang__symbol_table_init (nu_size_t               symbol_capacity,
-                           nu_size_t               type_capacity,
                            nu_size_t               block_capacity,
                            nulang__allocator_t    *alloc,
                            nulang__symbol_table_t *table)
@@ -248,13 +252,6 @@ nulang__symbol_table_init (nu_size_t               symbol_capacity,
     }
     table->symbol_capacity = symbol_capacity;
     table->symbol_count    = 0;
-    table->types = nulang__alloc(alloc, sizeof(nulang__type_t) * type_capacity);
-    if (!table->types)
-    {
-        return NULANG_ERROR_OUT_OF_MEMORY;
-    }
-    table->type_capacity = type_capacity;
-    table->type_count    = 0;
     table->blocks
         = nulang__alloc(alloc, sizeof(nulang__block_t) * block_capacity);
     if (!table->blocks)
@@ -270,7 +267,6 @@ static void
 nulang__symbol_table_clear (nulang__symbol_table_t *table)
 {
     table->symbol_count = 0;
-    table->type_count   = 0;
     table->block_count  = 0;
 }
 static nulang_error_t
@@ -447,11 +443,32 @@ nulang__lookup_symbol (nulang__symbol_table_t *table,
     }
     return NULANG_ERROR_NONE;
 }
+
 static nulang_error_t
-nulang__lookup_type (nulang__symbol_table_t *table,
-                     nulang__string_t        ident,
-                     nulang__span_t          span,
-                     nulang__type_id_t      *type)
+nulang__type_table_init (nu_size_t             type_capacity,
+                         nulang__allocator_t  *alloc,
+                         nulang__type_table_t *table)
+{
+    table->types = nulang__alloc(alloc, sizeof(nulang__type_t) * type_capacity);
+    if (!table->types)
+    {
+        return NULANG_ERROR_OUT_OF_MEMORY;
+    }
+    table->type_capacity = type_capacity;
+    table->type_count    = 0;
+    return NULANG_ERROR_NONE;
+}
+static void
+nulang__type_table_clear (nulang__type_table_t *table)
+{
+    table->type_count = 0;
+}
+
+static nulang_error_t
+nulang__lookup_type (nulang__type_table_t *table,
+                     nulang__string_t      ident,
+                     nulang__span_t        span,
+                     nulang__type_id_t    *type)
 {
     nu_size_t i;
     for (i = 0; i < table->type_count; ++i)

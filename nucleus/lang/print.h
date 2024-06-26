@@ -1,13 +1,22 @@
 #ifndef NULANG_PRINT_H
 #define NULANG_PRINT_H
 
-#include <nucleus/lang/error.h>
-#include <nucleus/lang/lexer.h>
-#include <nucleus/lang/mir.h>
-#include <nucleus/lang/token.h>
+#include <nucleus/lang/compiler.h>
+
+#ifdef NU_STDLIB
+
+NU_API nulang_error_t nulang_source_print_tokens(const nu_char_t *source);
+NU_API void nulang_compiler_print_symbols(const nulang_compiler_t *compiler);
+NU_API void nulang_compiler_print_types(const nulang_compiler_t *compiler);
+NU_API void nulang_compiler_print_ast(const nulang_compiler_t *compiler);
+
+#endif
+
 #ifdef NULANG_IMPL
 
 #ifdef NU_STDLIB
+
+#include <stdio.h>
 
 static void
 nulang__print_string (nulang__string_t s)
@@ -103,18 +112,18 @@ nulang__print_depth (nu_u16_t depth)
     }
 }
 static void
-nulang__print_type (const nulang__symbol_table_t *table, nulang__type_id_t type)
+nulang__print_type (const nulang__type_table_t *table, nulang__type_id_t type)
 {
     nulang__type_t *t = &table->types[type];
-    printf(" %.*s", (int)t->ident.n, t->ident.p);
+    printf("%.*s", (int)t->ident.n, t->ident.p);
 }
 static void
-nulang__print_symbol (const nulang__symbol_table_t *table,
+nulang__print_symbol (const nulang__symbol_table_t *symbols,
                       nulang__symbol_id_t           symbol)
 {
-    const nulang__symbol_t *sym = &table->symbols[symbol];
-    printf("%.*s [%d]", (int)sym->ident.n, sym->ident.p, sym->block);
-    switch (table->symbols[symbol].type)
+    const nulang__symbol_t *sym = &symbols->symbols[symbol];
+    printf("name: %.*s block: %d", (int)sym->ident.n, sym->ident.p, sym->block);
+    switch (symbols->symbols[symbol].type)
     {
         case SYMBOL_FUNCTION:
             break;
@@ -124,16 +133,15 @@ nulang__print_symbol (const nulang__symbol_table_t *table,
             switch (sym->value.variable.vartype.type)
             {
                 case VARTYPE_ENTITY:
-                    nulang__print_type(table,
-                                       sym->value.variable.vartype.value.type);
+                    printf(" type: %d", sym->value.variable.vartype.value.type);
                     break;
                 case VARTYPE_PRIMITIVE:
-                    printf(" %s",
+                    printf(" type: %s",
                            NU_PRIMITIVE_NAMES[sym->value.variable.vartype.value
                                                   .primitive]);
                     break;
                 case VARTYPE_UNKNOWN:
-                    printf(" UNKNOWN");
+                    printf(" type: UNKNOWN");
                     break;
             }
             if (sym->value.variable.vartype.type == VARTYPE_ENTITY)
@@ -156,17 +164,20 @@ static void
 nulang__print_symbol_table (const nulang__symbol_table_t *table)
 {
     nu_size_t i;
-    printf("SYMBOLS\n");
     for (i = 0; i < table->symbol_count; ++i)
     {
-        printf("  ");
+        printf("[%ld] ", i);
         nulang__print_symbol(table, i);
         printf("\n");
     }
-    printf("TYPES\n");
+}
+static void
+nulang__print_type_table (const nulang__type_table_t *table)
+{
+    nu_size_t i;
     for (i = 0; i < table->type_count; ++i)
     {
-        printf("  ");
+        printf("[%ld] ", i);
         nulang__print_type(table, i);
         printf("\n");
     }
@@ -184,10 +195,10 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
     switch (node->type)
     {
         case AST_VARDECL:
-            nulang__print_symbol(symbols, node->value.symbol);
+            printf("symbol: %d ", node->value.symbol);
             break;
         case AST_SYMBOL:
-            nulang__print_symbol(symbols, node->value.symbol);
+            printf("symbol: %d ", node->value.symbol);
             break;
         case AST_LITERAL:
             nulang__print_literal(&node->value.literal);
@@ -210,6 +221,34 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
     {
         nulang__print_node(symbols, ast, depth, node->next_sibling);
     }
+}
+
+nulang_error_t
+nulang_source_print_tokens (const nu_char_t *source)
+{
+    nulang__lexer_t lexer;
+    nulang__lexer_init(source, &lexer);
+    printf("==== TOKENS ====\n");
+    return nulang__lexer_print_tokens(&lexer);
+}
+void
+nulang_compiler_print_symbols (const nulang_compiler_t *compiler)
+{
+    printf("==== SYMBOLS ====\n");
+    nulang__print_symbol_table(&compiler->symbols);
+}
+void
+nulang_compiler_print_types (const nulang_compiler_t *compiler)
+{
+    printf("==== TYPES ====\n");
+    nulang__print_type_table(&compiler->types);
+}
+void
+nulang_compiler_print_ast (const nulang_compiler_t *compiler)
+{
+    printf("==== NODES ====\n");
+    nulang__print_node(
+        &compiler->symbols, &compiler->ast, 0, compiler->ast.root);
 }
 
 #endif

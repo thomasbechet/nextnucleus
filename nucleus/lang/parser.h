@@ -14,6 +14,7 @@ typedef struct
     nulang__lexer_t        *lexer;
     nulang__ast_t          *ast;
     nulang__symbol_table_t *symbols;
+    nulang__type_table_t   *types;
 } nulang__parser_t;
 
 static nulang_error_t nulang__parse_expression(nulang__parser_t *parser,
@@ -73,6 +74,7 @@ nulang__parser_accept (nulang__parser_t    *parser,
 static nulang_error_t
 nulang__try_parse_vartype (nulang__parser_t       *parser,
                            nulang__symbol_table_t *symbols,
+                           nulang__type_table_t   *types,
                            nulang__block_id_t      block,
                            nulang__vartype_t      *vartype,
                            nu_bool_t              *found)
@@ -97,7 +99,7 @@ nulang__try_parse_vartype (nulang__parser_t       *parser,
         {
             nulang__type_id_t type;
             error = nulang__lookup_type(
-                symbols, tok.value.identifier, tok.span, &type);
+                types, tok.value.identifier, tok.span, &type);
             NULANG_ERROR_CHECK(error);
             vartype->type       = VARTYPE_ENTITY;
             vartype->value.type = type;
@@ -164,8 +166,12 @@ nulang__parse_function_argument_list (
     if (found)
     {
         nulang__vartype_t vartype;
-        error = nulang__try_parse_vartype(
-            parser, parser->symbols, function_block, &vartype, &found);
+        error = nulang__try_parse_vartype(parser,
+                                          parser->symbols,
+                                          parser->types,
+                                          function_block,
+                                          &vartype,
+                                          &found);
         NULANG_ERROR_CHECK(error);
         error = callback(&tok, vartype, userdata);
         NULANG_ERROR_CHECK(error);
@@ -178,8 +184,12 @@ nulang__parse_function_argument_list (
             {
                 break;
             }
-            error = nulang__try_parse_vartype(
-                parser, parser->symbols, function_block, &vartype, &found);
+            error = nulang__try_parse_vartype(parser,
+                                              parser->symbols,
+                                              parser->types,
+                                              function_block,
+                                              &vartype,
+                                              &found);
             NULANG_ERROR_CHECK(error);
             error = callback(&tok, vartype, userdata);
             NULANG_ERROR_CHECK(error);
@@ -490,7 +500,7 @@ nulang__parse_variable_declaration (nulang__parser_t  *parser,
     error = nulang__parser_expect(parser, TOKEN_IDENTIFIER, &ident);
     NULANG_ERROR_CHECK(error);
     error = nulang__try_parse_vartype(
-        parser, parser->symbols, block, &vartype, &found);
+        parser, parser->symbols, parser->types, block, &vartype, &found);
     NULANG_ERROR_CHECK(error);
     error = nulang__parser_expect(parser, TOKEN_ASSIGN, &tok);
     NULANG_ERROR_CHECK(error);
@@ -774,6 +784,7 @@ static void
 nulang__parser_init (nulang__lexer_t        *lexer,
                      nulang__ast_t          *ast,
                      nulang__symbol_table_t *symbols,
+                     nulang__type_table_t   *types,
                      nulang__error_data_t   *error,
                      nulang__parser_t       *parser)
 {
@@ -781,6 +792,7 @@ nulang__parser_init (nulang__lexer_t        *lexer,
     parser->lexer   = lexer;
     parser->ast     = ast;
     parser->symbols = symbols;
+    parser->types   = types;
 }
 
 #endif

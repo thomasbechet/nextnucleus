@@ -6,15 +6,17 @@
 typedef enum
 {
     NULANG_ERROR_NONE,
+    /* allocation error */
     NULANG_ERROR_OUT_OF_NODE,
     NULANG_ERROR_OUT_OF_SYMBOL,
     NULANG_ERROR_OUT_OF_TYPE,
     NULANG_ERROR_OUT_OF_BLOCK,
     NULANG_ERROR_OUT_OF_MEMORY,
-    NULANG_ERROR_INVALID,
+    /* lexer error */
     NULANG_ERROR_ILLEGAL_CHARACTER,
     NULANG_ERROR_UNTERMINATED_STRING,
     NULANG_ERROR_UNEXPECTED_TOKEN,
+    /* parser error */
     NULANG_ERROR_SYMBOL_ALREADY_DEFINED,
     NULANG_ERROR_INVALID_ATOM_EXPRESSION,
     NULANG_ERROR_UNEXPECTED_BINOP,
@@ -40,6 +42,8 @@ typedef struct
 
 #ifdef NU_STDLIB
 
+#include <stdio.h>
+
 static void
 nulang__error_print (nulang_error_t        code,
                      nulang__error_data_t *data,
@@ -55,7 +59,6 @@ nulang__error_print (nulang_error_t        code,
         case NULANG_ERROR_OUT_OF_TYPE:
         case NULANG_ERROR_OUT_OF_BLOCK:
         case NULANG_ERROR_OUT_OF_MEMORY:
-        case NULANG_ERROR_INVALID:
         case NULANG_ERROR_ILLEGAL_CHARACTER:
         case NULANG_ERROR_UNTERMINATED_STRING:
         case NULANG_ERROR_UNEXPECTED_TOKEN:
