@@ -95,7 +95,7 @@ static const nu_char_t *NULANG_BLOCK_NAMES[]
     = { NULANG_FOREACH_BLOCK(NULANG_GENERATE_NAME) };
 
 #define NULANG_FOREACH_VARTYPE(VARTYPE) \
-    VARTYPE(VARTYPE_ENTITY)             \
+    VARTYPE(VARTYPE_ARCHETYPE)          \
     VARTYPE(VARTYPE_PRIMITIVE)          \
     VARTYPE(VARTYPE_UNKNOWN)
 typedef enum
@@ -107,18 +107,18 @@ static const nu_char_t *NULANG_VARTYPE_NAMES[]
 
 typedef nu_u32_t nulang__node_id_t;
 typedef nu_u32_t nulang__symbol_id_t;
-typedef nu_u32_t nulang__type_id_t;
+typedef nu_u32_t nulang__archetype_id_t;
 typedef nu_u32_t nulang__block_id_t;
-#define NULANG_NODE_NULL    0xffffffff
-#define NULANG_SYMBOL_NULL  0xffffffff
-#define NULANG_TYPE_NULL    0xffffffff
-#define NULANG_BLOCK_NULL   0xffffffff
-#define NULANG_BLOCK_GLOBAL 0
+#define NULANG_NODE_NULL      0xffffffff
+#define NULANG_SYMBOL_NULL    0xffffffff
+#define NULANG_ARCHETYPE_NULL 0xffffffff
+#define NULANG_BLOCK_NULL     0xffffffff
+#define NULANG_BLOCK_GLOBAL   0
 
 typedef union
 {
-    nu_primitive_t    primitive;
-    nulang__type_id_t type;
+    nu_primitive_t         primitive;
+    nulang__archetype_id_t archetype;
 } nulang__vartype_value_t;
 
 typedef struct
@@ -129,14 +129,14 @@ typedef struct
 
 typedef union
 {
-    nulang__lit_t       literal;
-    nulang__binop_t     binop;
-    nulang__unop_t      unop;
-    nulang__vartype_t   vartype;
-    nu_primitive_t      primitive;
-    nulang__type_id_t   type;
-    nulang__symbol_id_t symbol;
-    nulang__string_t    fieldlookup;
+    nulang__lit_t          literal;
+    nulang__binop_t        binop;
+    nulang__unop_t         unop;
+    nulang__vartype_t      vartype;
+    nu_primitive_t         primitive;
+    nulang__archetype_id_t archetype;
+    nulang__symbol_id_t    symbol;
+    nulang__string_t       fieldlookup;
 } nulang__node_value_t;
 
 typedef struct
@@ -226,15 +226,15 @@ typedef struct
 {
     nulang__string_t ident;
     nulang__span_t   span;
-} nulang__type_t;
+} nulang__archetype_t;
 
 typedef struct
 {
 
-    nulang__type_t *types;
-    nu_size_t       type_count;
-    nu_size_t       type_capacity;
-} nulang__type_table_t;
+    nulang__archetype_t *archetypes;
+    nu_size_t            archetype_count;
+    nu_size_t            archetype_capacity;
+} nulang__archetype_table_t;
 
 #ifdef NULANG_IMPL
 
@@ -445,48 +445,49 @@ nulang__lookup_symbol (nulang__symbol_table_t *table,
 }
 
 static nulang_error_t
-nulang__type_table_init (nu_size_t             type_capacity,
-                         nulang__allocator_t  *alloc,
-                         nulang__type_table_t *table)
+nulang__archetype_table_init (nu_size_t                  archetype_capacity,
+                              nulang__allocator_t       *alloc,
+                              nulang__archetype_table_t *table)
 {
-    table->types = nulang__alloc(alloc, sizeof(nulang__type_t) * type_capacity);
-    if (!table->types)
+    table->archetypes = nulang__alloc(
+        alloc, sizeof(nulang__archetype_t) * archetype_capacity);
+    if (!table->archetypes)
     {
         return NULANG_ERROR_OUT_OF_MEMORY;
     }
-    table->type_capacity = type_capacity;
-    table->type_count    = 0;
+    table->archetype_capacity = archetype_capacity;
+    table->archetype_count    = 0;
     return NULANG_ERROR_NONE;
 }
 static void
-nulang__type_table_clear (nulang__type_table_t *table)
+nulang__archetype_table_clear (nulang__archetype_table_t *table)
 {
-    table->type_count = 0;
+    table->archetype_count = 0;
 }
 
 static nulang_error_t
-nulang__lookup_type (nulang__type_table_t *table,
-                     nulang__string_t      ident,
-                     nulang__span_t        span,
-                     nulang__type_id_t    *type)
+nulang__lookup_archetype (nulang__archetype_table_t *table,
+                          nulang__string_t           ident,
+                          nulang__span_t             span,
+                          nulang__archetype_id_t    *arch)
 {
     nu_size_t i;
-    for (i = 0; i < table->type_count; ++i)
+    for (i = 0; i < table->archetype_count; ++i)
     {
-        if (NULANG_SOURCE_STRING_EQUALS(table->types[i].ident, ident))
+        if (NULANG_SOURCE_STRING_EQUALS(table->archetypes[i].ident, ident))
         {
-            *type = i;
+            *arch = i;
             return NULANG_ERROR_NONE;
         }
     }
-    *type = NULANG_TYPE_NULL;
-    if (table->type_count >= table->type_capacity)
+    *arch = NULANG_ARCHETYPE_NULL;
+    if (table->archetype_count >= table->archetype_capacity)
     {
-        return NULANG_ERROR_OUT_OF_SYMBOL;
+        return NULANG_ERROR_OUT_OF_ARCHETYPE;
     }
-    *type                     = table->type_count++;
-    table->types[*type].ident = ident;
-    table->types[*type].span  = span;
+    *arch                          = table->archetype_count++;
+    table->archetypes[*arch].ident = ident;
+    table->archetypes[*arch].span  = span;
     return NULANG_ERROR_NONE;
 }
 

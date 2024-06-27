@@ -22,7 +22,7 @@ main (void)
 {
 
     nu__allocator_t     allocator;
-    nu_allocator_info_t alloc_info;
+    nu_allocator_api_t alloc_info;
     nu__slotmap_t       sm;
     nu__slotlist_t      sl;
     nu__slot_t          first, it;
@@ -35,8 +35,8 @@ main (void)
     NU_ERROR_ASSERT(nu__allocator_init(&alloc_info, &allocator));
 
     nu__slotmap_init(
-        &allocator, NU_MEMORY_USAGE_ECS, sizeof(object_t), OBJECT_COUNT, &sm);
-    nu__slotlist_init(&allocator, NU_MEMORY_USAGE_ECS, OBJECT_COUNT, &sl);
+        &allocator, NU_MEMORY_USAGE_TABLE, sizeof(object_t), OBJECT_COUNT, &sm);
+    nu__slotlist_init(&allocator, NU_MEMORY_USAGE_TABLE, OBJECT_COUNT, &sl);
 
     for (i = 0; i < OBJECT_COUNT; ++i)
     {

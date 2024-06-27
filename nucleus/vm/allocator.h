@@ -9,7 +9,7 @@
 typedef enum
 {
     NU_MEMORY_USAGE_CORE,
-    NU_MEMORY_USAGE_ECS,
+    NU_MEMORY_USAGE_TABLE,
     NU_MEMORY_USAGE_RENDERER
 } nu_memory_usage_t;
 
@@ -22,22 +22,21 @@ typedef struct
 {
     nu_allocator_callback_pfn_t callback;
     void                       *userdata;
-} nu_allocator_info_t;
+} nu_allocator_api_t;
 
 #ifdef NU_STDLIB
-NU_API void nu_allocator_info_stdlib(nu_allocator_info_t *info);
+NU_API void nu_allocator_info_stdlib(nu_allocator_api_t *info);
 #endif
 
 #ifdef NU_IMPL
 
 typedef struct
 {
-    nu_allocator_callback_pfn_t callback;
-    void                       *userdata;
+    nu_allocator_api_t api;
 } nu__allocator_t;
 
-nu_error_t nu__allocator_init(const nu_allocator_info_t *info,
-                              nu__allocator_t           *alloc);
+nu_error_t nu__allocator_init(const nu_allocator_api_t *info,
+                              nu__allocator_t          *alloc);
 void      *nu__alloc(nu__allocator_t  *alloc,
                      nu_size_t         size,
                      nu_memory_usage_t usage);
@@ -63,7 +62,7 @@ nu__static_allocator_callback (nu_size_t         size,
 }
 
 void
-nu_allocator_info_stdlib (nu_allocator_info_t *info)
+nu_allocator_info_stdlib (nu_allocator_api_t *info)
 {
     info->userdata = NU_NULL;
     info->callback = nu__static_allocator_callback;
@@ -72,10 +71,9 @@ nu_allocator_info_stdlib (nu_allocator_info_t *info)
 #endif
 
 nu_error_t
-nu__allocator_init (const nu_allocator_info_t *info, nu__allocator_t *alloc)
+nu__allocator_init (const nu_allocator_api_t *api, nu__allocator_t *alloc)
 {
-    alloc->callback = info->callback;
-    alloc->userdata = info->userdata;
+    alloc->api = *api;
     return NU_ERROR_NONE;
 }
 
@@ -83,7 +81,7 @@ void *
 nu__alloc (nu__allocator_t *alloc, nu_size_t size, nu_memory_usage_t usage)
 {
     NU_ASSERT(size > 0);
-    return alloc->callback(size, 16, usage, alloc->userdata);
+    return alloc->api.callback(size, 16, usage, alloc->api.userdata);
 }
 
 void *
@@ -93,7 +91,7 @@ nu__aligned_alloc (nu__allocator_t  *alloc,
                    nu_memory_usage_t usage)
 {
     NU_ASSERT(size > 0);
-    return alloc->callback(size, align, usage, alloc->userdata);
+    return alloc->api.callback(size, align, usage, alloc->api.userdata);
 }
 
 #endif

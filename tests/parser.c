@@ -27,7 +27,7 @@ main (void)
     nulang_compiler_print_status(&compiler);
     NU_ASSERT(error == NULANG_ERROR_NONE);
     nulang_compiler_print_symbols(&compiler);
-    nulang_compiler_print_types(&compiler);
+    nulang_compiler_print_archetypes(&compiler);
     nulang_compiler_print_ast(&compiler);
     nulang_compiler_free(&compiler);
     return 0;

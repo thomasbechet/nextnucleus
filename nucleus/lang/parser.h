@@ -10,11 +10,11 @@
 
 typedef struct
 {
-    nulang__error_data_t   *error;
-    nulang__lexer_t        *lexer;
-    nulang__ast_t          *ast;
-    nulang__symbol_table_t *symbols;
-    nulang__type_table_t   *types;
+    nulang__error_data_t      *error;
+    nulang__lexer_t           *lexer;
+    nulang__ast_t             *ast;
+    nulang__symbol_table_t    *symbols;
+    nulang__archetype_table_t *archetypes;
 } nulang__parser_t;
 
 static nulang_error_t nulang__parse_expression(nulang__parser_t *parser,
@@ -72,12 +72,12 @@ nulang__parser_accept (nulang__parser_t    *parser,
     return NULANG_ERROR_NONE;
 }
 static nulang_error_t
-nulang__try_parse_vartype (nulang__parser_t       *parser,
-                           nulang__symbol_table_t *symbols,
-                           nulang__type_table_t   *types,
-                           nulang__block_id_t      block,
-                           nulang__vartype_t      *vartype,
-                           nu_bool_t              *found)
+nulang__try_parse_vartype (nulang__parser_t          *parser,
+                           nulang__symbol_table_t    *symbols,
+                           nulang__archetype_table_t *types,
+                           nulang__block_id_t         block,
+                           nulang__vartype_t         *vartype,
+                           nu_bool_t                 *found)
 {
     nulang_error_t  error;
     nulang__token_t tok;
@@ -97,12 +97,12 @@ nulang__try_parse_vartype (nulang__parser_t       *parser,
         NULANG_ERROR_CHECK(error);
         if (*found)
         {
-            nulang__type_id_t type;
-            error = nulang__lookup_type(
-                types, tok.value.identifier, tok.span, &type);
+            nulang__archetype_id_t arch;
+            error = nulang__lookup_archetype(
+                types, tok.value.identifier, tok.span, &arch);
             NULANG_ERROR_CHECK(error);
-            vartype->type       = VARTYPE_ENTITY;
-            vartype->value.type = type;
+            vartype->type            = VARTYPE_ARCHETYPE;
+            vartype->value.archetype = arch;
             return NULANG_ERROR_NONE;
         }
     }
@@ -168,7 +168,7 @@ nulang__parse_function_argument_list (
         nulang__vartype_t vartype;
         error = nulang__try_parse_vartype(parser,
                                           parser->symbols,
-                                          parser->types,
+                                          parser->archetypes,
                                           function_block,
                                           &vartype,
                                           &found);
@@ -186,7 +186,7 @@ nulang__parse_function_argument_list (
             }
             error = nulang__try_parse_vartype(parser,
                                               parser->symbols,
-                                              parser->types,
+                                              parser->archetypes,
                                               function_block,
                                               &vartype,
                                               &found);
@@ -500,7 +500,7 @@ nulang__parse_variable_declaration (nulang__parser_t  *parser,
     error = nulang__parser_expect(parser, TOKEN_IDENTIFIER, &ident);
     NULANG_ERROR_CHECK(error);
     error = nulang__try_parse_vartype(
-        parser, parser->symbols, parser->types, block, &vartype, &found);
+        parser, parser->symbols, parser->archetypes, block, &vartype, &found);
     NULANG_ERROR_CHECK(error);
     error = nulang__parser_expect(parser, TOKEN_ASSIGN, &tok);
     NULANG_ERROR_CHECK(error);
@@ -781,18 +781,18 @@ nulang__parse (nulang__parser_t *parser)
 }
 
 static void
-nulang__parser_init (nulang__lexer_t        *lexer,
-                     nulang__ast_t          *ast,
-                     nulang__symbol_table_t *symbols,
-                     nulang__type_table_t   *types,
-                     nulang__error_data_t   *error,
-                     nulang__parser_t       *parser)
+nulang__parser_init (nulang__lexer_t           *lexer,
+                     nulang__ast_t             *ast,
+                     nulang__symbol_table_t    *symbols,
+                     nulang__archetype_table_t *archetypes,
+                     nulang__error_data_t      *error,
+                     nulang__parser_t          *parser)
 {
-    parser->error   = error;
-    parser->lexer   = lexer;
-    parser->ast     = ast;
-    parser->symbols = symbols;
-    parser->types   = types;
+    parser->error      = error;
+    parser->lexer      = lexer;
+    parser->ast        = ast;
+    parser->symbols    = symbols;
+    parser->archetypes = archetypes;
 }
 
 #endif

@@ -9,7 +9,7 @@ typedef enum
     /* allocation error */
     NULANG_ERROR_OUT_OF_NODE,
     NULANG_ERROR_OUT_OF_SYMBOL,
-    NULANG_ERROR_OUT_OF_TYPE,
+    NULANG_ERROR_OUT_OF_ARCHETYPE,
     NULANG_ERROR_OUT_OF_BLOCK,
     NULANG_ERROR_OUT_OF_MEMORY,
     /* lexer error */

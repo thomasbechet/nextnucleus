@@ -22,34 +22,24 @@ allocator_callback (nu_size_t         size,
     return malloc(size);
 }
 
-nu_error_t
-bootstrap (nu_api_t api)
-{
-    nu_error_t      error;
-    nu_table_t      table;
-    nu_entity_t     e;
-    nu_field_info_t fields[] = { { "position", NU_PRIMITIVE_INT, 1 },
-                                 { "rotation", NU_PRIMITIVE_INT, 1 } };
-
-    error = nu_create_table(api, "player", fields, 2, &table);
-    NU_ERROR_ASSERT(error);
-
-    e = nu_spawn(api, table);
-    NU_ASSERT(e);
-
-    (void)error;
-    (void)e;
-    (void)table;
-
-    return NU_ERROR_NONE;
-}
-
 static nu_error_t
-load_properties (void *userdata, nu_vm_properties_t *properties)
+load_vm_properties (void *userdata, nu_vm_properties_t *properties)
 {
     (void)userdata;
     nu_vm_properties_default(properties);
     return NU_ERROR_NONE;
+}
+
+static void
+register_archetypes (nu_vm_t vm)
+{
+    nu_error_t      error;
+    nu_archetype_t  archetype;
+    nu_field_info_t fields[] = { { "position", NU_PRIMITIVE_INT, NU_NULL, 1 },
+                                 { "rotation", NU_PRIMITIVE_INT, NU_NULL, 1 } };
+
+    error = nu_vm_create_archetype(vm, "player", fields, 2, &archetype);
+    NU_ERROR_ASSERT(error);
 }
 
 int
@@ -70,16 +60,13 @@ main (void)
         c = b;
     }
 
-    info.allocator.userdata        = NU_NULL;
-    info.allocator.callback        = allocator_callback;
-    info.cartridge.userdata        = NU_NULL;
-    info.cartridge.load_properties = load_properties;
+    info.allocator.userdata           = NU_NULL;
+    info.allocator.callback           = allocator_callback;
+    info.cartridge.userdata           = NU_NULL;
+    info.cartridge.load_vm_properties = load_vm_properties;
 
     error = nu_vm_init(&info, &vm);
     NU_ERROR_CHECK(error, return 123);
-
-    error = nu_vm_exec(vm, bootstrap);
-    NU_ERROR_CHECK(error, return 124);
 
     tick = 10;
     while (--tick)

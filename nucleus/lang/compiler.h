@@ -8,7 +8,7 @@
 typedef struct
 {
     nu_size_t               symbol_capacity;
-    nu_size_t               type_capacity;
+    nu_size_t               archetype_capacity;
     nu_size_t               block_capacity;
     nu_size_t               node_capacity;
     nulang_allocator_info_t allocator;
@@ -16,11 +16,11 @@ typedef struct
 
 typedef struct
 {
-    nulang__allocator_t    allocator;
-    nulang__symbol_table_t symbols;
-    nulang__type_table_t   types;
-    nulang__ast_t          ast;
-    nulang_error_t         error;
+    nulang__allocator_t       allocator;
+    nulang__symbol_table_t    symbols;
+    nulang__archetype_table_t archetypes;
+    nulang__ast_t             ast;
+    nulang_error_t            error;
 } nulang_compiler_t;
 
 NU_API void nulang_compiler_info_default(nulang_compiler_info_t *info);
@@ -48,10 +48,10 @@ nulang__default_allocator (nu_size_t s, void *userdata)
 void
 nulang_compiler_info_default (nulang_compiler_info_t *info)
 {
-    info->symbol_capacity = 256;
-    info->type_capacity   = 256;
-    info->block_capacity  = 256;
-    info->node_capacity   = 256;
+    info->symbol_capacity    = 256;
+    info->archetype_capacity = 256;
+    info->block_capacity     = 256;
+    info->node_capacity      = 256;
 #ifdef NU_STDLIB
     info->allocator.callback = nulang__default_allocator;
     info->allocator.userdata = NU_NULL;
@@ -75,8 +75,8 @@ nulang_compiler_init (const nulang_compiler_info_t *info,
                                       &compiler->allocator,
                                       &compiler->symbols);
     NULANG_ERROR_CHECK(error);
-    error = nulang__type_table_init(
-        info->type_capacity, &compiler->allocator, &compiler->types);
+    error = nulang__archetype_table_init(
+        info->archetype_capacity, &compiler->allocator, &compiler->archetypes);
     NULANG_ERROR_CHECK(error);
 
     error = nulang__ast_init(
@@ -96,7 +96,7 @@ static void
 nulang__compiler_prepare (nulang_compiler_t *compiler)
 {
     nulang__symbol_table_clear(&compiler->symbols);
-    nulang__type_table_clear(&compiler->types);
+    nulang__archetype_table_clear(&compiler->archetypes);
     nulang__ast_clear(&compiler->ast);
 }
 nulang_error_t
@@ -112,7 +112,7 @@ nulang_compiler_load (nulang_compiler_t *compiler, const nu_char_t *source)
     nulang__parser_init(&lexer,
                         &compiler->ast,
                         &compiler->symbols,
-                        &compiler->types,
+                        &compiler->archetypes,
                         &error_data,
                         &parser);
     error           = nulang__parse(&parser);

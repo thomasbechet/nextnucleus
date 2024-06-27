@@ -2,12 +2,14 @@
 #define NULANG_PRINT_H
 
 #include <nucleus/lang/compiler.h>
+#include <nucleus/lang/error.h>
+#include <nucleus/lang/mir.h>
 
 #ifdef NU_STDLIB
 
 NU_API nulang_error_t nulang_source_print_tokens(const nu_char_t *source);
 NU_API void nulang_compiler_print_symbols(const nulang_compiler_t *compiler);
-NU_API void nulang_compiler_print_types(const nulang_compiler_t *compiler);
+NU_API void nulang_compiler_print_archetypes(const nulang_compiler_t *compiler);
 NU_API void nulang_compiler_print_ast(const nulang_compiler_t *compiler);
 NU_API void nulang_compiler_print_status(const nulang_compiler_t *compiler);
 
@@ -30,7 +32,7 @@ nulang_compiler_print_status (const nulang_compiler_t *compiler)
         case NULANG_ERROR_OUT_OF_NODE:
             printf("Out of node error");
         case NULANG_ERROR_OUT_OF_SYMBOL:
-        case NULANG_ERROR_OUT_OF_TYPE:
+        case NULANG_ERROR_OUT_OF_ARCHETYPE:
         case NULANG_ERROR_OUT_OF_BLOCK:
         case NULANG_ERROR_OUT_OF_MEMORY:
         case NULANG_ERROR_ILLEGAL_CHARACTER:
@@ -140,9 +142,10 @@ nulang__print_depth (nu_u16_t depth)
     }
 }
 static void
-nulang__print_type (const nulang__type_table_t *table, nulang__type_id_t type)
+nulang__print_archetype (const nulang__archetype_table_t *table,
+                         nulang__archetype_id_t           arch)
 {
-    nulang__type_t *t = &table->types[type];
+    nulang__archetype_t *t = &table->archetypes[arch];
     printf("%.*s", (int)t->ident.n, t->ident.p);
 }
 static void
@@ -160,11 +163,12 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
         case SYMBOL_VARIABLE:
             switch (sym->value.variable.vartype.type)
             {
-                case VARTYPE_ENTITY:
-                    printf(" type: %d", sym->value.variable.vartype.value.type);
+                case VARTYPE_ARCHETYPE:
+                    printf(" archetype: %d",
+                           sym->value.variable.vartype.value.archetype);
                     break;
                 case VARTYPE_PRIMITIVE:
-                    printf(" type: %s",
+                    printf(" primitive: %s",
                            NU_PRIMITIVE_NAMES[sym->value.variable.vartype.value
                                                   .primitive]);
                     break;
@@ -172,7 +176,7 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
                     printf(" type: UNKNOWN");
                     break;
             }
-            if (sym->value.variable.vartype.type == VARTYPE_ENTITY)
+            if (sym->value.variable.vartype.type == VARTYPE_ARCHETYPE)
             {
                 break;
             }
@@ -200,22 +204,21 @@ nulang__print_symbol_table (const nulang__symbol_table_t *table)
     }
 }
 static void
-nulang__print_type_table (const nulang__type_table_t *table)
+nulang__print_archetype_table (const nulang__archetype_table_t *table)
 {
     nu_size_t i;
-    for (i = 0; i < table->type_count; ++i)
+    for (i = 0; i < table->archetype_count; ++i)
     {
         printf("[%ld] ", i);
-        nulang__print_type(table, i);
+        nulang__print_archetype(table, i);
         printf("\n");
     }
 }
 static void
 nulang__print_node (const nulang__symbol_table_t *symbols,
                     const nulang__ast_t          *ast,
-
-                    nu_u16_t          depth,
-                    nulang__node_id_t id)
+                    nu_u16_t                      depth,
+                    nulang__node_id_t             id)
 {
     nulang__node_t *node = &ast->nodes[id];
     nulang__print_depth(depth);
@@ -266,10 +269,10 @@ nulang_compiler_print_symbols (const nulang_compiler_t *compiler)
     nulang__print_symbol_table(&compiler->symbols);
 }
 void
-nulang_compiler_print_types (const nulang_compiler_t *compiler)
+nulang_compiler_print_archetypes (const nulang_compiler_t *compiler)
 {
-    printf("==== TYPES ====\n");
-    nulang__print_type_table(&compiler->types);
+    printf("==== ARCHETYPES ====\n");
+    nulang__print_archetype_table(&compiler->archetypes);
 }
 void
 nulang_compiler_print_ast (const nulang_compiler_t *compiler)

@@ -8,7 +8,6 @@
 #include <nucleus/vm/allocator.h>
 #include <nucleus/vm/renderer.h>
 #include <nucleus/vm/cartridge.h>
-#include <nucleus/vm/api.h>
 #include <nucleus/vm/list.h>
 #include <nucleus/vm/slotmap.h>
 #include <nucleus/vm/interpreter.h>
@@ -17,26 +16,26 @@ typedef struct nu__vm *nu_vm_t;
 
 typedef struct
 {
-    nu_allocator_info_t allocator;
-    nu_cartridge_info_t cartridge;
+    nu_allocator_api_t allocator;
+    nu_cartridge_api_t cartridge;
 } nu_vm_info_t;
 
-typedef nu_error_t (*nu_vm_exec_pfn_t)(nu_api_t api);
-
 NU_API nu_error_t nu_vm_init(const nu_vm_info_t *info, nu_vm_t *vm);
-
 NU_API nu_error_t nu_vm_free(nu_vm_t vm);
 
 NU_API nu_error_t nu_vm_tick(nu_vm_t vm);
 
 NU_API nu_error_t nu_vm_save(nu_vm_t vm);
-
 NU_API nu_error_t nu_vm_load(nu_vm_t vm);
-
-NU_API nu_error_t nu_vm_exec(nu_vm_t vm, nu_vm_exec_pfn_t exec);
 
 NU_API nu_error_t nu_vm_bind_renderer(nu_vm_t                   vm,
                                       const nu_renderer_info_t *info);
+
+NU_API nu_error_t nu_vm_create_archetype(nu_vm_t                vm,
+                                         const nu_char_t       *name,
+                                         const nu_field_info_t *fields,
+                                         nu_u16_t               field_count,
+                                         nu_archetype_t        *archetype);
 
 #ifdef NU_IMPL
 
@@ -46,16 +45,8 @@ struct nu__vm
     nu__renderer_t         renderer;
     nu__table_manager_t    tables;
     nu__property_manager_t properties;
+    nu__resource_manager_t resources;
 };
-
-static struct nu__api
-nu__build_api (nu_vm_t vm)
-{
-    struct nu__api api;
-    api.allocator = &vm->allocator;
-    api.tables    = &vm->tables;
-    return api;
-}
 
 nu_error_t
 nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
@@ -75,8 +66,8 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
     error = nu__allocator_init(&info->allocator, &data->allocator);
     NU_ERROR_CHECK(error, return error);
 
-    error = info->cartridge.load_properties(info->cartridge.userdata,
-                                            &properties);
+    error = info->cartridge.load_vm_properties(info->cartridge.userdata,
+                                               &properties);
     NU_ERROR_CHECK(error, return error);
 
     error = nu__table_manager_init(&data->tables,
@@ -86,11 +77,16 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
                                    properties.chunk_capacity);
     NU_ERROR_CHECK(error, return error);
 
+    error = nu__resource_manager_init(
+        &data->allocator, properties.resource_capacity, &data->resources);
+    NU_ERROR_CHECK(error, return error);
+
+    /* TODO: load base bundle */
+
     *vm = data;
 
     return NU_ERROR_NONE;
 }
-
 nu_error_t
 nu_vm_free (nu_vm_t vm)
 {
@@ -101,16 +97,19 @@ nu_vm_free (nu_vm_t vm)
 nu_error_t
 nu_vm_tick (nu_vm_t vm)
 {
-    struct nu__api api = nu__build_api(vm);
-    (void)api;
+    (void)vm;
     return NU_ERROR_NONE;
 }
 
 nu_error_t
-nu_vm_exec (nu_vm_t vm, nu_vm_exec_pfn_t exec)
+nu_vm_create_archetype (nu_vm_t                vm,
+                        const nu_char_t       *name,
+                        const nu_field_info_t *fields,
+                        nu_u16_t               field_count,
+                        nu_archetype_t        *archetype)
 {
-    struct nu__api api = nu__build_api(vm);
-    return exec(&api);
+    return nu__archetype_create(
+        &vm->tables, name, fields, field_count, archetype);
 }
 
 #endif

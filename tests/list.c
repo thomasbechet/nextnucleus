@@ -12,7 +12,7 @@ int
 main (void)
 {
     nu__allocator_t     allocator;
-    nu_allocator_info_t alloc_info;
+    nu_allocator_api_t alloc_info;
     nu__list_t          list;
     object_t           *objs[OBJECT_COUNT];
     object_t           *it;
