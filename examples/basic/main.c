@@ -42,6 +42,28 @@ register_archetypes (nu_vm_t vm)
     NU_ERROR_ASSERT(error);
 }
 
+static nu_error_t
+cartridge_load (void *userdata, nu_cartdata_type_t type, void *data)
+{
+    (void)userdata;
+    switch (type)
+    {
+        case NU_CARTDATA_VM_PROPERTIES: {
+            nu_cartdata_vm_properties_t *pdata = data;
+            nu_vm_properties_default(pdata->props);
+            break;
+        }
+        case NU_CARTDATA_BUNDLE:
+            break;
+        case NU_CARTDATA_RESOURCE:
+            break;
+        case NU_CARTDATA_UNKNOWN:
+            return NU_ERROR_RESOURCE_NOT_FOUND;
+            break;
+    }
+    return NU_ERROR_NONE;
+}
+
 int
 main (void)
 {
@@ -60,10 +82,10 @@ main (void)
         c = b;
     }
 
-    info.allocator.userdata           = NU_NULL;
-    info.allocator.callback           = allocator_callback;
-    info.cartridge.userdata           = NU_NULL;
-    info.cartridge.load_vm_properties = load_vm_properties;
+    info.allocator.userdata = NU_NULL;
+    info.allocator.callback = allocator_callback;
+    info.cartridge.userdata = NU_NULL;
+    info.cartridge.load     = cartridge_load;
 
     error = nu_vm_init(&info, &vm);
     NU_ERROR_CHECK(error, return 123);
