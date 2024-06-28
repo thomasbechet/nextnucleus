@@ -66,8 +66,8 @@ nu_vm_init (const nu_vm_info_t *info, nu_vm_t *vm)
     error = nu__allocator_init(&info->allocator, &data->allocator);
     NU_ERROR_CHECK(error, return error);
 
-    error = info->cartridge.load_vm_properties(info->cartridge.userdata,
-                                               &properties);
+    error = info->cartridge.load(
+        info->cartridge.userdata, NU_CARTDATA_VM_PROPERTIES, &properties);
     NU_ERROR_CHECK(error, return error);
 
     error = nu__table_manager_init(&data->tables,
