@@ -4,14 +4,15 @@
 #include <nucleus/lang/compiler.h>
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/mir.h>
+#include <nucleus/lang/token.h>
 
 #ifdef NU_STDLIB
 
-NU_API nulang_error_t nulang_source_print_tokens(const nu_char_t *source);
-NU_API void nulang_compiler_print_symbols(const nulang_compiler_t *compiler);
-NU_API void nulang_compiler_print_archetypes(const nulang_compiler_t *compiler);
-NU_API void nulang_compiler_print_ast(const nulang_compiler_t *compiler);
-NU_API void nulang_compiler_print_status(const nulang_compiler_t *compiler);
+NU_API void nulang_print_tokens(const nu_char_t *source);
+NU_API void nulang_print_symbols(const nulang_compiler_t *compiler);
+NU_API void nulang_print_ast(const nulang_compiler_t *compiler);
+NU_API void nulang_print_status(const nulang_compiler_t *compiler,
+                                const nu_char_t         *source);
 
 #endif
 
@@ -21,46 +22,15 @@ NU_API void nulang_compiler_print_status(const nulang_compiler_t *compiler);
 
 #include <stdio.h>
 
-void
-nulang_compiler_print_status (const nulang_compiler_t *compiler)
-{
-    switch (compiler->error)
-    {
-        case NULANG_ERROR_NONE:
-            printf("No compilation error");
-            break;
-        case NULANG_ERROR_OUT_OF_NODE:
-            printf("Out of node error");
-        case NULANG_ERROR_OUT_OF_SYMBOL:
-        case NULANG_ERROR_OUT_OF_ARCHETYPE:
-        case NULANG_ERROR_OUT_OF_BLOCK:
-        case NULANG_ERROR_OUT_OF_MEMORY:
-        case NULANG_ERROR_ILLEGAL_CHARACTER:
-        case NULANG_ERROR_UNTERMINATED_STRING:
-        case NULANG_ERROR_UNEXPECTED_TOKEN:
-        case NULANG_ERROR_SYMBOL_ALREADY_DEFINED:
-        case NULANG_ERROR_INVALID_ATOM_EXPRESSION:
-        case NULANG_ERROR_UNEXPECTED_BINOP:
-        case NULANG_ERROR_NON_STATEMENT_TOKEN:
-        case NULANG_ERROR_IDENTIFIER_AS_STATEMENT:
-        case NULANG_ERROR_EMPTY_TYPE:
-            break;
-    }
-    printf("\n");
-}
 static void
 nulang__print_string (nulang__string_t s)
 {
     printf("%.*s", (int)s.n, s.p);
 }
 static void
-nulang__print_span (nulang__span_t span)
+nulang__print_location (nulang_location_t loc)
 {
-    printf("%d:%d %d:%d ",
-           span.start.line,
-           span.start.column,
-           span.stop.line,
-           span.stop.column);
+    printf("%d:%d", loc.line, loc.column);
 }
 static void
 nulang__print_literal (const nulang__lit_t *lit)
@@ -81,7 +51,7 @@ nulang__print_literal (const nulang__lit_t *lit)
             }
             break;
         case LITERAL_STRING:
-            printf("str(%.*s)", (int)lit->value.s.n, lit->value.s.p);
+            printf("str('%.*s')", (int)lit->value.s.n, lit->value.s.p);
             break;
         case LITERAL_INT:
             printf("int(%d)", lit->value.i);
@@ -95,13 +65,14 @@ static void
 nulang__print_token (const nulang__token_t *tok)
 {
     printf("%s ", NULANG_TOKEN_NAMES[tok->type]);
-    nulang__print_span(tok->span);
+    nulang__print_location(tok->span.start);
+    printf(" ");
     switch (tok->type)
     {
         case TOKEN_IDENTIFIER:
             nulang__print_string(tok->value.identifier);
             break;
-        case TOKEN_TYPE:
+        case TOKEN_ARCHETYPE:
             nulang__print_string(tok->value.identifier);
             break;
         case TOKEN_LITERAL:
@@ -113,11 +84,11 @@ nulang__print_token (const nulang__token_t *tok)
             break;
     }
 }
-static nulang_error_t
+static nulang__error_t
 nulang__lexer_print_tokens (nulang__lexer_t *lexer)
 {
     nulang__token_t tok;
-    nulang_error_t  error;
+    nulang__error_t error;
     for (;;)
     {
         error = nulang__lexer_next(lexer, &tok);
@@ -142,18 +113,14 @@ nulang__print_depth (nu_u16_t depth)
     }
 }
 static void
-nulang__print_archetype (const nulang__archetype_table_t *table,
-                         nulang__archetype_id_t           arch)
-{
-    nulang__archetype_t *t = &table->archetypes[arch];
-    printf("%.*s", (int)t->ident.n, t->ident.p);
-}
-static void
 nulang__print_symbol (const nulang__symbol_table_t *symbols,
                       nulang__symbol_id_t           symbol)
 {
     const nulang__symbol_t *sym = &symbols->symbols[symbol];
-    printf("name: %.*s block: %d", (int)sym->ident.n, sym->ident.p, sym->block);
+    printf("'%.*s' type=%s",
+           (int)sym->ident.n,
+           sym->ident.p,
+           NULANG_SYMBOL_NAMES[sym->type]);
     switch (symbols->symbols[symbol].type)
     {
         case SYMBOL_FUNCTION:
@@ -161,19 +128,20 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
         case SYMBOL_CONSTANT:
             break;
         case SYMBOL_VARIABLE:
+            printf(" block=%d", sym->block);
             switch (sym->value.variable.vartype.type)
             {
                 case VARTYPE_ARCHETYPE:
-                    printf(" archetype: %d",
+                    printf(" vartype=ARCHETYPE(%d)",
                            sym->value.variable.vartype.value.archetype);
                     break;
                 case VARTYPE_PRIMITIVE:
-                    printf(" primitive: %s",
+                    printf(" vartype=%s",
                            NU_PRIMITIVE_NAMES[sym->value.variable.vartype.value
                                                   .primitive]);
                     break;
                 case VARTYPE_UNKNOWN:
-                    printf(" type: UNKNOWN");
+                    printf(" vartype=UNKNOWN");
                     break;
             }
             if (sym->value.variable.vartype.type == VARTYPE_ARCHETYPE)
@@ -181,17 +149,111 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
                 break;
             }
             break;
+        case SYMBOL_ARCHETYPE:
+            break;
+        case SYMBOL_ARGUMENT:
+            break;
         case SYMBOL_MODULE:
             break;
         case SYMBOL_EXTERNAL:
             break;
         case SYMBOL_UNKNOWN:
-            printf(" UNKNOWN");
-            break;
-        default:
             break;
     }
 }
+
+void
+nulang_print_status (const nulang_compiler_t *compiler, const nu_char_t *source)
+{
+    nulang__error_data_t data = compiler->error_data;
+    if (compiler->error == NULANG_ERROR_NONE)
+    {
+        printf("SUCCESS\n");
+        return;
+    }
+    printf("ERROR: ");
+    switch (compiler->error)
+    {
+        case NULANG_ERROR_OUT_OF_NODE:
+            printf("out of nodes (capacity: %d)", compiler->ast.node_capacity);
+            break;
+        case NULANG_ERROR_OUT_OF_SYMBOL:
+            printf("out of symbols (capacity: %d)",
+                   compiler->symbols.symbol_capacity);
+            break;
+        case NULANG_ERROR_OUT_OF_BLOCK:
+            printf("out of blocks (capacity: %d)",
+                   compiler->symbols.block_capacity);
+            break;
+        case NULANG_ERROR_OUT_OF_MEMORY:
+            printf("out of memory");
+            break;
+
+        case NULANG_ERROR_ILLEGAL_CHARACTER:
+            printf("illegal character");
+            break;
+        case NULANG_ERROR_UNTERMINATED_STRING:
+            printf("unterminated string");
+            break;
+        case NULANG_ERROR_UNEXPECTED_TOKEN:
+            printf("unexpected token (expect: %s, got: %s)",
+                   NULANG_TOKEN_NAMES[data.expect],
+                   NULANG_TOKEN_NAMES[data.got]);
+            break;
+
+        case NULANG_ERROR_SYMBOL_ALREADY_DEFINED:
+            printf("symbol already defined");
+            break;
+        case NULANG_ERROR_INVALID_ATOM_EXPRESSION:
+            printf("invalid atom expression (got: %s)",
+                   NULANG_TOKEN_NAMES[data.got]);
+            break;
+        case NULANG_ERROR_UNEXPECTED_BINOP:
+            printf("unpexected binop");
+            break;
+        case NULANG_ERROR_NON_STATEMENT_TOKEN:
+            printf("non statement token");
+            break;
+        case NULANG_ERROR_IDENTIFIER_AS_STATEMENT:
+            printf("identifier as statement");
+            break;
+        case NULANG_ERROR_INVALID_VARTYPE:
+            printf("invalid vartype");
+            break;
+        case NULANG_ERROR_NONE:
+            break;
+    }
+    printf(" at line %d column %d\n",
+           data.span.start.line,
+           data.span.start.column);
+    {
+        nu_u32_t start, stop, n;
+        start = stop = compiler->error_data.span.start.index;
+        while (start)
+        {
+            if (*(source + start) == '\n')
+            {
+                start++;
+                break;
+            }
+            start--;
+        }
+        while (*(source + stop) && *(source + stop) != '\n')
+        {
+            stop++;
+        }
+        printf("ERROR: ");
+        printf("%.*s\n", (nu_u32_t)(stop - start), source + start);
+        printf("ERROR: ");
+        n = compiler->error_data.span.start.index - start;
+        while (n--)
+        {
+            printf(" ");
+        }
+        printf("^\n");
+    }
+}
+
 static void
 nulang__print_symbol_table (const nulang__symbol_table_t *table)
 {
@@ -200,17 +262,6 @@ nulang__print_symbol_table (const nulang__symbol_table_t *table)
     {
         printf("[%ld] ", i);
         nulang__print_symbol(table, i);
-        printf("\n");
-    }
-}
-static void
-nulang__print_archetype_table (const nulang__archetype_table_t *table)
-{
-    nu_size_t i;
-    for (i = 0; i < table->archetype_count; ++i)
-    {
-        printf("[%ld] ", i);
-        nulang__print_archetype(table, i);
         printf("\n");
     }
 }
@@ -226,10 +277,10 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
     switch (node->type)
     {
         case AST_VARDECL:
-            printf("symbol: %d ", node->value.symbol);
+            printf("symbol(%d) ", node->value.symbol);
             break;
         case AST_SYMBOL:
-            printf("symbol: %d ", node->value.symbol);
+            printf("symbol(%d) ", node->value.symbol);
             break;
         case AST_LITERAL:
             nulang__print_literal(&node->value.literal);
@@ -240,6 +291,8 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
         case AST_UNOP:
             printf("%s", NULANG_UNOP_NAMES[node->value.unop]);
             break;
+        case AST_FIELDLOOKUP:
+            nulang__print_string(node->value.fieldlookup);
         default:
             break;
     }
@@ -254,28 +307,22 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
     }
 }
 
-nulang_error_t
-nulang_source_print_tokens (const nu_char_t *source)
+void
+nulang_print_tokens (const nu_char_t *source)
 {
     nulang__lexer_t lexer;
     nulang__lexer_init(source, &lexer);
     printf("==== TOKENS ====\n");
-    return nulang__lexer_print_tokens(&lexer);
+    nulang__lexer_print_tokens(&lexer);
 }
 void
-nulang_compiler_print_symbols (const nulang_compiler_t *compiler)
+nulang_print_symbols (const nulang_compiler_t *compiler)
 {
     printf("==== SYMBOLS ====\n");
     nulang__print_symbol_table(&compiler->symbols);
 }
 void
-nulang_compiler_print_archetypes (const nulang_compiler_t *compiler)
-{
-    printf("==== ARCHETYPES ====\n");
-    nulang__print_archetype_table(&compiler->archetypes);
-}
-void
-nulang_compiler_print_ast (const nulang_compiler_t *compiler)
+nulang_print_ast (const nulang_compiler_t *compiler)
 {
     printf("==== NODES ====\n");
     nulang__print_node(

@@ -7,118 +7,128 @@
 #include <nucleus/vm/types.h>
 
 #define NULANG_FOREACH_AST(AST) \
-    AST(AST_ROOT)               \
-    AST(AST_COMPOUND)           \
-    AST(AST_LITERAL)            \
-    AST(AST_SYMBOL)             \
-    AST(AST_TYPE)               \
-    AST(AST_PRIMITIVE)          \
-    AST(AST_FIELDLOOKUP)        \
-    AST(AST_BREAK)              \
-    AST(AST_CONTINUE)           \
-    AST(AST_RETURN)             \
-    AST(AST_IF)                 \
-    AST(AST_IFBODY)             \
-    AST(AST_FOR)                \
-    AST(AST_WHILE)              \
-    AST(AST_LOOP)               \
-    AST(AST_VARDECL)            \
-    AST(AST_CONSTDECL)          \
-    AST(AST_CALL)               \
-    AST(AST_ASSIGN)             \
-    AST(AST_BINOP)              \
-    AST(AST_UNOP)
+    AST(ROOT)                   \
+    AST(COMPOUND)               \
+    AST(LITERAL)                \
+    AST(SYMBOL)                 \
+    AST(PRIMITIVE)              \
+    AST(FIELDLOOKUP)            \
+    AST(BREAK)                  \
+    AST(CONTINUE)               \
+    AST(RETURN)                 \
+    AST(IF)                     \
+    AST(IFBODY)                 \
+    AST(FOR)                    \
+    AST(WHILE)                  \
+    AST(LOOP)                   \
+    AST(VARDECL)                \
+    AST(CONSTDECL)              \
+    AST(CALL)                   \
+    AST(ASSIGN)                 \
+    AST(BINOP)                  \
+    AST(UNOP)
+#define NULANG_GENERATE_AST(AST)      AST_##AST,
+#define NULANG_GENERATE_AST_NAME(AST) #AST,
 typedef enum
 {
-    NULANG_FOREACH_AST(NULANG_GENERATE_ENUM)
+    NULANG_FOREACH_AST(NULANG_GENERATE_AST)
 } nulang_node_type_t;
 static const nu_char_t *NULANG_AST_NAMES[]
-    = { NULANG_FOREACH_AST(NULANG_GENERATE_NAME) };
+    = { NULANG_FOREACH_AST(NULANG_GENERATE_AST_NAME) };
 
 #define NULANG_FOREACH_BINOP(BINOP) \
-    BINOP(BINOP_ADD)                \
-    BINOP(BINOP_SUB)                \
-    BINOP(BINOP_MUL)                \
-    BINOP(BINOP_DIV)                \
-    BINOP(BINOP_EQUAL)              \
-    BINOP(BINOP_NEQUAL)             \
-    BINOP(BINOP_LEQUAL)             \
-    BINOP(BINOP_GEQUAL)             \
-    BINOP(BINOP_LESS)               \
-    BINOP(BINOP_GREATER)            \
-    BINOP(BINOP_AND)                \
-    BINOP(BINOP_OR)
+    BINOP(ADD)                      \
+    BINOP(SUB)                      \
+    BINOP(MUL)                      \
+    BINOP(DIV)                      \
+    BINOP(EQUAL)                    \
+    BINOP(NEQUAL)                   \
+    BINOP(LEQUAL)                   \
+    BINOP(GEQUAL)                   \
+    BINOP(LESS)                     \
+    BINOP(GREATER)                  \
+    BINOP(AND)                      \
+    BINOP(OR)
+#define NULANG_GENERATE_BINOP(BINOP)      BINOP_##BINOP,
+#define NULANG_GENERATE_BINOP_NAME(BINOP) #BINOP,
 typedef enum
 {
-    NULANG_FOREACH_BINOP(NULANG_GENERATE_ENUM)
+    NULANG_FOREACH_BINOP(NULANG_GENERATE_BINOP)
 } nulang__binop_t;
 static const nu_char_t *NULANG_BINOP_NAMES[]
-    = { NULANG_FOREACH_BINOP(NULANG_GENERATE_NAME) };
+    = { NULANG_FOREACH_BINOP(NULANG_GENERATE_BINOP_NAME) };
 
 #define NULANG_FOREACH_UNOP(UNOP) \
-    UNOP(UNOP_NOT)                \
-    UNOP(UNOP_NEG)
+    UNOP(NOT)                     \
+    UNOP(NEG)
+#define NULANG_GENERATE_UNOP(UNOP)      UNOP_##UNOP,
+#define NULANG_GENERATE_UNOP_NAME(UNOP) #UNOP,
 typedef enum
 {
-    NULANG_FOREACH_UNOP(NULANG_GENERATE_ENUM)
+    NULANG_FOREACH_UNOP(NULANG_GENERATE_UNOP)
 } nulang__unop_t;
 static const nu_char_t *NULANG_UNOP_NAMES[]
-    = { NULANG_FOREACH_UNOP(NULANG_GENERATE_NAME) };
+    = { NULANG_FOREACH_UNOP(NULANG_GENERATE_UNOP_NAME) };
 
 #define NULANG_FOREACH_SYMBOL(SYMBOL) \
-    SYMBOL(SYMBOL_FUNCTION)           \
-    SYMBOL(SYMBOL_ARGUMENT)           \
-    SYMBOL(SYMBOL_CONSTANT)           \
-    SYMBOL(SYMBOL_VARIABLE)           \
-    SYMBOL(SYMBOL_MODULE)             \
-    SYMBOL(SYMBOL_EXTERNAL)           \
-    SYMBOL(SYMBOL_UNKNOWN)
+    SYMBOL(FUNCTION)                  \
+    SYMBOL(ARGUMENT)                  \
+    SYMBOL(CONSTANT)                  \
+    SYMBOL(VARIABLE)                  \
+    SYMBOL(ARCHETYPE)                 \
+    SYMBOL(MODULE)                    \
+    SYMBOL(EXTERNAL)                  \
+    SYMBOL(UNKNOWN)
+#define NULANG_GENERATE_SYMBOL(SYMBOL)      SYMBOL_##SYMBOL,
+#define NULANG_GENERATE_SYMBOL_NAME(SYMBOL) #SYMBOL,
 typedef enum
 {
-    NULANG_FOREACH_SYMBOL(NULANG_GENERATE_ENUM)
+    NULANG_FOREACH_SYMBOL(NULANG_GENERATE_SYMBOL)
 } nulang__symbol_type_t;
 static const nu_char_t *NULANG_SYMBOL_NAMES[]
-    = { NULANG_FOREACH_SYMBOL(NULANG_GENERATE_NAME) };
+    = { NULANG_FOREACH_SYMBOL(NULANG_GENERATE_SYMBOL_NAME) };
 
 #define NULANG_FOREACH_BLOCK(BLOCK) \
-    BLOCK(BLOCK_GLOBAL)             \
-    BLOCK(BLOCK_FUNCTION)           \
-    BLOCK(BLOCK_WHILE)              \
-    BLOCK(BLOCK_FOR)                \
-    BLOCK(BLOCK_IF)                 \
-    BLOCK(BLOCK_LOOP)
+    BLOCK(GLOBAL)                   \
+    BLOCK(FUNCTION)                 \
+    BLOCK(WHILE)                    \
+    BLOCK(FOR)                      \
+    BLOCK(IF)                       \
+    BLOCK(LOOP)
+#define NULANG_GENERATE_BLOCK(BLOCK)      BLOCK_##BLOCK,
+#define NULANG_GENERATE_BLOCK_NAME(BLOCK) #BLOCK,
 typedef enum
 {
-    NULANG_FOREACH_BLOCK(NULANG_GENERATE_ENUM)
+    NULANG_FOREACH_BLOCK(NULANG_GENERATE_BLOCK)
 } nulang__block_type_t;
 static const nu_char_t *NULANG_BLOCK_NAMES[]
-    = { NULANG_FOREACH_BLOCK(NULANG_GENERATE_NAME) };
+    = { NULANG_FOREACH_BLOCK(NULANG_GENERATE_BLOCK_NAME) };
 
 #define NULANG_FOREACH_VARTYPE(VARTYPE) \
-    VARTYPE(VARTYPE_ARCHETYPE)          \
-    VARTYPE(VARTYPE_PRIMITIVE)          \
-    VARTYPE(VARTYPE_UNKNOWN)
+    VARTYPE(ARCHETYPE)                  \
+    VARTYPE(PRIMITIVE)                  \
+    VARTYPE(UNKNOWN)
+#define NULANG_GENERATE_VARTYPE(VARTYPE)      VARTYPE_##VARTYPE,
+#define NULANG_GENERATE_VARTYPE_NAME(VARTYPE) #VARTYPE,
 typedef enum
 {
-    NULANG_FOREACH_VARTYPE(NULANG_GENERATE_ENUM)
+    NULANG_FOREACH_VARTYPE(NULANG_GENERATE_VARTYPE)
 } nulang__vartype_type_t;
 static const nu_char_t *NULANG_VARTYPE_NAMES[]
-    = { NULANG_FOREACH_VARTYPE(NULANG_GENERATE_NAME) };
+    = { NULANG_FOREACH_VARTYPE(NULANG_GENERATE_VARTYPE_NAME) };
 
 typedef nu_u32_t nulang__node_id_t;
 typedef nu_u32_t nulang__symbol_id_t;
-typedef nu_u32_t nulang__archetype_id_t;
 typedef nu_u32_t nulang__block_id_t;
-#define NULANG_NODE_NULL      0xffffffff
-#define NULANG_SYMBOL_NULL    0xffffffff
-#define NULANG_ARCHETYPE_NULL 0xffffffff
-#define NULANG_BLOCK_NULL     0xffffffff
-#define NULANG_BLOCK_GLOBAL   0
+#define NULANG_NODE_NULL    0xffffffff
+#define NULANG_SYMBOL_NULL  0xffffffff
+#define NULANG_BLOCK_NULL   0xffffffff
+#define NULANG_BLOCK_GLOBAL 0
 
 typedef union
 {
-    nu_primitive_t         primitive;
-    nulang__archetype_id_t archetype;
+    nu_primitive_t      primitive;
+    nulang__symbol_id_t archetype;
 } nulang__vartype_value_t;
 
 typedef struct
@@ -129,14 +139,13 @@ typedef struct
 
 typedef union
 {
-    nulang__lit_t          literal;
-    nulang__binop_t        binop;
-    nulang__unop_t         unop;
-    nulang__vartype_t      vartype;
-    nu_primitive_t         primitive;
-    nulang__archetype_id_t archetype;
-    nulang__symbol_id_t    symbol;
-    nulang__string_t       fieldlookup;
+    nulang__lit_t       literal;
+    nulang__binop_t     binop;
+    nulang__unop_t      unop;
+    nulang__vartype_t   vartype;
+    nu_primitive_t      primitive;
+    nulang__symbol_id_t symbol;
+    nulang__string_t    fieldlookup;
 } nulang__node_value_t;
 
 typedef struct
@@ -215,30 +224,16 @@ typedef struct
 typedef struct
 {
     nulang__symbol_t *symbols;
-    nu_size_t         symbol_count;
-    nu_size_t         symbol_capacity;
+    nu_u32_t          symbol_count;
+    nu_u32_t          symbol_capacity;
     nulang__block_t  *blocks;
-    nu_size_t         block_count;
-    nu_size_t         block_capacity;
+    nu_u32_t          block_count;
+    nu_u32_t          block_capacity;
 } nulang__symbol_table_t;
-
-typedef struct
-{
-    nulang__string_t ident;
-    nulang__span_t   span;
-} nulang__archetype_t;
-
-typedef struct
-{
-
-    nulang__archetype_t *archetypes;
-    nu_size_t            archetype_count;
-    nu_size_t            archetype_capacity;
-} nulang__archetype_table_t;
 
 #ifdef NULANG_IMPL
 
-static nulang_error_t
+static nulang__error_t
 nulang__symbol_table_init (nu_size_t               symbol_capacity,
                            nu_size_t               block_capacity,
                            nulang__allocator_t    *alloc,
@@ -269,7 +264,7 @@ nulang__symbol_table_clear (nulang__symbol_table_t *table)
     table->symbol_count = 0;
     table->block_count  = 0;
 }
-static nulang_error_t
+static nulang__error_t
 nulang__symbol_add (nulang__symbol_table_t *table,
                     nulang__symbol_type_t   type,
                     nulang__symbol_value_t  value,
@@ -387,7 +382,7 @@ nulang__check_in_function (const nulang__symbol_table_t *table,
     }
     return NU_FALSE;
 }
-static nulang_error_t
+static nulang__error_t
 nulang__add_block (nulang__symbol_table_t *table,
                    nulang__block_type_t    type,
                    nulang__block_id_t      parent,
@@ -419,14 +414,14 @@ nulang__add_block (nulang__symbol_table_t *table,
 
     return NULANG_ERROR_NONE;
 }
-static nulang_error_t
+static nulang__error_t
 nulang__lookup_symbol (nulang__symbol_table_t *table,
                        nulang__string_t        ident,
                        nulang__span_t          span,
                        nulang__block_id_t      block,
                        nulang__symbol_id_t    *id)
 {
-    nulang_error_t error;
+    nulang__error_t error;
     nulang__find_symbol_in_scope(table, block, ident, id);
     if (*id == NULANG_SYMBOL_NULL)
     {
@@ -444,63 +439,48 @@ nulang__lookup_symbol (nulang__symbol_table_t *table,
     return NULANG_ERROR_NONE;
 }
 
-static nulang_error_t
-nulang__archetype_table_init (nu_size_t                  archetype_capacity,
-                              nulang__allocator_t       *alloc,
-                              nulang__archetype_table_t *table)
-{
-    table->archetypes = nulang__alloc(
-        alloc, sizeof(nulang__archetype_t) * archetype_capacity);
-    if (!table->archetypes)
-    {
-        return NULANG_ERROR_OUT_OF_MEMORY;
-    }
-    table->archetype_capacity = archetype_capacity;
-    table->archetype_count    = 0;
-    return NULANG_ERROR_NONE;
-}
-static void
-nulang__archetype_table_clear (nulang__archetype_table_t *table)
-{
-    table->archetype_count = 0;
-}
-
-static nulang_error_t
-nulang__lookup_archetype (nulang__archetype_table_t *table,
-                          nulang__string_t           ident,
-                          nulang__span_t             span,
-                          nulang__archetype_id_t    *arch)
+static nulang__error_t
+nulang__lookup_archetype (nulang__symbol_table_t *table,
+                          nulang__string_t        ident,
+                          nulang__span_t          span,
+                          nulang__symbol_id_t    *id)
 {
     nu_size_t i;
-    for (i = 0; i < table->archetype_count; ++i)
+    for (i = 0; i < table->symbol_count; ++i)
     {
-        if (NULANG_SOURCE_STRING_EQUALS(table->archetypes[i].ident, ident))
+        if (table->symbols[i].type == SYMBOL_ARCHETYPE
+            && NULANG_SOURCE_STRING_EQUALS(table->symbols[i].ident, ident))
         {
-            *arch = i;
+            *id = i;
             return NULANG_ERROR_NONE;
         }
     }
-    *arch = NULANG_ARCHETYPE_NULL;
-    if (table->archetype_count >= table->archetype_capacity)
+    *id = NULANG_SYMBOL_NULL;
+    if (table->symbol_count >= table->symbol_capacity)
     {
-        return NULANG_ERROR_OUT_OF_ARCHETYPE;
+        return NULANG_ERROR_OUT_OF_SYMBOL;
     }
-    *arch                          = table->archetype_count++;
-    table->archetypes[*arch].ident = ident;
-    table->archetypes[*arch].span  = span;
+    *id                                   = table->symbol_count++;
+    table->symbols[*id].type              = SYMBOL_ARCHETYPE;
+    table->symbols[*id].ident             = ident;
+    table->symbols[*id].span              = span;
+    table->symbols[*id].block             = NULANG_BLOCK_NULL;
+    table->symbols[*id].previous_in_scope = NULANG_SYMBOL_NULL;
+    table->symbols[*id].previous_in_block = NULANG_SYMBOL_NULL;
     return NULANG_ERROR_NONE;
 }
 
-static nulang_error_t
+static nulang__error_t
 nulang__define_symbol (nulang__symbol_table_t *table,
                        nulang__symbol_type_t   type,
                        nulang__symbol_value_t  value,
                        nulang__string_t        ident,
                        nulang__span_t          span,
                        nulang__block_id_t      block,
+                       nulang__error_data_t   *error_data,
                        nulang__symbol_id_t    *id)
 {
-    nulang_error_t      error;
+    nulang__error_t     error;
     nulang__symbol_id_t found;
     /* check existing symbol */
     nulang__find_symbol_in_scope(table, block, ident, &found);
@@ -514,6 +494,8 @@ nulang__define_symbol (nulang__symbol_table_t *table,
             /* fall-through */
         case SYMBOL_EXTERNAL:
             /* fall-through */
+        case SYMBOL_ARCHETYPE:
+            /* fall-through */
         case SYMBOL_VARIABLE:
             if (found != NULANG_SYMBOL_NULL)
             {
@@ -521,6 +503,7 @@ nulang__define_symbol (nulang__symbol_table_t *table,
                  * definition */
                 if (table->symbols[found].type != SYMBOL_UNKNOWN)
                 {
+                    error_data->span = span;
                     return NULANG_ERROR_SYMBOL_ALREADY_DEFINED;
                 }
                 else
@@ -550,7 +533,7 @@ nulang__define_symbol (nulang__symbol_table_t *table,
     return NULANG_ERROR_NONE;
 }
 
-static nulang_error_t
+static nulang__error_t
 nulang__ast_init (nu_u32_t             node_capacity,
                   nulang__allocator_t *alloc,
                   nulang__ast_t       *ast)
@@ -581,7 +564,7 @@ nulang__ast_clear (nulang__ast_t *ast)
     ast->nodes[0].last_child   = NULANG_NODE_NULL;
     ast->nodes[0].next_sibling = NULANG_NODE_NULL;
 }
-static nulang_error_t
+static nulang__error_t
 nulang__ast_add_node (nulang__ast_t *ast, nulang__node_id_t *id)
 {
     nulang__node_t *node;

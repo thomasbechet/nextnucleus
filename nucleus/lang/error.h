@@ -9,7 +9,6 @@ typedef enum
     /* allocation error */
     NULANG_ERROR_OUT_OF_NODE,
     NULANG_ERROR_OUT_OF_SYMBOL,
-    NULANG_ERROR_OUT_OF_ARCHETYPE,
     NULANG_ERROR_OUT_OF_BLOCK,
     NULANG_ERROR_OUT_OF_MEMORY,
     /* lexer error */
@@ -22,8 +21,8 @@ typedef enum
     NULANG_ERROR_UNEXPECTED_BINOP,
     NULANG_ERROR_NON_STATEMENT_TOKEN,
     NULANG_ERROR_IDENTIFIER_AS_STATEMENT,
-    NULANG_ERROR_EMPTY_TYPE
-} nulang_error_t;
+    NULANG_ERROR_INVALID_VARTYPE
+} nulang__error_t;
 
 #define NULANG_ERROR_CHECK(error)   \
     if (error != NULANG_ERROR_NONE) \
@@ -37,5 +36,11 @@ typedef struct
     nulang__token_type_t expect;
     nulang__token_type_t got;
 } nulang__error_data_t;
+
+typedef enum
+{
+    NULANG_SUCCESS,
+    NULANG_FAILURE
+} nulang_status_t;
 
 #endif

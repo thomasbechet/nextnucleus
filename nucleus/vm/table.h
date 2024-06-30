@@ -32,7 +32,6 @@ typedef struct
     const nu_char_t *name;
     nu_primitive_t   primitive;
     nu_archetype_t   archetype;
-    nu_u16_t         count;
 } nu_field_info_t;
 
 #ifdef NU_IMPL
@@ -52,7 +51,6 @@ typedef struct
     nu_ident_t     name;
     nu_primitive_t primitive;
     nu_archetype_t archetype;
-    nu_u16_t       count;
 } nu__field_entry_t;
 
 typedef struct
@@ -60,6 +58,12 @@ typedef struct
     nu_u16_t next;
     nu_u16_t free;
 } nu__chunk_entry_t;
+
+typedef struct
+{
+    nu_entity_t ref;
+    nu_entity_t next;
+} nu__entity_ref_t;
 
 typedef struct
 {
@@ -147,6 +151,8 @@ nu__field_type_size (nu_primitive_t t)
             return 4 * 3;
         case NU_PRIMITIVE_QUAT:
             return 4 * 4;
+        case NU_PRIMITIVE_ENTITY:
+            return sizeof(nu__entity_ref_t);
         default:
             return 4;
     }
@@ -158,8 +164,7 @@ nu__archetype_entry_size (const nu_field_info_t *fields, nu_u16_t field_count)
     nu_size_t i, entry_size = 0;
     for (i = 0; i < field_count; ++i)
     {
-        entry_size
-            += nu__field_type_size(fields[i].primitive) * fields[i].count;
+        entry_size += nu__field_type_size(fields[i].primitive);
     }
     return entry_size;
 }
@@ -207,7 +212,6 @@ nu__archetype_create (nu__table_manager_t   *manager,
                          fields[i].name);
         manager->fields[manager->field_count].primitive = fields[i].primitive;
         manager->fields[manager->field_count].archetype = fields[i].archetype;
-        manager->fields[manager->field_count].count     = fields[i].count;
         manager->field_count++;
     }
 

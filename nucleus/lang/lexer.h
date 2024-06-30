@@ -33,6 +33,7 @@ nulang__lexer_init (const nu_char_t *source, nulang__lexer_t *lexer)
     lexer->ptr             = source;
     lexer->next_loc.line   = 1;
     lexer->next_loc.column = 1;
+    lexer->next_loc.index  = 0;
 
     lexer->has_peek = NU_FALSE;
 
@@ -50,7 +51,8 @@ nulang__source_stream_next (nulang__lexer_t   *lexer,
         return NU_FALSE;
     }
     *loc = lexer->next_loc;
-    *c   = *(lexer->ptr++);
+    lexer->next_loc.index++;
+    *c = *(lexer->ptr++);
     if (*c == '\0')
     {
         lexer->ptr = NU_NULL;
@@ -114,7 +116,7 @@ nulang__consume_char (nulang__lexer_t *lexer)
     nulang_location_t dloc;
     nulang__lexer_next_char(lexer, &c, &dloc);
 }
-static nulang_error_t
+static nulang__error_t
 nulang__consume_single_char_token (nulang__lexer_t     *lexer,
                                    nulang__token_type_t type,
                                    nulang_location_t    loc,
@@ -163,7 +165,7 @@ nulang__consume_spaces (nulang__lexer_t *lexer)
 #define NULANG_SOURCE_STRING_EQUALS(a, b) \
     (a.n == b.n && nu_strncmp(a.p, b.p, a.n) == 0)
 
-static nulang_error_t
+static nulang__error_t
 nulang__consume_string (nulang__lexer_t *lexer, nulang__token_t *token)
 {
     nulang_location_t start_loc, stop_loc, loc;
@@ -193,7 +195,7 @@ nulang__consume_string (nulang__lexer_t *lexer, nulang__token_t *token)
     }
     return NULANG_ERROR_UNTERMINATED_STRING;
 }
-static nulang_error_t
+static nulang__error_t
 nulang__consume_number (nulang__lexer_t *lexer, nulang__token_t *token)
 {
     nulang_location_t start_loc, stop_loc, loc;
@@ -257,7 +259,7 @@ nulang__consume_number (nulang__lexer_t *lexer, nulang__token_t *token)
     }
     return NULANG_ERROR_NONE;
 }
-static nulang_error_t
+static nulang__error_t
 nulang__consume_identifier (nulang__lexer_t *lexer, nulang__token_t *token)
 {
     nulang_location_t start_loc, stop_loc, loc;
@@ -435,8 +437,8 @@ nulang__consume_identifier (nulang__lexer_t *lexer, nulang__token_t *token)
 
     return NULANG_ERROR_NONE;
 }
-static nulang_error_t
-nulang__consume_type (nulang__lexer_t *lexer, nulang__token_t *token)
+static nulang__error_t
+nulang__consume_archetype (nulang__lexer_t *lexer, nulang__token_t *token)
 {
     nulang_location_t start_loc, stop_loc, loc;
     nu_char_t         c;
@@ -464,14 +466,14 @@ nulang__consume_type (nulang__lexer_t *lexer, nulang__token_t *token)
     }
     token->span.start         = start_loc;
     token->span.stop          = stop_loc;
-    token->type               = TOKEN_TYPE;
+    token->type               = TOKEN_ARCHETYPE;
     token->value.identifier.p = s;
     token->value.identifier.n = n;
 
     return NULANG_ERROR_NONE;
 }
 
-static nulang_error_t
+static nulang__error_t
 nulang__lexer_parse_token (nulang__lexer_t *lexer, nulang__token_t *token)
 {
     nu_char_t         c, next;
@@ -571,7 +573,7 @@ nulang__lexer_parse_token (nulang__lexer_t *lexer, nulang__token_t *token)
                 *token = NULANG_TOKEN_SINGLE(TOKEN_GREATER, loc);
                 return NULANG_ERROR_NONE;
             case '$':
-                return nulang__consume_type(lexer, token);
+                return nulang__consume_archetype(lexer, token);
             case '!':
                 nulang__consume_char(lexer);
                 if (nulang__lexer_peek_char(lexer, &next, &loc2))
@@ -609,7 +611,7 @@ nulang__lexer_parse_token (nulang__lexer_t *lexer, nulang__token_t *token)
     return NULANG_ERROR_NONE;
 }
 
-static nulang_error_t
+static nulang__error_t
 nulang__lexer_next (nulang__lexer_t *lexer, nulang__token_t *token)
 {
     if (lexer->peek_count)
@@ -629,12 +631,12 @@ nulang__lexer_next (nulang__lexer_t *lexer, nulang__token_t *token)
     }
 }
 
-static nulang_error_t
+static nulang__error_t
 nulang__lexer_peek (nulang__lexer_t *lexer,
                     nu_size_t        lookahead,
                     nulang__token_t *token)
 {
-    nulang_error_t error;
+    nulang__error_t error;
     while (lexer->peek_count <= lookahead)
     {
         error = nulang__lexer_parse_token(lexer, token);

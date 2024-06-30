@@ -17,7 +17,7 @@ main (void)
     nulang_location_t loc;
     nu_bool_t         has;
     nulang__token_t   token;
-    nulang_error_t    error;
+    nulang__error_t   error;
 
     nulang__lexer_init(source, &lexer);
 

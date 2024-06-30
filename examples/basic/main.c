@@ -35,8 +35,8 @@ register_archetypes (nu_vm_t vm)
 {
     nu_error_t      error;
     nu_archetype_t  archetype;
-    nu_field_info_t fields[] = { { "position", NU_PRIMITIVE_INT, NU_NULL, 1 },
-                                 { "rotation", NU_PRIMITIVE_INT, NU_NULL, 1 } };
+    nu_field_info_t fields[] = { { "position", NU_PRIMITIVE_INT, NU_NULL },
+                                 { "rotation", NU_PRIMITIVE_INT, NU_NULL } };
 
     error = nu_vm_create_archetype(vm, "player", fields, 2, &archetype);
     NU_ERROR_ASSERT(error);

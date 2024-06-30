@@ -8,65 +8,66 @@ typedef struct
 {
     nu_u16_t line;
     nu_u16_t column;
+    nu_u32_t index;
 } nulang_location_t;
 
 #define NULANG_FOREACH_TOKEN(TOKEN) \
-    TOKEN(TOKEN_IDENTIFIER)         \
-    TOKEN(TOKEN_PRIMITIVE)          \
-    TOKEN(TOKEN_TYPE)               \
-    TOKEN(TOKEN_LITERAL)            \
-    TOKEN(TOKEN_IMPORT)             \
-    TOKEN(TOKEN_FROM)               \
-    TOKEN(TOKEN_EXPORT)             \
-    TOKEN(TOKEN_COMMENT)            \
-    TOKEN(TOKEN_SPACE)              \
-    TOKEN(TOKEN_LPAREN)             \
-    TOKEN(TOKEN_RPAREN)             \
-    TOKEN(TOKEN_LBRACKET)           \
-    TOKEN(TOKEN_RBRACKET)           \
-    TOKEN(TOKEN_COMMA)              \
-    TOKEN(TOKEN_DOT)                \
-    TOKEN(TOKEN_COLON)              \
-    TOKEN(TOKEN_ADD)                \
-    TOKEN(TOKEN_SUB)                \
-    TOKEN(TOKEN_MUL)                \
-    TOKEN(TOKEN_DIV)                \
-    TOKEN(TOKEN_EQUAL)              \
-    TOKEN(TOKEN_ASSIGN)             \
-    TOKEN(TOKEN_NEQUAL)             \
-    TOKEN(TOKEN_LEQUAL)             \
-    TOKEN(TOKEN_GEQUAL)             \
-    TOKEN(TOKEN_LESS)               \
-    TOKEN(TOKEN_GREATER)            \
-    TOKEN(TOKEN_AND)                \
-    TOKEN(TOKEN_OR)                 \
-    TOKEN(TOKEN_NOT)                \
-    TOKEN(TOKEN_LET)                \
-    TOKEN(TOKEN_CONST)              \
-    TOKEN(TOKEN_IF)                 \
-    TOKEN(TOKEN_THEN)               \
-    TOKEN(TOKEN_ELSE)               \
-    TOKEN(TOKEN_ELIF)               \
-    TOKEN(TOKEN_END)                \
-    TOKEN(TOKEN_DO)                 \
-    TOKEN(TOKEN_FOR)                \
-    TOKEN(TOKEN_IN)                 \
-    TOKEN(TOKEN_WHILE)              \
-    TOKEN(TOKEN_FUNCTION)           \
-    TOKEN(TOKEN_BREAK)              \
-    TOKEN(TOKEN_CONTINUE)           \
-    TOKEN(TOKEN_RETURN)             \
-    TOKEN(TOKEN_EOF)
-#define NULANG_GENERATE_ENUM(ENUM) ENUM,
-#define NULANG_GENERATE_NAME(ENUM) #ENUM,
+    TOKEN(IDENTIFIER)               \
+    TOKEN(PRIMITIVE)                \
+    TOKEN(ARCHETYPE)                \
+    TOKEN(LITERAL)                  \
+    TOKEN(IMPORT)                   \
+    TOKEN(FROM)                     \
+    TOKEN(EXPORT)                   \
+    TOKEN(COMMENT)                  \
+    TOKEN(SPACE)                    \
+    TOKEN(LPAREN)                   \
+    TOKEN(RPAREN)                   \
+    TOKEN(LBRACKET)                 \
+    TOKEN(RBRACKET)                 \
+    TOKEN(COMMA)                    \
+    TOKEN(DOT)                      \
+    TOKEN(COLON)                    \
+    TOKEN(ADD)                      \
+    TOKEN(SUB)                      \
+    TOKEN(MUL)                      \
+    TOKEN(DIV)                      \
+    TOKEN(EQUAL)                    \
+    TOKEN(ASSIGN)                   \
+    TOKEN(NEQUAL)                   \
+    TOKEN(LEQUAL)                   \
+    TOKEN(GEQUAL)                   \
+    TOKEN(LESS)                     \
+    TOKEN(GREATER)                  \
+    TOKEN(AND)                      \
+    TOKEN(OR)                       \
+    TOKEN(NOT)                      \
+    TOKEN(LET)                      \
+    TOKEN(CONST)                    \
+    TOKEN(IF)                       \
+    TOKEN(THEN)                     \
+    TOKEN(ELSE)                     \
+    TOKEN(ELIF)                     \
+    TOKEN(END)                      \
+    TOKEN(DO)                       \
+    TOKEN(FOR)                      \
+    TOKEN(IN)                       \
+    TOKEN(WHILE)                    \
+    TOKEN(FUNCTION)                 \
+    TOKEN(BREAK)                    \
+    TOKEN(CONTINUE)                 \
+    TOKEN(RETURN)                   \
+    TOKEN(EOF)
+#define NULANG_GENERATE_TOKEN(TOKEN)      TOKEN_##TOKEN,
+#define NULANG_GENERATE_TOKEN_NAME(TOKEN) #TOKEN,
 
 typedef enum
 {
-    NULANG_FOREACH_TOKEN(NULANG_GENERATE_ENUM)
+    NULANG_FOREACH_TOKEN(NULANG_GENERATE_TOKEN)
 } nulang__token_type_t;
 
 static const nu_char_t *NULANG_TOKEN_NAMES[]
-    = { NULANG_FOREACH_TOKEN(NULANG_GENERATE_NAME) };
+    = { NULANG_FOREACH_TOKEN(NULANG_GENERATE_TOKEN_NAME) };
 
 typedef struct
 {
