@@ -92,7 +92,7 @@ nulang__try_parse_vartype (nulang__parser_t       *parser,
             error = nulang__lookup_archetype(
                 symbols, tok.value.identifier, tok.span, &arch);
             NULANG_ERROR_CHECK(error);
-            vartype->type            = VARTYPE_ARCHETYPE;
+            vartype->primitive       = NU_PRIMITIVE_ENTITY;
             vartype->value.archetype = arch;
             return NULANG_ERROR_NONE;
         }
@@ -100,8 +100,7 @@ nulang__try_parse_vartype (nulang__parser_t       *parser,
         NULANG_ERROR_CHECK(error);
         if (*found)
         {
-            vartype->type            = VARTYPE_PRIMITIVE;
-            vartype->value.primitive = tok.value.primitive;
+            vartype->primitive = tok.value.primitive;
             return NULANG_ERROR_NONE;
         }
         error = nulang__parser_consume(parser, &tok);
@@ -109,7 +108,7 @@ nulang__try_parse_vartype (nulang__parser_t       *parser,
         parser->error->span = tok.span;
         return NULANG_ERROR_INVALID_VARTYPE;
     }
-    vartype->type = VARTYPE_UNKNOWN;
+    vartype->primitive = NU_PRIMITIVE_UNKNOWN;
     return NULANG_ERROR_NONE;
 }
 typedef nulang__error_t (*nu__parse_identifier_list_pfn_t)(

@@ -127,25 +127,13 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
         case SYMBOL_CONSTANT:
             break;
         case SYMBOL_VARIABLE:
-            printf(" block=%d", sym->block);
-            switch (sym->value.variable.vartype.type)
+            printf(" block=%d primitive=%s",
+                   sym->block,
+                   NU_PRIMITIVE_NAMES[sym->value.variable.vartype.primitive]);
+            if (sym->value.variable.vartype.primitive == NU_PRIMITIVE_ENTITY)
             {
-                case VARTYPE_ARCHETYPE:
-                    printf(" vartype=ARCHETYPE(%d)",
-                           sym->value.variable.vartype.value.archetype);
-                    break;
-                case VARTYPE_PRIMITIVE:
-                    printf(" vartype=%s",
-                           NU_PRIMITIVE_NAMES[sym->value.variable.vartype.value
-                                                  .primitive]);
-                    break;
-                case VARTYPE_UNKNOWN:
-                    printf(" vartype=UNKNOWN");
-                    break;
-            }
-            if (sym->value.variable.vartype.type == VARTYPE_ARCHETYPE)
-            {
-                break;
+                printf(" archetype=%d",
+                       sym->value.variable.vartype.value.archetype);
             }
             break;
         case SYMBOL_ARCHETYPE:

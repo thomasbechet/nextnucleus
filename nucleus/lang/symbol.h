@@ -41,19 +41,6 @@ typedef enum
 static const nu_char_t *NULANG_BLOCK_NAMES[]
     = { NULANG_FOREACH_BLOCK(NULANG_GENERATE_BLOCK_NAME) };
 
-#define NULANG_FOREACH_VARTYPE(VARTYPE) \
-    VARTYPE(ARCHETYPE)                  \
-    VARTYPE(PRIMITIVE)                  \
-    VARTYPE(UNKNOWN)
-#define NULANG_GENERATE_VARTYPE(VARTYPE)      VARTYPE_##VARTYPE,
-#define NULANG_GENERATE_VARTYPE_NAME(VARTYPE) #VARTYPE,
-typedef enum
-{
-    NULANG_FOREACH_VARTYPE(NULANG_GENERATE_VARTYPE)
-} nulang__vartype_type_t;
-static const nu_char_t *NULANG_VARTYPE_NAMES[]
-    = { NULANG_FOREACH_VARTYPE(NULANG_GENERATE_VARTYPE_NAME) };
-
 typedef nu_u32_t nulang__symbol_id_t;
 typedef nu_u32_t nulang__block_id_t;
 
@@ -63,13 +50,12 @@ typedef nu_u32_t nulang__block_id_t;
 
 typedef union
 {
-    nu_primitive_t      primitive;
     nulang__symbol_id_t archetype;
 } nulang__vartype_value_t;
 
 typedef struct
 {
-    nulang__vartype_type_t  type;
+    nu_primitive_t          primitive;
     nulang__vartype_value_t value;
 } nulang__vartype_t;
 
@@ -439,18 +425,13 @@ nulang__define_symbol (nulang__symbol_table_t *table,
 static nu_bool_t
 nulang__vartype_equals (nulang__vartype_t a, nulang__vartype_t b)
 {
-    if (a.type == b.type)
+    if (a.primitive == b.primitive)
     {
-        switch (a.type)
+        if (a.primitive == NU_PRIMITIVE_ENTITY)
         {
-            case VARTYPE_ARCHETYPE:
-                return a.value.archetype == b.value.archetype;
-            case VARTYPE_PRIMITIVE:
-                return a.value.primitive == b.value.primitive;
-            case VARTYPE_UNKNOWN:
-                NU_UNREACHABLE;
-                break;
+            return a.value.archetype == b.value.archetype;
         }
+        return NU_TRUE;
     }
     return NU_FALSE;
 }

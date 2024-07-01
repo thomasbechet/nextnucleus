@@ -42,35 +42,48 @@ nulang__analyze_expr (nulang__analyzer_t *analyzer,
     switch (node->type)
     {
         case AST_LITERAL:
-            ret->type = VARTYPE_PRIMITIVE;
             switch (node->value.literal.type)
             {
                 case LITERAL_NIL:
-                    ret->value.primitive = NU_PRIMITIVE_ENTITY;
-                    ret->type            = VARTYPE_ARCHETYPE;
+                    ret->primitive = NU_PRIMITIVE_ENTITY;
                     break;
                 case LITERAL_BOOL:
-                    ret->value.primitive = NU_PRIMITIVE_BOOL;
+                    ret->primitive = NU_PRIMITIVE_BOOL;
                     break;
                 case LITERAL_STRING:
                     /*TODO */
                     NU_UNREACHABLE;
                     break;
                 case LITERAL_INT:
-                    ret->value.primitive = NU_PRIMITIVE_INT;
+                    ret->primitive = NU_PRIMITIVE_INT;
                     break;
                 case LITERAL_FIX:
-                    ret->value.primitive = NU_PRIMITIVE_FIX;
+                    ret->primitive = NU_PRIMITIVE_FIX;
                     break;
             }
             break;
-        case AST_SYMBOL:
-            break;
-        case AST_PRIMITIVE:
-            break;
+        case AST_SYMBOL: {
+            nulang__symbol_t *sym
+                = &analyzer->symbols->symbols[node->value.symbol];
+            switch (sym->type)
+            {
+                case SYMBOL_ARGUMENT:
+                    break;
+                case SYMBOL_CONSTANT:
+                    break;
+                case SYMBOL_VARIABLE:
+                    *ret = sym->value.variable.vartype;
+                    break;
+                case SYMBOL_EXTERNAL:
+                    break;
+                case SYMBOL_UNKNOWN:
+                    break;
+                default:
+                    break;
+            }
+        }
+        break;
         case AST_FIELDLOOKUP:
-            break;
-        case AST_IFBODY:
             break;
         case AST_CALL:
             break;
@@ -103,7 +116,7 @@ nulang__analyze_assign (nulang__analyzer_t *analyzer, nulang__node_id_t assign)
     error = nulang__analyze_expr(analyzer, expr, &vartype);
     NULANG_ERROR_CHECK(error);
 
-    if (symbol->value.variable.vartype.type != VARTYPE_UNKNOWN)
+    if (symbol->value.variable.vartype.primitive != NU_PRIMITIVE_UNKNOWN)
     {
         if (!nulang__vartype_equals(symbol->value.variable.vartype, vartype))
         {
