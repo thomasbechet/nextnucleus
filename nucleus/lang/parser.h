@@ -1,8 +1,9 @@
 #ifndef NULANG_PARSER_H
 #define NULANG_PARSER_H
 
-#include <nucleus/lang/mir.h>
+#include <nucleus/lang/ast.h>
 #include <nucleus/lang/token.h>
+#include <nucleus/lang/report.h>
 #include <nucleus/vm/error.h>
 #include <nucleus/vm/types.h>
 
@@ -45,9 +46,9 @@ nulang__parser_expect (nulang__parser_t    *parser,
     NULANG_ERROR_CHECK(error);
     if (token->type != type)
     {
-        parser->error->got    = token->type;
-        parser->error->expect = type;
-        parser->error->span   = token->span;
+        parser->error->token_got    = token->type;
+        parser->error->token_expect = type;
+        parser->error->span         = token->span;
         return NULANG_ERROR_UNEXPECTED_TOKEN;
     }
     return NULANG_ERROR_NONE;
@@ -267,7 +268,7 @@ nulang__parse_symbol (nulang__parser_t  *parser,
     }
     else
     {
-        parser->error->got = tok.type;
+        parser->error->token_got = tok.type;
         return NULANG_ERROR_UNEXPECTED_TOKEN;
     }
 
@@ -384,8 +385,8 @@ nulang__parse_atom (nulang__parser_t  *parser,
             parser->ast->nodes[*node].value.literal = tok.value.literal;
             break;
         default:
-            parser->error->span = tok.span;
-            parser->error->got  = tok.type;
+            parser->error->span      = tok.span;
+            parser->error->token_got = tok.type;
             return NULANG_ERROR_INVALID_ATOM_EXPRESSION;
     }
     return NULANG_ERROR_NONE;
@@ -527,8 +528,11 @@ nulang__parse_variable_declaration (nulang__parser_t  *parser,
                                   ident.value.identifier,
                                   ident.span,
                                   block,
-                                  parser->error,
                                   &symbol);
+    if (error != NULANG_ERROR_NONE)
+    {
+        parser->error->span = ident.span;
+    }
     NULANG_ERROR_CHECK(error);
     error = nulang__ast_add_node(parser->ast, node);
     NULANG_ERROR_CHECK(error);
@@ -748,8 +752,8 @@ nulang__parse_statement (nulang__parser_t  *parser,
             }
             break;
         default:
-            parser->error->span = tok.span;
-            parser->error->got  = tok.type;
+            parser->error->span      = tok.span;
+            parser->error->token_got = tok.type;
             return NULANG_ERROR_NON_STATEMENT_TOKEN;
     }
     return NULANG_ERROR_NONE;

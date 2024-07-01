@@ -17,6 +17,8 @@ typedef enum
 #define NU_ASSERT(x) (void)(x)
 #endif
 
+#define NU_UNREACHABLE NU_ASSERT(0)
+
 #define _NU_S(x)      #x
 #define _NU_S_(x)     _NU_S(x)
 #define _NU_S__LINE__ _NU_S_(__LINE__)

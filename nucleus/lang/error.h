@@ -1,8 +1,6 @@
 #ifndef NULANG_ERROR_H
 #define NULANG_ERROR_H
 
-#include <nucleus/lang/token.h>
-
 typedef enum
 {
     NULANG_ERROR_NONE,
@@ -21,7 +19,9 @@ typedef enum
     NULANG_ERROR_UNEXPECTED_BINOP,
     NULANG_ERROR_NON_STATEMENT_TOKEN,
     NULANG_ERROR_IDENTIFIER_AS_STATEMENT,
-    NULANG_ERROR_INVALID_VARTYPE
+    NULANG_ERROR_INVALID_VARTYPE,
+    /* analyzer error */
+    NULANG_ERROR_INCOMPATIBLE_TYPE
 } nulang__error_t;
 
 #define NULANG_ERROR_CHECK(error)   \
@@ -30,12 +30,6 @@ typedef enum
         return error;               \
     }
 
-typedef struct
-{
-    nulang__span_t       span;
-    nulang__token_type_t expect;
-    nulang__token_type_t got;
-} nulang__error_data_t;
 
 typedef enum
 {

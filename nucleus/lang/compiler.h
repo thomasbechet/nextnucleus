@@ -3,8 +3,8 @@
 
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/lexer.h>
-#include <nucleus/lang/mir.h>
 #include <nucleus/lang/parser.h>
+#include <nucleus/lang/analyzer.h>
 
 typedef struct
 {
@@ -20,6 +20,7 @@ typedef struct
     nulang__allocator_t    allocator;
     nulang__symbol_table_t symbols;
     nulang__ast_t          ast;
+    const nu_char_t       *source;
     nulang__error_t        error;
     nulang__error_data_t   error_data;
 } nulang_compiler_t;
@@ -30,6 +31,7 @@ NU_API nulang_status_t nulang_compiler_init(const nulang_compiler_info_t *info,
 NU_API nulang_status_t nulang_compiler_free(nulang_compiler_t *compiler);
 NU_API nulang_status_t nulang_compile(nulang_compiler_t *compiler,
                                       const nu_char_t   *source);
+NU_API nulang_status_t nulang_evaluate(nulang_compiler_t *compiler);
 
 #ifdef NULANG_IMPL
 
@@ -103,16 +105,31 @@ nulang__compiler_prepare (nulang_compiler_t *compiler)
 nulang_status_t
 nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
 {
-    nulang__lexer_t      lexer;
-    nulang__parser_t     parser;
-    nulang__error_data_t error_data;
+    nulang__lexer_t    lexer;
+    nulang__parser_t   parser;
+    nulang__analyzer_t analyzer;
 
+    /* prepare compiler */
     nulang__compiler_prepare(compiler);
     nulang__lexer_init(source, &lexer);
-    nulang__parser_init(
-        &lexer, &compiler->ast, &compiler->symbols, &error_data, &parser);
-    compiler->error      = nulang__parse(&parser);
-    compiler->error_data = error_data;
+    nulang__parser_init(&lexer,
+                        &compiler->ast,
+                        &compiler->symbols,
+                        &compiler->error_data,
+                        &parser);
+    compiler->source = source;
+
+    /* parse source */
+    compiler->error = nulang__parse(&parser);
+    if (compiler->error != NULANG_ERROR_NONE)
+    {
+        return NULANG_FAILURE;
+    }
+
+    /* analyze */
+    nulang__analyzer_init(
+        &analyzer, &compiler->ast, &compiler->symbols, &compiler->error_data);
+    compiler->error = nulang__analyze(&analyzer);
     if (compiler->error != NULANG_ERROR_NONE)
     {
         return NULANG_FAILURE;

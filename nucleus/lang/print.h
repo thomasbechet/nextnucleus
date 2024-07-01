@@ -3,7 +3,7 @@
 
 #include <nucleus/lang/compiler.h>
 #include <nucleus/lang/error.h>
-#include <nucleus/lang/mir.h>
+#include <nucleus/lang/ast.h>
 #include <nucleus/lang/token.h>
 
 #ifdef NU_STDLIB
@@ -11,8 +11,7 @@
 NU_API void nulang_print_tokens(const nu_char_t *source);
 NU_API void nulang_print_symbols(const nulang_compiler_t *compiler);
 NU_API void nulang_print_ast(const nulang_compiler_t *compiler);
-NU_API void nulang_print_status(const nulang_compiler_t *compiler,
-                                const nu_char_t         *source);
+NU_API void nulang_print_status(const nulang_compiler_t *compiler);
 
 #endif
 
@@ -163,7 +162,7 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
 }
 
 void
-nulang_print_status (const nulang_compiler_t *compiler, const nu_char_t *source)
+nulang_print_status (const nulang_compiler_t *compiler)
 {
     nulang__error_data_t data = compiler->error_data;
     if (compiler->error == NULANG_ERROR_NONE)
@@ -197,8 +196,8 @@ nulang_print_status (const nulang_compiler_t *compiler, const nu_char_t *source)
             break;
         case NULANG_ERROR_UNEXPECTED_TOKEN:
             printf("unexpected token (expect: %s, got: %s)",
-                   NULANG_TOKEN_NAMES[data.expect],
-                   NULANG_TOKEN_NAMES[data.got]);
+                   NULANG_TOKEN_NAMES[data.token_expect],
+                   NULANG_TOKEN_NAMES[data.token_got]);
             break;
 
         case NULANG_ERROR_SYMBOL_ALREADY_DEFINED:
@@ -206,7 +205,7 @@ nulang_print_status (const nulang_compiler_t *compiler, const nu_char_t *source)
             break;
         case NULANG_ERROR_INVALID_ATOM_EXPRESSION:
             printf("invalid atom expression (got: %s)",
-                   NULANG_TOKEN_NAMES[data.got]);
+                   NULANG_TOKEN_NAMES[data.token_got]);
             break;
         case NULANG_ERROR_UNEXPECTED_BINOP:
             printf("unpexected binop");
@@ -220,6 +219,10 @@ nulang_print_status (const nulang_compiler_t *compiler, const nu_char_t *source)
         case NULANG_ERROR_INVALID_VARTYPE:
             printf("invalid vartype");
             break;
+
+        case NULANG_ERROR_INCOMPATIBLE_TYPE:
+            printf("incompatible type");
+
         case NULANG_ERROR_NONE:
             break;
     }
@@ -231,19 +234,19 @@ nulang_print_status (const nulang_compiler_t *compiler, const nu_char_t *source)
         start = stop = compiler->error_data.span.start.index;
         while (start)
         {
-            if (*(source + start) == '\n')
+            if (*(compiler->source + start) == '\n')
             {
                 start++;
                 break;
             }
             start--;
         }
-        while (*(source + stop) && *(source + stop) != '\n')
+        while (*(compiler->source + stop) && *(compiler->source + stop) != '\n')
         {
             stop++;
         }
         printf("ERROR: ");
-        printf("%.*s\n", (nu_u32_t)(stop - start), source + start);
+        printf("%.*s\n", (nu_u32_t)(stop - start), compiler->source + start);
         printf("ERROR: ");
         n = compiler->error_data.span.start.index - start;
         while (n--)
