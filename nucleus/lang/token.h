@@ -14,7 +14,6 @@ typedef struct
 #define NULANG_FOREACH_TOKEN(TOKEN) \
     TOKEN(IDENTIFIER)               \
     TOKEN(PRIMITIVE)                \
-    TOKEN(ARCHETYPE)                \
     TOKEN(LITERAL)                  \
     TOKEN(IMPORT)                   \
     TOKEN(FROM)                     \
@@ -43,7 +42,6 @@ typedef struct
     TOKEN(OR)                       \
     TOKEN(NOT)                      \
     TOKEN(LET)                      \
-    TOKEN(CONST)                    \
     TOKEN(IF)                       \
     TOKEN(THEN)                     \
     TOKEN(ELSE)                     \
@@ -57,6 +55,11 @@ typedef struct
     TOKEN(BREAK)                    \
     TOKEN(CONTINUE)                 \
     TOKEN(RETURN)                   \
+    TOKEN(INSERT)                   \
+    TOKEN(DELETE)                   \
+    TOKEN(SINGLETON)                \
+    TOKEN(ITER)                     \
+    TOKEN(NEXT)                     \
     TOKEN(EOF)
 #define NULANG_GENERATE_TOKEN(TOKEN)      TOKEN_##TOKEN,
 #define NULANG_GENERATE_TOKEN_NAME(TOKEN) #TOKEN,
@@ -84,8 +87,8 @@ typedef struct
 typedef union
 {
     nu_bool_t        b;
-    nu_f32_t         f;
-    nu_i32_t         i;
+    nu_fix_t         f;
+    nu_u32_t         i;
     nulang__string_t s;
 } nulang__lit_value_t;
 

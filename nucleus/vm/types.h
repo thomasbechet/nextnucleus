@@ -19,11 +19,11 @@ typedef signed long    nu_i64_t;
 
 #define NU_U16_MAX 0xFFFF
 
-typedef int  nu_int_t;
-typedef char nu_char_t;
-
+typedef char          nu_char_t;
 typedef int           nu_bool_t;
+typedef nu_i32_t      nu_int_t;
 typedef unsigned long nu_size_t;
+typedef int           nu_word_t;
 
 #define NU_TRUE  1
 #define NU_FALSE 0
@@ -38,17 +38,16 @@ typedef void (*nu_pfn_t)(void);
     PRIMITIVE(BOOL)                     \
     PRIMITIVE(INT)                      \
     PRIMITIVE(FIX)                      \
-    PRIMITIVE(IV2)                      \
-    PRIMITIVE(IV3)                      \
-    PRIMITIVE(IV4)                      \
-    PRIMITIVE(FV2)                      \
-    PRIMITIVE(FV3)                      \
-    PRIMITIVE(FV4)                      \
+    PRIMITIVE(IVEC2)                    \
+    PRIMITIVE(IVEC3)                    \
+    PRIMITIVE(IVEC4)                    \
+    PRIMITIVE(VEC2)                     \
+    PRIMITIVE(VEC3)                     \
+    PRIMITIVE(VEC4)                     \
+    PRIMITIVE(MAT4)                     \
     PRIMITIVE(QUAT)                     \
     PRIMITIVE(ENTITY)                   \
-    PRIMITIVE(TEXTURE)                  \
-    PRIMITIVE(MESH)                     \
-    PRIMITIVE(ANIMATION)
+    PRIMITIVE(RESOURCE)
 #define NU_GENERATE_PRIMITIVE_ENUM(PRIMITIVE) NU_PRIMITIVE_##PRIMITIVE,
 #define NU_GENERATE_PRIMITIVE_NAME(PRIMITIVE) #PRIMITIVE,
 typedef enum

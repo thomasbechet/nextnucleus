@@ -5,12 +5,12 @@
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/lexer.h>
 #include <nucleus/lang/token.h>
+#include <nucleus/vm/table.h>
 #include <nucleus/vm/types.h>
 
 #define NULANG_FOREACH_SYMBOL(SYMBOL) \
     SYMBOL(FUNCTION)                  \
     SYMBOL(ARGUMENT)                  \
-    SYMBOL(CONSTANT)                  \
     SYMBOL(VARIABLE)                  \
     SYMBOL(ARCHETYPE)                 \
     SYMBOL(MODULE)                    \
@@ -48,16 +48,29 @@ typedef nu_u32_t nulang__block_id_t;
 #define NULANG_BLOCK_NULL   0xffffffff
 #define NULANG_BLOCK_GLOBAL 0
 
-typedef union
-{
-    nulang__symbol_id_t archetype;
-} nulang__vartype_value_t;
-
 typedef struct
 {
-    nu_primitive_t          primitive;
-    nulang__vartype_value_t value;
+    nu_primitive_t      primitive;
+    nulang__symbol_id_t archetype;
 } nulang__vartype_t;
+
+typedef union
+{
+    nu_bool_t   b;
+    nu_int_t    i;
+    nu_fix_t    f;
+    nu_ivec2_t  ivec2;
+    nu_ivec3_t  ivec3;
+    nu_ivec4_t  ivec4;
+    nu_vec2_t   vec2;
+    nu_vec3_t   vec3;
+    nu_vec4_t   vec4;
+    nu_mat3_t   mat3;
+    nu_mat4_t   mat4;
+    nu_quat_t   quat;
+    nu_entity_t entity;
+    nu_handle_t handle;
+} nulang__value_t;
 
 typedef struct
 {
@@ -379,8 +392,6 @@ nulang__define_symbol (nulang__symbol_table_t *table,
     {
         case SYMBOL_FUNCTION:
             /* fall-through */
-        case SYMBOL_CONSTANT:
-            /* fall-through */
         case SYMBOL_MODULE:
             /* fall-through */
         case SYMBOL_EXTERNAL:
@@ -429,7 +440,7 @@ nulang__vartype_equals (nulang__vartype_t a, nulang__vartype_t b)
     {
         if (a.primitive == NU_PRIMITIVE_ENTITY)
         {
-            return a.value.archetype == b.value.archetype;
+            return a.archetype == b.archetype;
         }
         return NU_TRUE;
     }

@@ -237,7 +237,7 @@ nulang__consume_number (nulang__lexer_t *lexer, nulang__token_t *token)
     token->span.stop  = stop_loc;
     if (has_dot)
     {
-        nu_f32_t v;
+        nu_fix_t v;
         if (nu_fparse(s, n, &v) != NU_ERROR_NONE)
         {
             return NULANG_ERROR_ILLEGAL_CHARACTER;
@@ -314,10 +314,6 @@ nulang__consume_identifier (nulang__lexer_t *lexer, nulang__token_t *token)
     {
         token->type = TOKEN_LET;
     }
-    else if (NULANG_MATCH_TOKEN(s, "const", n))
-    {
-        token->type = TOKEN_CONST;
-    }
     else if (NULANG_MATCH_TOKEN(s, "if", n))
     {
         token->type = TOKEN_IF;
@@ -370,6 +366,26 @@ nulang__consume_identifier (nulang__lexer_t *lexer, nulang__token_t *token)
     {
         token->type = TOKEN_RETURN;
     }
+    else if (NULANG_MATCH_TOKEN(s, "insert", n))
+    {
+        token->type = TOKEN_INSERT;
+    }
+    else if (NULANG_MATCH_TOKEN(s, "delete", n))
+    {
+        token->type = TOKEN_DELETE;
+    }
+    else if (NULANG_MATCH_TOKEN(s, "singleton", n))
+    {
+        token->type = TOKEN_SINGLETON;
+    }
+    else if (NULANG_MATCH_TOKEN(s, "iter", n))
+    {
+        token->type = TOKEN_ITER;
+    }
+    else if (NULANG_MATCH_TOKEN(s, "next", n))
+    {
+        token->type = TOKEN_NEXT;
+    }
     if (token->type != TOKEN_EOF)
     {
         return NULANG_ERROR_NONE;
@@ -418,12 +434,32 @@ nulang__consume_identifier (nulang__lexer_t *lexer, nulang__token_t *token)
     else if (NULANG_MATCH_TOKEN(s, "vec2", n))
     {
         token->type            = TOKEN_PRIMITIVE;
-        token->value.primitive = NU_PRIMITIVE_FV2;
+        token->value.primitive = NU_PRIMITIVE_VEC2;
     }
     else if (NULANG_MATCH_TOKEN(s, "vec3", n))
     {
         token->type            = TOKEN_PRIMITIVE;
-        token->value.primitive = NU_PRIMITIVE_FV3;
+        token->value.primitive = NU_PRIMITIVE_VEC3;
+    }
+    else if (NULANG_MATCH_TOKEN(s, "vec4", n))
+    {
+        token->type            = TOKEN_PRIMITIVE;
+        token->value.primitive = NU_PRIMITIVE_VEC4;
+    }
+    else if (NULANG_MATCH_TOKEN(s, "ivec2", n))
+    {
+        token->type            = TOKEN_PRIMITIVE;
+        token->value.primitive = NU_PRIMITIVE_IVEC2;
+    }
+    else if (NULANG_MATCH_TOKEN(s, "ivec3", n))
+    {
+        token->type            = TOKEN_PRIMITIVE;
+        token->value.primitive = NU_PRIMITIVE_IVEC3;
+    }
+    else if (NULANG_MATCH_TOKEN(s, "ivec4", n))
+    {
+        token->type            = TOKEN_PRIMITIVE;
+        token->value.primitive = NU_PRIMITIVE_IVEC4;
     }
     if (token->type == TOKEN_PRIMITIVE)
     {
@@ -432,41 +468,6 @@ nulang__consume_identifier (nulang__lexer_t *lexer, nulang__token_t *token)
 
     /* check identifier */
     token->type               = TOKEN_IDENTIFIER;
-    token->value.identifier.p = s;
-    token->value.identifier.n = n;
-
-    return NULANG_ERROR_NONE;
-}
-static nulang__error_t
-nulang__consume_archetype (nulang__lexer_t *lexer, nulang__token_t *token)
-{
-    nulang_location_t start_loc, stop_loc, loc;
-    nu_char_t         c;
-    const nu_char_t  *s;
-    nu_size_t         n;
-
-    nulang__consume_char(lexer);
-    s = lexer->ptr; /* small hack */
-    n = 0;
-    nulang__lexer_peek_char(lexer, &c, &start_loc);
-    stop_loc = start_loc;
-    while (nulang__lexer_peek_char(lexer, &c, &loc))
-    {
-        if (!NULANG_IDENTIFIER_CHAR(c))
-        {
-            break;
-        }
-        stop_loc = loc;
-        n++;
-        nulang__consume_char(lexer);
-    }
-    if (n == 0)
-    {
-        return NULANG_ERROR_ILLEGAL_CHARACTER;
-    }
-    token->span.start         = start_loc;
-    token->span.stop          = stop_loc;
-    token->type               = TOKEN_ARCHETYPE;
     token->value.identifier.p = s;
     token->value.identifier.n = n;
 
@@ -572,8 +573,6 @@ nulang__lexer_parse_token (nulang__lexer_t *lexer, nulang__token_t *token)
                 }
                 *token = NULANG_TOKEN_SINGLE(TOKEN_GREATER, loc);
                 return NULANG_ERROR_NONE;
-            case '$':
-                return nulang__consume_archetype(lexer, token);
             case '!':
                 nulang__consume_char(lexer);
                 if (nulang__lexer_peek_char(lexer, &next, &loc2))

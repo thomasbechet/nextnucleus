@@ -84,7 +84,16 @@ nulang__try_parse_vartype (nulang__parser_t       *parser,
     NULANG_ERROR_CHECK(error);
     if (*found)
     {
-        error = nulang__parser_accept(parser, TOKEN_ARCHETYPE, &tok, found);
+        /* primitive */
+        error = nulang__parser_accept(parser, TOKEN_PRIMITIVE, &tok, found);
+        NULANG_ERROR_CHECK(error);
+        if (*found)
+        {
+            vartype->primitive = tok.value.primitive;
+            return NULANG_ERROR_NONE;
+        }
+        /* archetype */
+        error = nulang__parser_accept(parser, TOKEN_IDENTIFIER, &tok, found);
         NULANG_ERROR_CHECK(error);
         if (*found)
         {
@@ -92,15 +101,8 @@ nulang__try_parse_vartype (nulang__parser_t       *parser,
             error = nulang__lookup_archetype(
                 symbols, tok.value.identifier, tok.span, &arch);
             NULANG_ERROR_CHECK(error);
-            vartype->primitive       = NU_PRIMITIVE_ENTITY;
-            vartype->value.archetype = arch;
-            return NULANG_ERROR_NONE;
-        }
-        error = nulang__parser_accept(parser, TOKEN_PRIMITIVE, &tok, found);
-        NULANG_ERROR_CHECK(error);
-        if (*found)
-        {
-            vartype->primitive = tok.value.primitive;
+            vartype->primitive = NU_PRIMITIVE_ENTITY;
+            vartype->archetype = arch;
             return NULANG_ERROR_NONE;
         }
         error = nulang__parser_consume(parser, &tok);
@@ -253,13 +255,7 @@ nulang__parse_symbol (nulang__parser_t  *parser,
     error = nulang__parser_consume(parser, &tok);
     NULANG_ERROR_CHECK(error);
 
-    if (tok.type == TOKEN_ARCHETYPE)
-    {
-        error = nulang__lookup_archetype(
-            parser->symbols, tok.value.identifier, tok.span, &symbol);
-        NULANG_ERROR_CHECK(error);
-    }
-    else if (tok.type == TOKEN_IDENTIFIER)
+    if (tok.type == TOKEN_IDENTIFIER)
     {
         error = nulang__lookup_symbol(
             parser->symbols, tok.value.identifier, tok.span, block, &symbol);
@@ -353,7 +349,7 @@ nulang__parse_atom (nulang__parser_t  *parser,
     switch (tok.type)
     {
         case TOKEN_IDENTIFIER:
-        case TOKEN_ARCHETYPE:
+            /* TODO: lookup for builtin functions */
             error = nulang__parse_symbol(parser, block, node);
             NULANG_ERROR_CHECK(error);
             error = nulang__try_parse_field_lookup_chain(parser, *node, node);
@@ -408,7 +404,7 @@ nulang__parse_primary (nulang__parser_t  *parser,
         error = nulang__parser_expect(parser, TOKEN_RPAREN, &tok);
         NULANG_ERROR_CHECK(error);
     }
-    else if (nulang__ast_is_unop(tok.type))
+    else if (nulang__is_unop(tok.type))
     {
         nulang__node_id_t expr;
         error = nulang__parser_consume(parser, &tok);
@@ -423,7 +419,7 @@ nulang__parse_primary (nulang__parser_t  *parser,
         parser->ast->nodes[*node].span = tok.span;
         nulang__ast_append_child(parser->ast, *node, expr);
     }
-    else if (nulang__ast_is_binop(tok.type))
+    else if (nulang__is_binop(tok.type))
     {
         parser->error->span = tok.span;
         return NULANG_ERROR_UNEXPECTED_BINOP;
@@ -451,7 +447,7 @@ nulang__parse_expression (nulang__parser_t  *parser,
     {
         error = nulang__parser_peek(parser, 0, &tok);
         NULANG_ERROR_CHECK(error);
-        if (nulang__ast_is_binop(tok.type))
+        if (nulang__is_binop(tok.type))
         {
             nu_u16_t          next_min_assoc;
             nulang__node_id_t op_node, rhs;
@@ -705,8 +701,6 @@ nulang__parse_statement (nulang__parser_t  *parser,
             break;
         case TOKEN_EXPORT:
             break;
-        case TOKEN_CONST:
-            break;
         case TOKEN_FUNCTION:
             break;
         case TOKEN_RETURN:
@@ -725,7 +719,6 @@ nulang__parse_statement (nulang__parser_t  *parser,
             break;
         case TOKEN_CONTINUE:
             break;
-        case TOKEN_ARCHETYPE:
         case TOKEN_IDENTIFIER:
             error = nulang__parse_symbol(parser, block, &ident);
             NULANG_ERROR_CHECK(error);

@@ -102,6 +102,7 @@ nulang__compiler_prepare (nulang_compiler_t *compiler)
     nulang__symbol_table_clear(&compiler->symbols);
     nulang__ast_clear(&compiler->ast);
 }
+#include <nucleus/lang/print.h>
 nulang_status_t
 nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
 {
@@ -125,6 +126,9 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
     {
         return NULANG_FAILURE;
     }
+
+    nulang__print_node(
+        &compiler->symbols, &compiler->ast, 0, compiler->ast.root);
 
     /* analyze */
     nulang__analyzer_init(

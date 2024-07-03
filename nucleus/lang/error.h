@@ -21,7 +21,11 @@ typedef enum
     NULANG_ERROR_IDENTIFIER_AS_STATEMENT,
     NULANG_ERROR_INVALID_VARTYPE,
     /* analyzer error */
-    NULANG_ERROR_INCOMPATIBLE_TYPE
+    NULANG_ERROR_INCOMPATIBLE_TYPE,
+    NULANG_ERROR_ILLEGAL_ARITHMETIC,
+    NULANG_ERROR_ILLEGAL_COMPARISON,
+    NULANG_ERROR_ILLEGAL_LOGICAL,
+    NULANG_ERROR_UNKNOWN_SYMBOL_TYPE
 } nulang__error_t;
 
 #define NULANG_ERROR_CHECK(error)   \
@@ -29,7 +33,6 @@ typedef enum
     {                               \
         return error;               \
     }
-
 
 typedef enum
 {

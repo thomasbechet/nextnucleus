@@ -73,9 +73,9 @@ main (void)
     nu_size_t    tick;
 
     {
-        nu_f32_t a = nu_itof(123);
-        nu_f32_t b = nu_itof(32);
-        nu_f32_t c = nu_fmul(a, b);
+        nu_fix_t a = nu_itof(123);
+        nu_fix_t b = nu_itof(32);
+        nu_fix_t c = nu_fmul(a, b);
         (void)a;
         (void)b;
         (void)c;

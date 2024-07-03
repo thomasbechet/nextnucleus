@@ -23,7 +23,6 @@
     AST(WHILE)                  \
     AST(LOOP)                   \
     AST(VARDECL)                \
-    AST(CONSTDECL)              \
     AST(CALL)                   \
     AST(ASSIGN)                 \
     AST(BINOP)                  \
@@ -89,7 +88,7 @@ typedef union
 
 typedef struct
 {
-    nulang__node_type_t   type;
+    nulang__node_type_t  type;
     nulang__node_value_t value;
     nulang__span_t       span;
     nulang__node_id_t    parent;
@@ -180,12 +179,12 @@ nulang__ast_append_child (nulang__ast_t    *ast,
 }
 
 static nu_bool_t
-nulang__ast_is_statement (nulang__node_type_t t)
+nulang__is_statement (nulang__node_type_t t)
 {
-    nu_size_t                       i;
+    nu_size_t                        i;
     static const nulang__node_type_t statements[]
-        = { AST_COMPOUND, AST_RETURN,  AST_IF,        AST_FOR,   AST_WHILE,
-            AST_LOOP,     AST_VARDECL, AST_CONSTDECL, AST_ASSIGN };
+        = { AST_COMPOUND, AST_RETURN, AST_IF,      AST_FOR,
+            AST_WHILE,    AST_LOOP,   AST_VARDECL, AST_ASSIGN };
     for (i = 0; i < NU_ARRAY_SIZE(statements); ++i)
     {
         if (t == statements[i])
@@ -196,9 +195,9 @@ nulang__ast_is_statement (nulang__node_type_t t)
     return NU_FALSE;
 }
 static nu_bool_t
-nulang__ast_is_expression (nulang__node_type_t t)
+nulang__is_expression (nulang__node_type_t t)
 {
-    nu_size_t                       i;
+    nu_size_t                        i;
     static const nulang__node_type_t expressions[]
         = { AST_LITERAL, AST_SYMBOL, AST_FIELDLOOKUP,
             AST_CALL,    AST_BINOP,  AST_UNOP };
@@ -212,9 +211,9 @@ nulang__ast_is_expression (nulang__node_type_t t)
     return NU_FALSE;
 }
 static nu_bool_t
-nulang__ast_is_loop (nulang__node_type_t t)
+nulang__is_loop (nulang__node_type_t t)
 {
-    nu_size_t                       i;
+    nu_size_t                        i;
     static const nulang__node_type_t loops[] = { AST_FOR, AST_WHILE, AST_LOOP };
     for (i = 0; i < NU_ARRAY_SIZE(loops); ++i)
     {
@@ -226,7 +225,7 @@ nulang__ast_is_loop (nulang__node_type_t t)
     return NU_FALSE;
 }
 static nu_bool_t
-nulang__ast_is_binop (nulang__token_type_t t)
+nulang__is_binop (nulang__token_type_t t)
 {
     nu_size_t                         i;
     static const nulang__token_type_t binops[]
@@ -276,7 +275,7 @@ nulang__binop_from_token (nulang__token_type_t t)
     }
 }
 static nu_bool_t
-nulang__ast_is_unop (nulang__token_type_t t)
+nulang__is_unop (nulang__token_type_t t)
 {
     nu_size_t                         i;
     static const nulang__token_type_t unops[] = { TOKEN_SUB, TOKEN_NOT };

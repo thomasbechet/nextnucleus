@@ -147,10 +147,10 @@ nu__field_type_size (nu_primitive_t t)
 {
     switch (t)
     {
-        case NU_PRIMITIVE_FV3:
-            return 4 * 3;
+        case NU_PRIMITIVE_VEC3:
+            return sizeof(nu_vec3_t);
         case NU_PRIMITIVE_QUAT:
-            return 4 * 4;
+            return sizeof(nu_quat_t);
         case NU_PRIMITIVE_ENTITY:
             return sizeof(nu__entity_ref_t);
         default:

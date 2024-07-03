@@ -5,38 +5,47 @@
 #include <nucleus/vm/platform.h>
 #include <nucleus/vm/error.h>
 
-#define NU_F32_FRAC  16
+#define NU_FIX_FRAC  16
 #define NU_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define NU_MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-typedef nu_i32_t nu_f32_t;
+typedef nu_int_t nu_fix_t;
+typedef nu_fix_t nu_vec2_t[2];
+typedef nu_int_t nu_ivec2_t[2];
+typedef nu_fix_t nu_vec3_t[3];
+typedef nu_int_t nu_ivec3_t[3];
+typedef nu_fix_t nu_vec4_t[4];
+typedef nu_int_t nu_ivec4_t[4];
+typedef nu_fix_t nu_mat3_t[9];
+typedef nu_fix_t nu_mat4_t[16];
+typedef nu_fix_t nu_quat_t[4];
 
 NU_API nu_bool_t nu_is_power_of_two(nu_size_t n);
 NU_API nu_size_t nu_log2(nu_size_t n);
-NU_API nu_f32_t  nu_pow(nu_f32_t a, nu_f32_t b);
-NU_API nu_f32_t  nu_floor(nu_f32_t a);
-NU_API nu_f32_t  nu_ceil(nu_f32_t a);
-NU_API nu_f32_t  nu_exp(nu_f32_t a);
-NU_API nu_f32_t  nu_log(nu_f32_t a);
-NU_API nu_f32_t  nu_log10(nu_f32_t a);
-NU_API nu_f32_t  nu_sqrt(nu_f32_t a);
-NU_API nu_f32_t  nu_fmod(nu_f32_t a, nu_f32_t b);
-NU_API nu_f32_t  nu_sin(nu_f32_t a);
-NU_API nu_f32_t  nu_cos(nu_f32_t a);
-NU_API nu_f32_t  nu_tan(nu_f32_t a);
-NU_API nu_f32_t  nu_acos(nu_f32_t a);
-NU_API nu_f32_t  nu_asin(nu_f32_t a);
-NU_API nu_f32_t  nu_atan2(nu_f32_t a, nu_f32_t b);
+NU_API nu_fix_t  nu_pow(nu_fix_t a, nu_fix_t b);
+NU_API nu_fix_t  nu_floor(nu_fix_t a);
+NU_API nu_fix_t  nu_ceil(nu_fix_t a);
+NU_API nu_fix_t  nu_exp(nu_fix_t a);
+NU_API nu_fix_t  nu_log(nu_fix_t a);
+NU_API nu_fix_t  nu_log10(nu_fix_t a);
+NU_API nu_fix_t  nu_sqrt(nu_fix_t a);
+NU_API nu_fix_t  nu_fmod(nu_fix_t a, nu_fix_t b);
+NU_API nu_fix_t  nu_sin(nu_fix_t a);
+NU_API nu_fix_t  nu_cos(nu_fix_t a);
+NU_API nu_fix_t  nu_tan(nu_fix_t a);
+NU_API nu_fix_t  nu_acos(nu_fix_t a);
+NU_API nu_fix_t  nu_asin(nu_fix_t a);
+NU_API nu_fix_t  nu_atan2(nu_fix_t a, nu_fix_t b);
 
-NU_API nu_f32_t   nu_fadd(nu_f32_t a, nu_f32_t b);
-NU_API nu_f32_t   nu_fsub(nu_f32_t a, nu_f32_t b);
-NU_API nu_f32_t   nu_fmul(nu_f32_t a, nu_f32_t b);
-NU_API nu_f32_t   nu_fdiv(nu_f32_t a, nu_f32_t b);
-NU_API nu_f32_t   nu_itof(nu_i32_t a);
-NU_API nu_i32_t   nu_ftoi(nu_f32_t a);
-NU_API float      nu_ftofloat(nu_f32_t a);
-NU_API double     nu_ftodouble(nu_f32_t a);
-NU_API nu_error_t nu_fparse(const nu_char_t *s, nu_size_t n, nu_f32_t *v);
+NU_API nu_fix_t   nu_fadd(nu_fix_t a, nu_fix_t b);
+NU_API nu_fix_t   nu_fsub(nu_fix_t a, nu_fix_t b);
+NU_API nu_fix_t   nu_fmul(nu_fix_t a, nu_fix_t b);
+NU_API nu_fix_t   nu_fdiv(nu_fix_t a, nu_fix_t b);
+NU_API nu_fix_t   nu_itof(nu_int_t a);
+NU_API nu_int_t   nu_ftoi(nu_fix_t a);
+NU_API float      nu_ftofloat(nu_fix_t a);
+NU_API double     nu_ftodouble(nu_fix_t a);
+NU_API nu_error_t nu_fparse(const nu_char_t *s, nu_size_t n, nu_fix_t *v);
 NU_API nu_error_t nu_iparse(const nu_char_t *s, nu_size_t n, nu_i32_t *v);
 
 #ifdef NU_IMPL
@@ -58,103 +67,103 @@ nu_log2 (nu_size_t n)
     }
     return result;
 }
-nu_f32_t
-nu_pow (nu_f32_t a, nu_f32_t b)
+nu_fix_t
+nu_pow (nu_fix_t a, nu_fix_t b)
 {
     (void)a;
     (void)b;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_floor (nu_f32_t a)
+nu_fix_t
+nu_floor (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_ceil (nu_f32_t a)
+nu_fix_t
+nu_ceil (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
 
-nu_f32_t
-nu_exp (nu_f32_t a)
+nu_fix_t
+nu_exp (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_log (nu_f32_t a)
+nu_fix_t
+nu_log (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_log10 (nu_f32_t a)
+nu_fix_t
+nu_log10 (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_sqrt (nu_f32_t a)
+nu_fix_t
+nu_sqrt (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_fmod (nu_f32_t a, nu_f32_t b)
+nu_fix_t
+nu_fmod (nu_fix_t a, nu_fix_t b)
 {
     (void)a;
     (void)b;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_sin (nu_f32_t a)
+nu_fix_t
+nu_sin (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
 
-nu_f32_t
-nu_cos (nu_f32_t a)
+nu_fix_t
+nu_cos (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_tan (nu_f32_t a)
+nu_fix_t
+nu_tan (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_acos (nu_f32_t a)
+nu_fix_t
+nu_acos (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_asin (nu_f32_t a)
+nu_fix_t
+nu_asin (nu_fix_t a)
 {
     (void)a;
     /* TODO */
     return 0.0;
 }
-nu_f32_t
-nu_atan2 (nu_f32_t a, nu_f32_t b)
+nu_fix_t
+nu_atan2 (nu_fix_t a, nu_fix_t b)
 {
     (void)a;
     (void)b;
@@ -162,45 +171,45 @@ nu_atan2 (nu_f32_t a, nu_f32_t b)
     return 0.0;
 }
 
-nu_f32_t
-nu_fadd (nu_f32_t a, nu_f32_t b)
+nu_fix_t
+nu_fadd (nu_fix_t a, nu_fix_t b)
 {
     return a + b;
 }
-nu_f32_t
-nu_fsub (nu_f32_t a, nu_f32_t b)
+nu_fix_t
+nu_fsub (nu_fix_t a, nu_fix_t b)
 {
     return a - b;
 }
-nu_f32_t
-nu_fmul (nu_f32_t a, nu_f32_t b)
+nu_fix_t
+nu_fmul (nu_fix_t a, nu_fix_t b)
 {
-    return (nu_f32_t)(((nu_u64_t)a * (nu_u64_t)b) >> NU_F32_FRAC);
+    return (nu_fix_t)(((nu_u64_t)a * (nu_u64_t)b) >> NU_FIX_FRAC);
 }
-nu_f32_t
-nu_fdiv (nu_f32_t a, nu_f32_t b)
+nu_fix_t
+nu_fdiv (nu_fix_t a, nu_fix_t b)
 {
-    return (nu_f32_t)(((nu_i64_t)a << NU_F32_FRAC) / (nu_i64_t)b);
+    return (nu_fix_t)(((nu_i64_t)a << NU_FIX_FRAC) / (nu_i64_t)b);
 }
-nu_f32_t
-nu_itof (nu_i32_t a)
+nu_fix_t
+nu_itof (nu_int_t a)
 {
-    return (nu_f32_t)(a << NU_F32_FRAC);
+    return (nu_fix_t)(a << NU_FIX_FRAC);
 }
-nu_i32_t
-nu_ftoi (nu_f32_t a)
+nu_int_t
+nu_ftoi (nu_fix_t a)
 {
-    return (nu_i32_t)(a >> NU_F32_FRAC);
+    return (nu_int_t)(a >> NU_FIX_FRAC);
 }
 float
-nu_ftofloat (nu_f32_t a)
+nu_ftofloat (nu_fix_t a)
 {
-    return (float)a / (float)(1 << NU_F32_FRAC);
+    return (float)a / (float)(1 << NU_FIX_FRAC);
 }
 double
-nu_ftodouble (nu_f32_t a)
+nu_ftodouble (nu_fix_t a)
 {
-    return (double)a / (double)(1 << NU_F32_FRAC);
+    return (double)a / (double)(1 << NU_FIX_FRAC);
 }
 static nu_u32_t
 nu__fast_pow10 (nu_u32_t n)
@@ -209,7 +218,7 @@ nu__fast_pow10 (nu_u32_t n)
     return pow10[n];
 }
 nu_error_t
-nu_fparse (const nu_char_t *s, nu_size_t n, nu_f32_t *v)
+nu_fparse (const nu_char_t *s, nu_size_t n, nu_fix_t *v)
 {
     nu_u32_t  i, fixed, base;
     nu_bool_t sign = NU_FALSE, frac_flag = NU_FALSE;
@@ -252,15 +261,15 @@ nu_fparse (const nu_char_t *s, nu_size_t n, nu_f32_t *v)
         }
     }
     /* build fixed point float */
-    fixed = inte << NU_F32_FRAC;
+    fixed = inte << NU_FIX_FRAC;
     base  = nu__fast_pow10(dp);
     i     = 0;
-    while (i < NU_F32_FRAC)
+    while (i < NU_FIX_FRAC)
     {
         frac <<= 1;
         if (frac >= base)
         {
-            fixed |= 1 << (NU_F32_FRAC - 1 - i);
+            fixed |= 1 << (NU_FIX_FRAC - 1 - i);
             frac -= base;
         }
         i++;
@@ -269,7 +278,7 @@ nu_fparse (const nu_char_t *s, nu_size_t n, nu_f32_t *v)
     {
         fixed = !fixed + 1;
     }
-    *v = (nu_f32_t)fixed;
+    *v = (nu_fix_t)fixed;
     return NU_ERROR_NONE;
 }
 nu_error_t

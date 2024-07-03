@@ -71,9 +71,6 @@ nulang__print_token (const nulang__token_t *tok)
         case TOKEN_IDENTIFIER:
             nulang__print_string(tok->value.identifier);
             break;
-        case TOKEN_ARCHETYPE:
-            nulang__print_string(tok->value.identifier);
-            break;
         case TOKEN_LITERAL:
             nulang__print_literal(&tok->value.literal);
             break;
@@ -124,16 +121,13 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
     {
         case SYMBOL_FUNCTION:
             break;
-        case SYMBOL_CONSTANT:
-            break;
         case SYMBOL_VARIABLE:
             printf(" block=%d primitive=%s",
                    sym->block,
                    NU_PRIMITIVE_NAMES[sym->value.variable.vartype.primitive]);
             if (sym->value.variable.vartype.primitive == NU_PRIMITIVE_ENTITY)
             {
-                printf(" archetype=%d",
-                       sym->value.variable.vartype.value.archetype);
+                printf(" archetype=%d", sym->value.variable.vartype.archetype);
             }
             break;
         case SYMBOL_ARCHETYPE:
@@ -209,7 +203,21 @@ nulang_print_status (const nulang_compiler_t *compiler)
             break;
 
         case NULANG_ERROR_INCOMPATIBLE_TYPE:
-            printf("incompatible type");
+            printf("incompatible type (expect: %s)",
+                   NU_PRIMITIVE_NAMES[data.vartype_expect.primitive]);
+            break;
+        case NULANG_ERROR_ILLEGAL_ARITHMETIC:
+            printf("illegal arithmetic");
+            break; 
+        case NULANG_ERROR_ILLEGAL_COMPARISON:
+            printf("illegal comparison");
+            break; 
+        case NULANG_ERROR_ILLEGAL_LOGICAL:
+            printf("illegal logical operator");
+            break; 
+        case NULANG_ERROR_UNKNOWN_SYMBOL_TYPE:
+            printf("unknown symbol type");
+            break;
 
         case NULANG_ERROR_NONE:
             break;
