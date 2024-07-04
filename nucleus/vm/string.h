@@ -28,6 +28,7 @@ NU_API nu_size_t nu_strncmp(const nu_char_t *s1,
 NU_API nu_size_t nu_strcmp(const nu_char_t *s1, const nu_char_t *s2);
 
 NU_API nu_uid_t nu_uid(const nu_char_t *str);
+NU_API nu_uid_t nu_uidn(const nu_char_t *str, nu_size_t n);
 
 /* Fast FNV1A hash algorithm taken from
  * https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function */
@@ -146,6 +147,11 @@ nu_uid_t
 nu_uid (const nu_char_t *str)
 {
     return nu_fnv1a_hash_32((nu_u8_t *)str, nu_strlen(str));
+}
+nu_uid_t
+nu_uidn (const nu_char_t *str, nu_size_t n)
+{
+    return nu_fnv1a_hash_32((nu_u8_t *)str, n);
 }
 
 nu_u32_t

@@ -11,7 +11,8 @@
 #define NU_ARCHETYPE_FIELD_MAX_SIZE (1 >> 12) /* 4096 */
 #define NU_FIELD_SCALE              2         /* multiple of 4 */
 #define NU_CHUNK_NONE               0xffff
-#define NU_ARCHETYPE_NONE           0xffff
+
+#define NU_ARCHETYPE_INDEX(arch) (arch - 1)
 
 /*
  * Entity Bits Layout
@@ -25,7 +26,7 @@
 
 typedef nu_u32_t nu_field_t;
 typedef nu_u32_t nu_entity_t;
-typedef nu_u32_t nu_archetype_t;
+typedef nu_u16_t nu_archetype_t;
 
 typedef struct
 {
@@ -38,19 +39,20 @@ typedef struct
 
 typedef struct
 {
-    nu_u16_t capacity;
-    nu_u16_t entry_size;
-    nu_u16_t first_chunk;
-    nu_u16_t first_field;
-    nu_u16_t field_count;
-    nu_u16_t next;
+    nu_u16_t   capacity;
+    nu_u16_t   entry_size;
+    nu_u16_t   first_chunk;
+    nu_field_t first_field_offset;
+    nu_u16_t   field_count;
+    nu_u16_t   next;
+    nu_ident_t name;
 } nu__archetype_entry_t;
 
 typedef struct
 {
-    nu_ident_t     name;
     nu_primitive_t primitive;
     nu_archetype_t archetype;
+    nu_ident_t     name;
 } nu__field_entry_t;
 
 typedef struct
@@ -72,7 +74,7 @@ typedef struct
     nu_u16_t               chunk_capacity;
     nu_u16_t               archetype_count;
     nu_u16_t               field_count;
-    nu_u16_t               first_archetype;
+    nu_archetype_t         first_archetype;
     nu_u16_t               free_chunk;
     nu__archetype_entry_t *archetypes;
     nu__field_entry_t     *fields;
@@ -101,19 +103,19 @@ nu__entity_build (nu_u16_t chunk, nu_u16_t index)
 static nu_u16_t
 nu__field_offset (nu_field_t f)
 {
-    return (f & 0x3ff) << NU_FIELD_SCALE;
+    return ((f - 1) & 0x3ff) << NU_FIELD_SCALE;
 }
 
 static nu_u16_t
 nu__field_capacity (nu_field_t f)
 {
-    return ((f >> 10) & 0x3ff) << NU_FIELD_SCALE;
+    return (((f - 1) >> 10) & 0x3ff) << NU_FIELD_SCALE;
 }
 
 static nu_u16_t
 nu__field_size (nu_field_t f)
 {
-    return ((f >> 20) & 0x3ff) << NU_FIELD_SCALE;
+    return (((f - 1) >> 20) & 0x3ff) << NU_FIELD_SCALE;
 }
 
 /* static nu_field_t
@@ -187,7 +189,7 @@ nu__archetype_create (nu__table_manager_t   *manager,
                       nu_u16_t               field_count,
                       nu_archetype_t        *archetype)
 {
-    nu_archetype_t         handle;
+    nu_u16_t               index;
     nu_u16_t               first_field;
     nu__archetype_entry_t *entry;
     nu_size_t              i;
@@ -216,21 +218,56 @@ nu__archetype_create (nu__table_manager_t   *manager,
     }
 
     /* insert table */
-    handle             = manager->archetype_count;
-    entry              = &manager->archetypes[handle];
-    entry->first_chunk = NU_CHUNK_NONE;
-    entry->entry_size  = nu__archetype_entry_size(fields, field_count);
-    entry->capacity    = nu__table_entry_capacity(fields, field_count);
-    entry->first_field = first_field;
-    entry->field_count = field_count;
-    entry->next        = manager->first_archetype;
+    index                     = manager->archetype_count;
+    entry                     = &manager->archetypes[index];
+    entry->first_chunk        = NU_CHUNK_NONE;
+    entry->entry_size         = nu__archetype_entry_size(fields, field_count);
+    entry->capacity           = nu__table_entry_capacity(fields, field_count);
+    entry->first_field_offset = first_field;
+    entry->field_count        = field_count;
+    entry->next               = manager->first_archetype;
+    nu_ident_set_str(entry->name, name);
 
-    manager->first_archetype = handle;
+    *archetype = index + 1;
+
+    manager->first_archetype = *archetype;
     manager->archetype_count++;
 
-    *archetype = handle;
-
     return NU_ERROR_NONE;
+}
+
+static nu_archetype_t
+nu__archetype_find (const nu__table_manager_t *manager, nu_uid_t uid)
+{
+    nu_archetype_t current = manager->first_archetype;
+    while (current)
+    {
+        nu_u16_t index = NU_ARCHETYPE_INDEX(current);
+        if (nu_ident_uid(manager->archetypes[index].name) == uid)
+        {
+            return current;
+        }
+        current = manager->archetypes[index].next;
+    }
+    return NU_NULL;
+}
+static nu_field_t
+nu__archetype_find_field (const nu__table_manager_t *manager,
+                          nu_archetype_t             archetype,
+                          nu_uid_t                   uid)
+{
+    nu_size_t  i;
+    nu_u16_t   index = NU_ARCHETYPE_INDEX(archetype);
+    nu_field_t begin = manager->archetypes[index].first_field_offset;
+    nu_field_t end   = begin + manager->archetypes[index].field_count;
+    for (i = begin; i < end; ++i)
+    {
+        if (nu_ident_uid(manager->fields[i].name) == uid)
+        {
+            return i;
+        }
+    }
+    return NU_NULL;
 }
 
 static nu_u16_t
@@ -344,7 +381,7 @@ nu__table_manager_init (nu__table_manager_t *manager,
     manager->chunk_capacity     = chunk_capacity;
     manager->archetype_count    = 0;
     manager->field_count        = 0;
-    manager->first_archetype    = NU_ARCHETYPE_NONE;
+    manager->first_archetype    = NU_NULL;
     manager->free_chunk         = 0;
 
     for (i = 0; i < chunk_capacity; ++i)

@@ -1,7 +1,6 @@
 #ifndef NULANG_SYMBOL_H
 #define NULANG_SYMBOL_H
 
-#include <nucleus/lang/allocator.h>
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/lexer.h>
 #include <nucleus/lang/token.h>
@@ -12,7 +11,6 @@
     SYMBOL(FUNCTION)                  \
     SYMBOL(ARGUMENT)                  \
     SYMBOL(VARIABLE)                  \
-    SYMBOL(ARCHETYPE)                 \
     SYMBOL(MODULE)                    \
     SYMBOL(EXTERNAL)                  \
     SYMBOL(UNKNOWN)
@@ -50,8 +48,8 @@ typedef nu_u32_t nulang__block_id_t;
 
 typedef struct
 {
-    nu_primitive_t      primitive;
-    nulang__symbol_id_t archetype;
+    nu_primitive_t primitive;
+    nu_archetype_t archetype;
 } nulang__vartype_t;
 
 typedef union
@@ -136,24 +134,26 @@ typedef struct
     nu_u32_t          block_capacity;
 } nulang__symbol_table_t;
 
-#ifdef NULANG_IMPL
+#ifdef NU_IMPL
 
 static nulang__error_t
 nulang__symbol_table_init (nu_size_t               symbol_capacity,
                            nu_size_t               block_capacity,
-                           nulang__allocator_t    *alloc,
+                           nu__allocator_t        *alloc,
                            nulang__symbol_table_t *table)
 {
-    table->symbols
-        = nulang__alloc(alloc, sizeof(nulang__symbol_t) * symbol_capacity);
+    table->symbols = nu__alloc(alloc,
+                               sizeof(nulang__symbol_t) * symbol_capacity,
+                               NU_MEMORY_USAGE_COMPILER);
     if (!table->symbols)
     {
         return NULANG_ERROR_OUT_OF_MEMORY;
     }
     table->symbol_capacity = symbol_capacity;
     table->symbol_count    = 0;
-    table->blocks
-        = nulang__alloc(alloc, sizeof(nulang__block_t) * block_capacity);
+    table->blocks          = nu__alloc(alloc,
+                              sizeof(nulang__block_t) * block_capacity,
+                              NU_MEMORY_USAGE_COMPILER);
     if (!table->blocks)
     {
         return NULANG_ERROR_OUT_OF_MEMORY;
@@ -345,37 +345,6 @@ nulang__lookup_symbol (nulang__symbol_table_t *table,
 }
 
 static nulang__error_t
-nulang__lookup_archetype (nulang__symbol_table_t *table,
-                          nulang__string_t        ident,
-                          nulang__span_t          span,
-                          nulang__symbol_id_t    *id)
-{
-    nu_size_t i;
-    for (i = 0; i < table->symbol_count; ++i)
-    {
-        if (table->symbols[i].type == SYMBOL_ARCHETYPE
-            && NULANG_SOURCE_STRING_EQUALS(table->symbols[i].ident, ident))
-        {
-            *id = i;
-            return NULANG_ERROR_NONE;
-        }
-    }
-    *id = NULANG_SYMBOL_NULL;
-    if (table->symbol_count >= table->symbol_capacity)
-    {
-        return NULANG_ERROR_OUT_OF_SYMBOL;
-    }
-    *id                                   = table->symbol_count++;
-    table->symbols[*id].type              = SYMBOL_ARCHETYPE;
-    table->symbols[*id].ident             = ident;
-    table->symbols[*id].span              = span;
-    table->symbols[*id].block             = NULANG_BLOCK_NULL;
-    table->symbols[*id].previous_in_scope = NULANG_SYMBOL_NULL;
-    table->symbols[*id].previous_in_block = NULANG_SYMBOL_NULL;
-    return NULANG_ERROR_NONE;
-}
-
-static nulang__error_t
 nulang__define_symbol (nulang__symbol_table_t *table,
                        nulang__symbol_type_t   type,
                        nulang__symbol_value_t  value,
@@ -395,8 +364,6 @@ nulang__define_symbol (nulang__symbol_table_t *table,
         case SYMBOL_MODULE:
             /* fall-through */
         case SYMBOL_EXTERNAL:
-            /* fall-through */
-        case SYMBOL_ARCHETYPE:
             /* fall-through */
         case SYMBOL_VARIABLE:
             if (found != NULANG_SYMBOL_NULL)
@@ -438,7 +405,7 @@ nulang__vartype_equals (nulang__vartype_t a, nulang__vartype_t b)
 {
     if (a.primitive == b.primitive)
     {
-        if (a.primitive == NU_PRIMITIVE_ENTITY)
+        if (a.primitive == NU_PRIMITIVE_ENTITY && (a.archetype && b.archetype))
         {
             return a.archetype == b.archetype;
         }

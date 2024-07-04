@@ -4,9 +4,9 @@
 #include <nucleus/lang/ast.h>
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/report.h>
-#include <nucleus/vm/error.h>
+#include <nucleus/vm/types.h>
 
-#ifdef NULANG_IMPL
+#ifdef NU_IMPL
 
 typedef struct
 {
@@ -160,7 +160,7 @@ nulang__analyze_expr (nulang__analyzer_t *analyzer,
             {
                 case LITERAL_NIL:
                     type->primitive = NU_PRIMITIVE_ENTITY;
-                    type->archetype = NULANG_SYMBOL_NULL;
+                    type->archetype = NU_NULL;
                     break;
                 case LITERAL_BOOL:
                     type->primitive = NU_PRIMITIVE_BOOL;
@@ -202,6 +202,12 @@ nulang__analyze_expr (nulang__analyzer_t *analyzer,
         }
         break;
         case AST_CALL: {
+        }
+        break;
+        case AST_SINGLETON:
+        case AST_INSERT: {
+            type->primitive = NU_PRIMITIVE_ENTITY;
+            type->archetype = node->value.archetype;
         }
         break;
         case AST_BINOP: {

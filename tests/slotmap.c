@@ -21,17 +21,17 @@ int
 main (void)
 {
 
-    nu__allocator_t     allocator;
+    nu__allocator_t    allocator;
     nu_allocator_api_t alloc_info;
-    nu__slotmap_t       sm;
-    nu__slotlist_t      sl;
-    nu__slot_t          first, it;
-    nu_size_t           i;
-    nu__slot_t          slots[OBJECT_COUNT];
-    nu__slot_t          removed[REMOVE_COUNT];
-    object_t           *o;
+    nu__slotmap_t      sm;
+    nu__slotlist_t     sl;
+    nu__slot_t         first, it;
+    nu_size_t          i;
+    nu__slot_t         slots[OBJECT_COUNT];
+    nu__slot_t         removed[REMOVE_COUNT];
+    object_t          *o;
 
-    nu_allocator_info_stdlib(&alloc_info);
+    nu_allocator_api_stdlib(&alloc_info);
     NU_ERROR_ASSERT(nu__allocator_init(&alloc_info, &allocator));
 
     nu__slotmap_init(

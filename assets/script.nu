@@ -1,2 +1,2 @@
-let a = 1 + 2 + int.hello(4) 
-
+let b = insert(player) 
+let c = singleton(player) 

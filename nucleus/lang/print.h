@@ -3,8 +3,6 @@
 
 #include <nucleus/lang/compiler.h>
 #include <nucleus/lang/error.h>
-#include <nucleus/lang/ast.h>
-#include <nucleus/lang/token.h>
 
 #ifdef NU_STDLIB
 
@@ -15,7 +13,7 @@ NU_API void nulang_print_status(const nulang_compiler_t *compiler);
 
 #endif
 
-#ifdef NULANG_IMPL
+#ifdef NU_IMPL
 
 #ifdef NU_STDLIB
 
@@ -130,8 +128,6 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
                 printf(" archetype=%d", sym->value.variable.vartype.archetype);
             }
             break;
-        case SYMBOL_ARCHETYPE:
-            break;
         case SYMBOL_ARGUMENT:
             break;
         case SYMBOL_MODULE:
@@ -208,15 +204,18 @@ nulang_print_status (const nulang_compiler_t *compiler)
             break;
         case NULANG_ERROR_ILLEGAL_ARITHMETIC:
             printf("illegal arithmetic");
-            break; 
+            break;
         case NULANG_ERROR_ILLEGAL_COMPARISON:
             printf("illegal comparison");
-            break; 
+            break;
         case NULANG_ERROR_ILLEGAL_LOGICAL:
             printf("illegal logical operator");
-            break; 
+            break;
         case NULANG_ERROR_UNKNOWN_SYMBOL_TYPE:
             printf("unknown symbol type");
+            break;
+        case NULANG_ERROR_ARCHETYPE_NOT_FOUND:
+            printf("archetype not found");
             break;
 
         case NULANG_ERROR_NONE:
@@ -292,6 +291,13 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
             break;
         case AST_FIELDLOOKUP:
             nulang__print_string(node->value.fieldlookup);
+            break;
+        case AST_INSERT:
+            printf("archetype(%d) ", node->value.archetype);
+            break;
+        case AST_SINGLETON:
+            printf("archetype(%d) ", node->value.archetype);
+            break;
         default:
             break;
     }

@@ -2,15 +2,17 @@
 #define NULANG_PARSER_H
 
 #include <nucleus/lang/ast.h>
+#include <nucleus/lang/error.h>
 #include <nucleus/lang/token.h>
 #include <nucleus/lang/report.h>
-#include <nucleus/vm/error.h>
-#include <nucleus/vm/types.h>
+#include <nucleus/vm.h>
+#include <nucleus/vm/string.h>
 
-#ifdef NULANG_IMPL
+#ifdef NU_IMPL
 
 typedef struct
 {
+    const struct nu__vm    *vm;
     nulang__error_data_t   *error;
     nulang__lexer_t        *lexer;
     nulang__ast_t          *ast;
@@ -97,12 +99,16 @@ nulang__try_parse_vartype (nulang__parser_t       *parser,
         NULANG_ERROR_CHECK(error);
         if (*found)
         {
-            nulang__symbol_id_t arch;
-            error = nulang__lookup_archetype(
-                symbols, tok.value.identifier, tok.span, &arch);
-            NULANG_ERROR_CHECK(error);
+            nu_archetype_t archetype = nu__archetype_find(
+                &parser->vm->tables,
+                nu_uidn(tok.value.identifier.p, tok.value.identifier.n));
+            if (!archetype)
+            {
+                parser->error->span = tok.span;
+                return NULANG_ERROR_ARCHETYPE_NOT_FOUND;
+            }
             vartype->primitive = NU_PRIMITIVE_ENTITY;
-            vartype->archetype = arch;
+            vartype->archetype = archetype;
             return NULANG_ERROR_NONE;
         }
         error = nulang__parser_consume(parser, &tok);
@@ -338,6 +344,36 @@ nulang__try_parse_call (nulang__parser_t  *parser,
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t
+nulang__parse_insert_or_singleton (nulang__parser_t   *parser,
+                                   nulang__node_type_t type,
+                                   nulang__node_id_t  *id)
+{
+    nulang__error_t error;
+    nulang__token_t tok;
+    nu_archetype_t  archetype;
+    error = nulang__parser_consume(parser, &tok);
+    NULANG_ERROR_CHECK(error);
+    error = nulang__parser_expect(parser, TOKEN_LPAREN, &tok);
+    NULANG_ERROR_CHECK(error);
+    error = nulang__parser_expect(parser, TOKEN_IDENTIFIER, &tok);
+    NULANG_ERROR_CHECK(error);
+    archetype = nu__archetype_find(
+        &parser->vm->tables,
+        nu_uidn(tok.value.identifier.p, tok.value.identifier.n));
+    if (!archetype)
+    {
+        parser->error->span = tok.span;
+        return NULANG_ERROR_ARCHETYPE_NOT_FOUND;
+    }
+    error = nulang__ast_add_node(parser->ast, id);
+    NULANG_ERROR_CHECK(error);
+    parser->ast->nodes[*id].type            = type;
+    parser->ast->nodes[*id].span            = tok.span;
+    parser->ast->nodes[*id].value.archetype = archetype;
+    error = nulang__parser_expect(parser, TOKEN_RPAREN, &tok);
+    return NULANG_ERROR_NONE;
+}
+static nulang__error_t
 nulang__parse_atom (nulang__parser_t  *parser,
                     nulang__block_id_t block,
                     nulang__node_id_t *node)
@@ -355,6 +391,15 @@ nulang__parse_atom (nulang__parser_t  *parser,
             error = nulang__try_parse_field_lookup_chain(parser, *node, node);
             NULANG_ERROR_CHECK(error);
             error = nulang__try_parse_call(parser, *node, block, node);
+            NULANG_ERROR_CHECK(error);
+            break;
+        case TOKEN_INSERT:
+            error = nulang__parse_insert_or_singleton(parser, AST_INSERT, node);
+            NULANG_ERROR_CHECK(error);
+            break;
+        case TOKEN_SINGLETON:
+            error = nulang__parse_insert_or_singleton(
+                parser, AST_SINGLETON, node);
             NULANG_ERROR_CHECK(error);
             break;
         case TOKEN_PRIMITIVE:
@@ -793,12 +838,14 @@ nulang__parse (nulang__parser_t *parser)
 }
 
 static void
-nulang__parser_init (nulang__lexer_t        *lexer,
+nulang__parser_init (const struct nu__vm    *vm,
+                     nulang__lexer_t        *lexer,
                      nulang__ast_t          *ast,
                      nulang__symbol_table_t *symbols,
                      nulang__error_data_t   *error,
                      nulang__parser_t       *parser)
 {
+    parser->vm      = vm;
     parser->error   = error;
     parser->lexer   = lexer;
     parser->ast     = ast;

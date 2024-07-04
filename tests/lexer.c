@@ -1,6 +1,5 @@
 #include <stdio.h>
 #define NU_IMPL
-#define NULANG_IMPL
 #include <nucleus/lang.h>
 
 static const nu_char_t *source

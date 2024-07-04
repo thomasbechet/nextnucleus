@@ -24,7 +24,7 @@ typedef struct
     nu_size_t       peek_count;
 } nulang__lexer_t;
 
-#ifdef NULANG_IMPL
+#ifdef NU_IMPL
 
 static void
 nulang__lexer_init (const nu_char_t *source, nulang__lexer_t *lexer)

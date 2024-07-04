@@ -1,19 +1,5 @@
 #define NU_IMPL
-#define NULANG_IMPL
 #include <nucleus/lang.h>
-
-/* static const nu_char_t *source
-    = "let abc: $hello = 'hello world' + 4 + 3.0 * 1.0 / (3/2)\n"
-      "abc = 1.0\n"
-      "if abc == 'cool' then abc = true end\n"
-      "while abc > 0.12345 do\n"
-      "let test: fix = 123\n"
-      "let coucou = 0\n"
-      "if (true == false) then print('hello') end\n"
-      "aabc = 4\n"
-      "$player.position = 3\n"
-      "print($player)\n"
-      "end\n" */
 
 static nu_char_t *
 load_file (const nu_char_t *file)
@@ -40,6 +26,8 @@ load_file (const nu_char_t *file)
 int
 main (int argc, char *argv[])
 {
+    nu_vm_info_t           vm_info;
+    nu_vm_t                vm;
     nulang_status_t        status;
     nulang_compiler_info_t info;
     nulang_compiler_t      compiler;
@@ -49,8 +37,17 @@ main (int argc, char *argv[])
     source = load_file(argv[1]);
     NU_ASSERT(source);
 
+    nu_allocator_api_stdlib(&vm_info.allocator);
+    nu_cartridge_api_default(&vm_info.cartridge);
+    nu_vm_init(&vm_info, &vm);
+    {
+        nu_error_t error;
+        error = nu_vm_create_archetype(vm, "player", NU_NULL, 0, NU_NULL);
+        NU_ASSERT(error == NU_ERROR_NONE);
+    }
+
     /* nulang_print_tokens(source); */
-    nulang_compiler_info_default(&info);
+    nulang_compiler_info_default(vm, &info);
     status = nulang_compiler_init(&info, &compiler);
     NU_ASSERT(status == NULANG_SUCCESS);
     status = nulang_compile(&compiler, source);

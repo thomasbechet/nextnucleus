@@ -43,12 +43,46 @@ typedef struct
     nu_resource_type_t type;
 } nu_cartdata_resource_t;
 
+#ifdef NU_STDLIB
+NU_API void nu_cartridge_api_default(nu_cartridge_api_t *info);
+#endif
+
 #ifdef NU_IMPL
 
 typedef struct
 {
     nu_cartridge_api_t api;
 } nu__cartdrige_t;
+
+#ifdef NU_STDLIB
+static nu_error_t
+nu__cartridge_load_default (void *userdata, nu_cartdata_type_t type, void *data)
+{
+    (void)userdata;
+    switch (type)
+    {
+        case NU_CARTDATA_VM_PROPERTIES: {
+            nu_cartdata_vm_properties_t *pdata = data;
+            nu_vm_properties_default(pdata->props);
+            break;
+        }
+        case NU_CARTDATA_BUNDLE:
+            break;
+        case NU_CARTDATA_RESOURCE:
+            break;
+        case NU_CARTDATA_UNKNOWN:
+            return NU_ERROR_RESOURCE_NOT_FOUND;
+            break;
+    }
+    return NU_ERROR_NONE;
+}
+void
+nu_cartridge_api_default (nu_cartridge_api_t *info)
+{
+    info->load     = nu__cartridge_load_default;
+    info->userdata = NU_NULL;
+}
+#endif
 
 #endif
 

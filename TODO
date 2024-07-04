@@ -1,14 +1,1 @@
-[x] Externalize memory allocator from virtual machine
-[x] Make resource names optional
-
-nu_field(api, e, POSITION);
-
-arch = e.arch
-index = e.index
-headers = api->archs[arch]
-find header
-header->data[index]
-
-for e in 
-
-
+[ ] replace symbols by symtab

@@ -10,7 +10,8 @@ typedef enum
 {
     NU_MEMORY_USAGE_CORE,
     NU_MEMORY_USAGE_TABLE,
-    NU_MEMORY_USAGE_RENDERER
+    NU_MEMORY_USAGE_RENDERER,
+    NU_MEMORY_USAGE_COMPILER
 } nu_memory_usage_t;
 
 typedef void *(*nu_allocator_callback_pfn_t)(nu_size_t         size,
@@ -25,7 +26,7 @@ typedef struct
 } nu_allocator_api_t;
 
 #ifdef NU_STDLIB
-NU_API void nu_allocator_info_stdlib(nu_allocator_api_t *info);
+NU_API void nu_allocator_api_stdlib(nu_allocator_api_t *info);
 #endif
 
 #ifdef NU_IMPL
@@ -62,7 +63,7 @@ nu__static_allocator_callback (nu_size_t         size,
 }
 
 void
-nu_allocator_info_stdlib (nu_allocator_api_t *info)
+nu_allocator_api_stdlib (nu_allocator_api_t *info)
 {
     info->userdata = NU_NULL;
     info->callback = nu__static_allocator_callback;

@@ -11,14 +11,14 @@ typedef struct
 int
 main (void)
 {
-    nu__allocator_t     allocator;
+    nu__allocator_t    allocator;
     nu_allocator_api_t alloc_info;
-    nu__list_t          list;
-    object_t           *objs[OBJECT_COUNT];
-    object_t           *it;
-    nu_size_t           i;
+    nu__list_t         list;
+    object_t          *objs[OBJECT_COUNT];
+    object_t          *it;
+    nu_size_t          i;
 
-    nu_allocator_info_stdlib(&alloc_info);
+    nu_allocator_api_stdlib(&alloc_info);
 
     NU_ERROR_ASSERT(nu__allocator_init(&alloc_info, &allocator));
     nu__list_init(&list, sizeof(object_t));

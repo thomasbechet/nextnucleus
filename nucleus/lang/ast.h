@@ -2,7 +2,6 @@
 #define NULANG_AST_H
 
 #include <nucleus/lang/error.h>
-#include <nucleus/lang/allocator.h>
 #include <nucleus/lang/lexer.h>
 #include <nucleus/lang/symbol.h>
 #include <nucleus/vm/types.h>
@@ -26,7 +25,10 @@
     AST(CALL)                   \
     AST(ASSIGN)                 \
     AST(BINOP)                  \
-    AST(UNOP)
+    AST(UNOP)                   \
+    AST(INSERT)                 \
+    AST(DELETE)                 \
+    AST(SINGLETON)
 #define NULANG_GENERATE_AST(AST)      AST_##AST,
 #define NULANG_GENERATE_AST_NAME(AST) #AST,
 typedef enum
@@ -73,7 +75,7 @@ static const nu_char_t *NULANG_UNOP_NAMES[]
 typedef nu_u32_t nulang__node_id_t;
 #define NULANG_NODE_NULL 0xffffffff
 
-#ifdef NULANG_IMPL
+#ifdef NU_IMPL
 
 typedef union
 {
@@ -84,6 +86,7 @@ typedef union
     nu_primitive_t      primitive;
     nulang__symbol_id_t symbol;
     nulang__string_t    fieldlookup;
+    nu_archetype_t      archetype;
 } nulang__node_value_t;
 
 typedef struct
@@ -106,12 +109,14 @@ typedef struct
 } nulang__ast_t;
 
 static nulang__error_t
-nulang__ast_init (nu_u32_t             node_capacity,
-                  nulang__allocator_t *alloc,
-                  nulang__ast_t       *ast)
+nulang__ast_init (nu_u32_t         node_capacity,
+                  nu__allocator_t *alloc,
+                  nulang__ast_t   *ast)
 {
     NU_ASSERT(node_capacity);
-    ast->nodes = nulang__alloc(alloc, sizeof(nulang__node_t) * node_capacity);
+    ast->nodes = nu__alloc(alloc,
+                           sizeof(nulang__node_t) * node_capacity,
+                           NU_MEMORY_USAGE_COMPILER);
     if (!ast->nodes)
     {
         return NULANG_ERROR_OUT_OF_MEMORY;
@@ -199,8 +204,8 @@ nulang__is_expression (nulang__node_type_t t)
 {
     nu_size_t                        i;
     static const nulang__node_type_t expressions[]
-        = { AST_LITERAL, AST_SYMBOL, AST_FIELDLOOKUP,
-            AST_CALL,    AST_BINOP,  AST_UNOP };
+        = { AST_LITERAL, AST_SYMBOL,    AST_FIELDLOOKUP, AST_CALL,
+            AST_INSERT,  AST_SINGLETON, AST_BINOP,       AST_UNOP };
     for (i = 0; i < NU_ARRAY_SIZE(expressions); ++i)
     {
         if (t == expressions[i])

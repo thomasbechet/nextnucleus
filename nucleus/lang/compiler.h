@@ -8,16 +8,16 @@
 
 typedef struct
 {
-    nu_size_t               symbol_capacity;
-    nu_size_t               archetype_capacity;
-    nu_size_t               block_capacity;
-    nu_size_t               node_capacity;
-    nulang_allocator_info_t allocator;
+    nu_vm_t   vm;
+    nu_size_t symbol_capacity;
+    nu_size_t archetype_capacity;
+    nu_size_t block_capacity;
+    nu_size_t node_capacity;
 } nulang_compiler_info_t;
 
 typedef struct
 {
-    nulang__allocator_t    allocator;
+    struct nu__vm         *vm;
     nulang__symbol_table_t symbols;
     nulang__ast_t          ast;
     const nu_char_t       *source;
@@ -25,7 +25,8 @@ typedef struct
     nulang__error_data_t   error_data;
 } nulang_compiler_t;
 
-NU_API void nulang_compiler_info_default(nulang_compiler_info_t *info);
+NU_API void            nulang_compiler_info_default(nu_vm_t                 vm,
+                                                    nulang_compiler_info_t *info);
 NU_API nulang_status_t nulang_compiler_init(const nulang_compiler_info_t *info,
                                             nulang_compiler_t *compiler);
 NU_API nulang_status_t nulang_compiler_free(nulang_compiler_t *compiler);
@@ -33,7 +34,7 @@ NU_API nulang_status_t nulang_compile(nulang_compiler_t *compiler,
                                       const nu_char_t   *source);
 NU_API nulang_status_t nulang_evaluate(nulang_compiler_t *compiler);
 
-#ifdef NULANG_IMPL
+#ifdef NU_IMPL
 
 #ifdef NU_STDLIB
 
@@ -49,31 +50,24 @@ nulang__default_allocator (nu_size_t s, void *userdata)
 #endif
 
 void
-nulang_compiler_info_default (nulang_compiler_info_t *info)
+nulang_compiler_info_default (nu_vm_t vm, nulang_compiler_info_t *info)
 {
+    info->vm                 = vm;
     info->symbol_capacity    = 256;
     info->archetype_capacity = 256;
     info->block_capacity     = 256;
     info->node_capacity      = 256;
-#ifdef NU_STDLIB
-    info->allocator.callback = nulang__default_allocator;
-    info->allocator.userdata = NU_NULL;
-#else
-    info->allocator.callback = NU_NULL;
-    info->allocator.userdata = NU_NULL;
-#endif
 }
 
 nulang_status_t
 nulang_compiler_init (const nulang_compiler_info_t *info,
                       nulang_compiler_t            *compiler)
 {
-    compiler->allocator.callback = info->allocator.callback;
-    compiler->allocator.userdata = info->allocator.userdata;
+    compiler->vm = info->vm;
 
     compiler->error = nulang__symbol_table_init(info->symbol_capacity,
                                                 info->block_capacity,
-                                                &compiler->allocator,
+                                                &compiler->vm->allocator,
                                                 &compiler->symbols);
     if (compiler->error != NULANG_ERROR_NONE)
     {
@@ -81,7 +75,7 @@ nulang_compiler_init (const nulang_compiler_info_t *info,
     }
 
     compiler->error = nulang__ast_init(
-        info->node_capacity, &compiler->allocator, &compiler->ast);
+        info->node_capacity, &compiler->vm->allocator, &compiler->ast);
     if (compiler->error != NULANG_ERROR_NONE)
     {
         return NULANG_FAILURE;
@@ -113,7 +107,8 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
     /* prepare compiler */
     nulang__compiler_prepare(compiler);
     nulang__lexer_init(source, &lexer);
-    nulang__parser_init(&lexer,
+    nulang__parser_init(compiler->vm,
+                        &lexer,
                         &compiler->ast,
                         &compiler->symbols,
                         &compiler->error_data,
@@ -129,6 +124,7 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
 
     nulang__print_node(
         &compiler->symbols, &compiler->ast, 0, compiler->ast.root);
+    nulang__print_symbol_table(&compiler->symbols);
 
     /* analyze */
     nulang__analyzer_init(
