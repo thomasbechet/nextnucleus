@@ -9,6 +9,7 @@
 
 #define NULANG_FOREACH_AST(AST) \
     AST(ROOT)                   \
+    AST(FUNCTION)               \
     AST(COMPOUND)               \
     AST(LITERAL)                \
     AST(SYMBOL)                 \
@@ -190,8 +191,8 @@ nulang__is_statement (nulang__node_type_t t)
 {
     nu_size_t                        i;
     static const nulang__node_type_t statements[]
-        = { AST_COMPOUND, AST_RETURN, AST_IF,      AST_FOR,
-            AST_WHILE,    AST_LOOP,   AST_VARDECL, AST_ASSIGN };
+        = { AST_COMPOUND, AST_FUNCTION, AST_RETURN,  AST_IF,    AST_FOR,
+            AST_WHILE,    AST_LOOP,     AST_VARDECL, AST_ASSIGN };
     for (i = 0; i < NU_ARRAY_SIZE(statements); ++i)
     {
         if (t == statements[i])

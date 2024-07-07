@@ -11,14 +11,15 @@ static const nu_char_t *source
 int
 main (void)
 {
-    nulang__lexer_t   lexer;
-    nu_char_t         c;
-    nulang_location_t loc;
-    nu_bool_t         has;
-    nulang__token_t   token;
-    nulang__error_t   error;
+    nulang__lexer_t      lexer;
+    nu_char_t            c;
+    nulang_location_t    loc;
+    nu_bool_t            has;
+    nulang__token_t      token;
+    nulang__error_t      error;
+    nulang__error_data_t error_data;
 
-    nulang__lexer_init(source, &lexer);
+    nulang__lexer_init(source, &error_data, &lexer);
 
     for (;;)
     {

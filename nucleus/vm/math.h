@@ -214,7 +214,9 @@ nu_ftodouble (nu_fix_t a)
 static nu_u32_t
 nu__fast_pow10 (nu_u32_t n)
 {
-    static nu_u32_t pow10[6] = { 1, 10, 100, 1000, 10000, 100000 };
+    static nu_u32_t pow10[8]
+        = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000 };
+    NU_ASSERT(n < 8);
     return pow10[n];
 }
 nu_error_t
@@ -246,7 +248,7 @@ nu_fparse (const nu_char_t *s, nu_size_t n, nu_fix_t *v)
                 }
                 if (frac_flag)
                 {
-                    if (dp >= 8)
+                    if (dp >= 6)
                     {
                         return NU_ERROR_INVALID_STATE;
                     }

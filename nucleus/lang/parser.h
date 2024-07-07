@@ -3,6 +3,7 @@
 
 #include <nucleus/lang/ast.h>
 #include <nucleus/lang/error.h>
+#include <nucleus/lang/symbol.h>
 #include <nucleus/lang/token.h>
 #include <nucleus/lang/report.h>
 #include <nucleus/vm.h>
@@ -74,49 +75,63 @@ nulang__parser_accept (nulang__parser_t    *parser,
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t
-nulang__try_parse_vartype (nulang__parser_t       *parser,
-                           nulang__symbol_table_t *symbols,
-                           nulang__block_id_t      block,
-                           nulang__vartype_t      *vartype,
-                           nu_bool_t              *found)
+nulang__parse_vartype (nulang__parser_t *parser, nulang__vartype_t *vartype)
 {
     nulang__error_t error;
     nulang__token_t tok;
-    error = nulang__parser_accept(parser, TOKEN_COLON, &tok, found);
+    nu_bool_t       found;
+    error = nulang__parser_expect(parser, TOKEN_COLON, &tok);
     NULANG_ERROR_CHECK(error);
-    if (*found)
+    /* primitive */
+    error = nulang__parser_accept(parser, TOKEN_PRIMITIVE, &tok, &found);
+    NULANG_ERROR_CHECK(error);
+    if (found)
     {
-        /* primitive */
-        error = nulang__parser_accept(parser, TOKEN_PRIMITIVE, &tok, found);
-        NULANG_ERROR_CHECK(error);
-        if (*found)
-        {
-            vartype->primitive = tok.value.primitive;
-            return NULANG_ERROR_NONE;
-        }
-        /* archetype */
-        error = nulang__parser_accept(parser, TOKEN_IDENTIFIER, &tok, found);
-        NULANG_ERROR_CHECK(error);
-        if (*found)
-        {
-            nu_archetype_t archetype = nu__archetype_find(
-                &parser->vm->tables,
-                nu_uidn(tok.value.identifier.p, tok.value.identifier.n));
-            if (!archetype)
-            {
-                parser->error->span = tok.span;
-                return NULANG_ERROR_ARCHETYPE_NOT_FOUND;
-            }
-            vartype->primitive = NU_PRIMITIVE_ENTITY;
-            vartype->archetype = archetype;
-            return NULANG_ERROR_NONE;
-        }
-        error = nulang__parser_consume(parser, &tok);
-        NULANG_ERROR_CHECK(error);
-        parser->error->span = tok.span;
-        return NULANG_ERROR_INVALID_VARTYPE;
+        vartype->primitive = tok.value.primitive;
+        return NULANG_ERROR_NONE;
     }
-    vartype->primitive = NU_PRIMITIVE_UNKNOWN;
+    /* archetype */
+    error = nulang__parser_accept(parser, TOKEN_IDENTIFIER, &tok, &found);
+    NULANG_ERROR_CHECK(error);
+    if (found)
+    {
+        nu_archetype_t archetype = nu__archetype_find(
+            &parser->vm->tables,
+            nu_uidn(tok.value.identifier.p, tok.value.identifier.n));
+        if (!archetype)
+        {
+            parser->error->span = tok.span;
+            return NULANG_ERROR_ARCHETYPE_NOT_FOUND;
+        }
+        vartype->primitive = NU_PRIMITIVE_ENTITY;
+        vartype->archetype = archetype;
+        return NULANG_ERROR_NONE;
+    }
+    error = nulang__parser_consume(parser, &tok);
+    NULANG_ERROR_CHECK(error);
+    parser->error->span = tok.span;
+    return NULANG_ERROR_INVALID_VARTYPE;
+}
+static nulang__error_t
+nulang__try_parse_vartype (nulang__parser_t  *parser,
+                           nulang__vartype_t *vartype,
+                           nu_bool_t         *found)
+{
+    nulang__error_t error;
+    nulang__token_t tok;
+    error = nulang__parser_peek(parser, 0, &tok);
+    NULANG_ERROR_CHECK(error);
+    if (tok.type == TOKEN_COLON)
+    {
+        *found = NU_TRUE;
+        error  = nulang__parse_vartype(parser, vartype);
+        NULANG_ERROR_CHECK(error);
+    }
+    else
+    {
+        *found             = NU_FALSE;
+        vartype->primitive = NU_PRIMITIVE_UNKNOWN;
+    }
     return NULANG_ERROR_NONE;
 }
 typedef nulang__error_t (*nu__parse_identifier_list_pfn_t)(
@@ -150,50 +165,6 @@ nulang__parse_identifier_list (nulang__parser_t               *parser,
             error = nulang__parser_expect(parser, TOKEN_LITERAL, &tok);
             NULANG_ERROR_CHECK(error);
             error = callback(&tok, userdata);
-            NULANG_ERROR_CHECK(error);
-            (*count)++;
-        }
-    }
-    return NULANG_ERROR_NONE;
-}
-typedef nulang__error_t (*nu__parse_function_argument_list_pfn_t)(
-    const nulang__token_t *, nulang__vartype_t, void *);
-static nulang__error_t
-nulang__parse_function_argument_list (
-    nulang__parser_t                      *parser,
-    nulang__token_type_t                   separator,
-    nulang__block_id_t                     function_block,
-    nu_size_t                             *count,
-    nu__parse_function_argument_list_pfn_t callback,
-    void                                  *userdata)
-{
-    nulang__error_t error;
-    nulang__token_t tok;
-    nu_bool_t       found;
-    *count = 0;
-    error  = nulang__parser_accept(parser, TOKEN_IDENTIFIER, &tok, &found);
-    NULANG_ERROR_CHECK(error);
-    if (found)
-    {
-        nulang__vartype_t vartype;
-        error = nulang__try_parse_vartype(
-            parser, parser->symbols, function_block, &vartype, &found);
-        NULANG_ERROR_CHECK(error);
-        error = callback(&tok, vartype, userdata);
-        NULANG_ERROR_CHECK(error);
-        (*count)++;
-        for (;;)
-        {
-            error = nulang__parser_accept(parser, separator, &tok, &found);
-            NULANG_ERROR_CHECK(error);
-            if (!found)
-            {
-                break;
-            }
-            error = nulang__try_parse_vartype(
-                parser, parser->symbols, function_block, &vartype, &found);
-            NULANG_ERROR_CHECK(error);
-            error = callback(&tok, vartype, userdata);
             NULANG_ERROR_CHECK(error);
             (*count)++;
         }
@@ -597,8 +568,7 @@ nulang__parse_variable_declaration (nulang__parser_t  *parser,
     NULANG_ERROR_CHECK(error);
     error = nulang__parser_expect(parser, TOKEN_IDENTIFIER, &ident);
     NULANG_ERROR_CHECK(error);
-    error = nulang__try_parse_vartype(
-        parser, parser->symbols, block, &vartype, &found);
+    error = nulang__try_parse_vartype(parser, &vartype, &found);
     NULANG_ERROR_CHECK(error);
     error = nulang__parser_expect(parser, TOKEN_ASSIGN, &tok);
     NULANG_ERROR_CHECK(error);
@@ -772,6 +742,156 @@ nulang__parse_while_statement (nulang__parser_t  *parser,
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t
+nulang__parse_function_declaration (nulang__parser_t  *parser,
+                                    nulang__block_id_t block,
+                                    nu_bool_t          exported,
+                                    nulang__node_id_t *node)
+{
+    nulang__error_t        error;
+    nulang__token_t        tok;
+    nulang__node_id_t      ident;
+    nulang__symbol_value_t symbol_value;
+    nulang__symbol_id_t    function_symbol;
+    nulang__block_id_t     function_block;
+    nulang__vartype_t      type;
+    nu_bool_t              found;
+
+    error = nulang__parser_expect(parser, TOKEN_FUNCTION, &tok);
+    NULANG_ERROR_CHECK(error);
+    if (parser->symbols->blocks[block].type != BLOCK_GLOBAL)
+    {
+        parser->error->span = tok.span;
+        return NULANG_ERROR_FUNCTION_OUTSIDE_GLOBAL_SCOPE;
+    }
+
+    error = nulang__parser_expect(parser, TOKEN_IDENTIFIER, &tok);
+    NULANG_ERROR_CHECK(error);
+
+    symbol_value.function.return_type.primitive = NU_PRIMITIVE_UNKNOWN;
+    symbol_value.function.exported              = exported;
+    symbol_value.function.first_arg             = NULANG_NODE_NULL;
+    error = nulang__define_symbol(parser->symbols,
+                                  SYMBOL_FUNCTION,
+                                  symbol_value,
+                                  tok.value.identifier,
+                                  tok.span,
+                                  block,
+                                  &function_symbol);
+    NULANG_ERROR_CHECK(error);
+    error = nulang__add_block(
+        parser->symbols, BLOCK_FUNCTION, block, &function_block);
+    NULANG_ERROR_CHECK(error);
+    error = nulang__ast_add_node(parser->ast, node);
+    NULANG_ERROR_CHECK(error);
+    parser->ast->nodes[*node].type         = AST_FUNCTION;
+    parser->ast->nodes[*node].span         = tok.span;
+    parser->ast->nodes[*node].value.symbol = function_symbol;
+
+    /* parse arguments */
+    error = nulang__parser_expect(parser, TOKEN_LPAREN, &tok);
+    NULANG_ERROR_CHECK(error);
+
+    error = nulang__parser_peek(parser, 0, &tok);
+    NULANG_ERROR_CHECK(error);
+    if (tok.type != TOKEN_RPAREN)
+    {
+        for (;;)
+        {
+            nulang__symbol_id_t argument;
+
+            error = nulang__parser_expect(parser, TOKEN_IDENTIFIER, &tok);
+            NULANG_ERROR_CHECK(error);
+
+            /* check duplicated argument */
+            if (nulang__find_symbol_in_block(parser->symbols,
+                                             function_block,
+                                             tok.value.identifier,
+                                             &argument))
+            {
+                parser->error->span = tok.span;
+                return NULANG_ERROR_DUPLICATED_FUNCTION_ARGUMENT;
+            }
+
+            /* parse argument type */
+            error = nulang__parse_vartype(parser, &type);
+            NULANG_ERROR_CHECK(error);
+
+            /* define symbol */
+            symbol_value.argument.vartype  = type;
+            symbol_value.argument.function = function_symbol;
+            symbol_value.argument.next
+                = parser->symbols->symbols[function_symbol]
+                      .value.function.first_arg;
+            error = nulang__define_symbol(parser->symbols,
+                                          SYMBOL_ARGUMENT,
+                                          symbol_value,
+                                          tok.value.identifier,
+                                          tok.span,
+                                          function_block,
+                                          &argument);
+            NULANG_ERROR_CHECK(error);
+            parser->symbols->symbols[function_symbol].value.function.first_arg
+                = argument;
+
+            error = nulang__parser_accept(parser, TOKEN_COMMA, &tok, &found);
+            NULANG_ERROR_CHECK(error);
+            if (!found)
+            {
+                break;
+            }
+        }
+    }
+    error = nulang__parser_expect(parser, TOKEN_RPAREN, &tok);
+    NULANG_ERROR_CHECK(error);
+
+    /* parse return type */
+    error = nulang__try_parse_vartype(parser, &type, &found);
+    NULANG_ERROR_CHECK(error);
+    if (found)
+    {
+        parser->symbols->symbols[function_symbol].value.function.return_type
+            = type;
+    }
+
+    /* parse function body */
+    for (;;)
+    {
+        nulang__node_id_t stmt;
+        error = nulang__parser_peek(parser, 0, &tok);
+        NULANG_ERROR_CHECK(error);
+        if (tok.type == TOKEN_END)
+        {
+            break;
+        }
+        error = nulang__parse_statement(parser, function_block, &stmt);
+        NULANG_ERROR_CHECK(error);
+        nulang__ast_append_child(parser->ast, *node, stmt);
+    }
+    error = nulang__parser_expect(parser, TOKEN_END, &tok);
+    NULANG_ERROR_CHECK(error);
+
+    return NULANG_ERROR_NONE;
+}
+static nulang__error_t
+nulang__parse_return_statement (nulang__parser_t  *parser,
+                                nulang__block_id_t block,
+                                nulang__node_id_t *node)
+{
+    nulang__error_t   error;
+    nulang__token_t   tok;
+    nulang__node_id_t expr;
+    error = nulang__parser_expect(parser, TOKEN_RETURN, &tok);
+    NULANG_ERROR_CHECK(error);
+    error = nulang__parse_expression(parser, 0, block, &expr);
+    NULANG_ERROR_CHECK(error);
+    error = nulang__ast_add_node(parser->ast, node);
+    NULANG_ERROR_CHECK(error);
+    parser->ast->nodes[*node].type = AST_RETURN;
+    parser->ast->nodes[*node].span = tok.span;
+    nulang__ast_append_child(parser->ast, *node, expr);
+    return NULANG_ERROR_NONE;
+}
+static nulang__error_t
 nulang__parse_statement (nulang__parser_t  *parser,
                          nulang__block_id_t block,
                          nulang__node_id_t *node)
@@ -790,8 +910,13 @@ nulang__parse_statement (nulang__parser_t  *parser,
         case TOKEN_EXPORT:
             break;
         case TOKEN_FUNCTION:
+            error = nulang__parse_function_declaration(
+                parser, block, NU_FALSE, node);
+            NULANG_ERROR_CHECK(error);
             break;
         case TOKEN_RETURN:
+            error = nulang__parse_return_statement(parser, block, node);
+            NULANG_ERROR_CHECK(error);
             break;
         case TOKEN_IF:
             error = nulang__parse_if_statement(parser, block, node);

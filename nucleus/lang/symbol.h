@@ -1,8 +1,8 @@
 #ifndef NULANG_SYMBOL_H
 #define NULANG_SYMBOL_H
 
+#include <math.h>
 #include <nucleus/lang/error.h>
-#include <nucleus/lang/lexer.h>
 #include <nucleus/lang/token.h>
 #include <nucleus/vm/table.h>
 #include <nucleus/vm/types.h>
@@ -79,6 +79,7 @@ typedef struct
 typedef struct
 {
     nulang__vartype_t   vartype;
+    nulang__symbol_id_t function;
     nulang__symbol_id_t next;
 } nulang__symbol_argument_t;
 typedef struct
@@ -401,15 +402,18 @@ nulang__define_symbol (nulang__symbol_table_t *table,
     return NULANG_ERROR_NONE;
 }
 static nu_bool_t
-nulang__vartype_equals (nulang__vartype_t a, nulang__vartype_t b)
+nulang__vartype_compatible (nulang__vartype_t var, nulang__vartype_t expr)
 {
-    if (a.primitive == b.primitive)
+    if (var.primitive == expr.primitive)
     {
-        if (a.primitive == NU_PRIMITIVE_ENTITY && (a.archetype && b.archetype))
+        if (var.primitive == NU_PRIMITIVE_ENTITY)
         {
-            return a.archetype == b.archetype;
+            if (var.archetype == expr.archetype
+                || expr.archetype == NU_ARCHETYPE_NULL)
+            {
+                return NU_TRUE;
+            }
         }
-        return NU_TRUE;
     }
     return NU_FALSE;
 }

@@ -2,6 +2,7 @@
 #define NULANG_LEXER_H
 
 #include <nucleus/lang/error.h>
+#include <nucleus/lang/report.h>
 #include <nucleus/lang/token.h>
 #include <nucleus/vm/string.h>
 #include <nucleus/vm/math.h>
@@ -11,6 +12,7 @@
 
 typedef struct
 {
+    nulang__error_data_t *error;
     /* source streaming info */
     const nu_char_t  *source;
     const nu_char_t  *ptr;
@@ -27,8 +29,12 @@ typedef struct
 #ifdef NU_IMPL
 
 static void
-nulang__lexer_init (const nu_char_t *source, nulang__lexer_t *lexer)
+nulang__lexer_init (const nu_char_t      *source,
+                    nulang__error_data_t *error,
+                    nulang__lexer_t      *lexer)
 {
+    lexer->error = error;
+
     lexer->source          = source;
     lexer->ptr             = source;
     lexer->next_loc.line   = 1;
@@ -156,15 +162,6 @@ nulang__consume_spaces (nulang__lexer_t *lexer)
     }
 }
 
-#define NULANG_NUMERIC_CHAR(c) (c >= '0' && c <= '9')
-#define NULANG_IDENTIFIER_CHAR(c) \
-    (NULANG_NUMERIC_CHAR(c) || (c >= 'a' && c <= 'z') || c == '_')
-#define NULANG_MATCH_TOKEN(s, t, n) \
-    (n == nu_strlen(t) && nu_strncmp(s, t, n) == 0)
-
-#define NULANG_SOURCE_STRING_EQUALS(a, b) \
-    (a.n == b.n && nu_strncmp(a.p, b.p, a.n) == 0)
-
 static nulang__error_t
 nulang__consume_string (nulang__lexer_t *lexer, nulang__token_t *token)
 {
@@ -193,6 +190,8 @@ nulang__consume_string (nulang__lexer_t *lexer, nulang__token_t *token)
         }
         n++;
     }
+    lexer->error->span.start = start_loc;
+    lexer->error->span.stop  = stop_loc;
     return NULANG_ERROR_UNTERMINATED_STRING;
 }
 static nulang__error_t
@@ -217,6 +216,8 @@ nulang__consume_number (nulang__lexer_t *lexer, nulang__token_t *token)
             {
                 if (has_dot)
                 {
+                    lexer->error->span.start = start_loc;
+                    lexer->error->span.stop  = stop_loc;
                     return NULANG_ERROR_ILLEGAL_CHARACTER;
                 }
                 has_dot = NU_TRUE;
@@ -226,6 +227,8 @@ nulang__consume_number (nulang__lexer_t *lexer, nulang__token_t *token)
         }
         else if (NULANG_IDENTIFIER_CHAR(c))
         {
+            lexer->error->span.start = start_loc;
+            lexer->error->span.stop  = stop_loc;
             return NULANG_ERROR_ILLEGAL_CHARACTER;
         }
         else
@@ -240,7 +243,9 @@ nulang__consume_number (nulang__lexer_t *lexer, nulang__token_t *token)
         nu_fix_t v;
         if (nu_fparse(s, n, &v) != NU_ERROR_NONE)
         {
-            return NULANG_ERROR_ILLEGAL_CHARACTER;
+            lexer->error->span.start = start_loc;
+            lexer->error->span.stop  = stop_loc;
+            return NULANG_ERROR_PARSE_FIXED_POINT;
         }
         token->type                  = TOKEN_LITERAL;
         token->value.literal.type    = LITERAL_FIX;
@@ -251,6 +256,8 @@ nulang__consume_number (nulang__lexer_t *lexer, nulang__token_t *token)
         nu_i32_t v;
         if (nu_iparse(s, n, &v) != NU_ERROR_NONE)
         {
+            lexer->error->span.start = start_loc;
+            lexer->error->span.stop  = stop_loc;
             return NULANG_ERROR_ILLEGAL_CHARACTER;
         }
         token->type                  = TOKEN_LITERAL;

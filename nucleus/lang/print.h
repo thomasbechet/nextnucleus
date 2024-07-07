@@ -118,8 +118,6 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
            NULANG_SYMBOL_NAMES[sym->type]);
     switch (symbols->symbols[symbol].type)
     {
-        case SYMBOL_FUNCTION:
-            break;
         case SYMBOL_VARIABLE:
             printf(" block=%d primitive=%s",
                    sym->block,
@@ -129,7 +127,26 @@ nulang__print_symbol (const nulang__symbol_table_t *symbols,
                 printf(" archetype=%d", sym->value.variable.vartype.archetype);
             }
             break;
+        case SYMBOL_FUNCTION:
+            printf(
+                " first_arg=symbol(%d) return_type=%s",
+                sym->value.function.first_arg,
+                NU_PRIMITIVE_NAMES[sym->value.function.return_type.primitive]);
+            if (sym->value.function.return_type.primitive
+                == NU_PRIMITIVE_ENTITY)
+            {
+                printf(" archetype=%d",
+                       sym->value.function.return_type.archetype);
+            }
+            break;
         case SYMBOL_ARGUMENT:
+            printf(" next=symbol(%d) primitive=%s",
+                   sym->value.argument.next,
+                   NU_PRIMITIVE_NAMES[sym->value.argument.vartype.primitive]);
+            if (sym->value.argument.vartype.primitive == NU_PRIMITIVE_ENTITY)
+            {
+                printf(" archetype=%d", sym->value.argument.vartype.archetype);
+            }
             break;
         case SYMBOL_MODULE:
             break;
@@ -170,6 +187,9 @@ nulang_print_status (const nulang_compiler_t *compiler)
         case NULANG_ERROR_ILLEGAL_CHARACTER:
             printf("illegal character");
             break;
+        case NULANG_ERROR_PARSE_FIXED_POINT:
+            printf("parse fixed point");
+            break;
         case NULANG_ERROR_UNTERMINATED_STRING:
             printf("unterminated string");
             break;
@@ -198,6 +218,12 @@ nulang_print_status (const nulang_compiler_t *compiler)
         case NULANG_ERROR_INVALID_VARTYPE:
             printf("invalid vartype");
             break;
+        case NULANG_ERROR_FUNCTION_OUTSIDE_GLOBAL_SCOPE:
+            printf("function outside global scope");
+            break;
+        case NULANG_ERROR_DUPLICATED_FUNCTION_ARGUMENT:
+            printf("duplicated function argument");
+            break;
 
         case NULANG_ERROR_INCOMPATIBLE_TYPE:
             printf("incompatible type (expect: %s)",
@@ -218,8 +244,14 @@ nulang_print_status (const nulang_compiler_t *compiler)
         case NULANG_ERROR_ARCHETYPE_NOT_FOUND:
             printf("archetype not found");
             break;
-        case NULANG_ERROR_UNRESOLVED_SYMBOL_TYPE:
-            printf("unresolved symbol type");
+        case NULANG_ERROR_UNRESOLVED_SYMBOL:
+            printf("unresolved symbol");
+            break;
+        case NULANG_ERROR_NOT_CALLABLE_SYMBOL:
+            printf("not callable symbol");
+            break;
+        case NULANG_ERROR_NON_BOOLEAN_EXPRESSION:
+            printf("expect a boolean expression");
             break;
 
         case NULANG_ERROR_NONE:
@@ -306,6 +338,9 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
         case AST_LITERAL:
             nulang__print_literal(&node->value.literal);
             break;
+        case AST_FUNCTION:
+            printf("symbol(%d) ", node->value.symbol);
+            break;
         case AST_BINOP:
             printf("%s", NULANG_BINOP_NAMES[node->value.binop]);
             break;
@@ -341,8 +376,9 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
 void
 nulang_print_tokens (const nu_char_t *source)
 {
-    nulang__lexer_t lexer;
-    nulang__lexer_init(source, &lexer);
+    nulang__lexer_t      lexer;
+    nulang__error_data_t error;
+    nulang__lexer_init(source, &error, &lexer);
     printf("==== TOKENS ====\n");
     nulang__lexer_print_tokens(&lexer);
 }

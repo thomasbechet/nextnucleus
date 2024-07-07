@@ -13,6 +13,7 @@
 #define NU_CHUNK_NONE               0xffff
 
 #define NU_ARCHETYPE_INDEX(arch) (arch - 1)
+#define NU_ARCHETYPE_NULL        0
 
 /*
  * Entity Bits Layout
@@ -249,7 +250,7 @@ nu__archetype_find (const nu__table_manager_t *manager, nu_uid_t uid)
         }
         current = manager->archetypes[index].next;
     }
-    return NU_NULL;
+    return NU_ARCHETYPE_NULL;
 }
 static nu_field_t
 nu__archetype_find_field (const nu__table_manager_t *manager,

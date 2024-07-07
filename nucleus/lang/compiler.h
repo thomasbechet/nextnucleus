@@ -106,7 +106,7 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
 
     /* prepare compiler */
     nulang__compiler_prepare(compiler);
-    nulang__lexer_init(source, &lexer);
+    nulang__lexer_init(source, &compiler->error_data, &lexer);
     nulang__parser_init(compiler->vm,
                         &lexer,
                         &compiler->ast,

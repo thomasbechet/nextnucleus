@@ -4,6 +4,15 @@
 #include <nucleus/vm/math.h>
 #include <nucleus/vm/types.h>
 
+#define NULANG_NUMERIC_CHAR(c) (c >= '0' && c <= '9')
+#define NULANG_IDENTIFIER_CHAR(c) \
+    (NULANG_NUMERIC_CHAR(c) || (c >= 'a' && c <= 'z') || c == '_')
+#define NULANG_MATCH_TOKEN(s, t, n) \
+    (n == nu_strlen(t) && nu_strncmp(s, t, n) == 0)
+
+#define NULANG_SOURCE_STRING_EQUALS(a, b) \
+    (a.n == b.n && nu_strncmp(a.p, b.p, a.n) == 0)
+
 typedef struct
 {
     nu_u16_t line;
