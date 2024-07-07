@@ -2,8 +2,10 @@
 #define NULANG_ANALYZER_H
 
 #include <nucleus/lang/ast.h>
+#include <nucleus/lang/builtin.h>
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/report.h>
+#include <nucleus/vm/table.h>
 #include <nucleus/vm/types.h>
 
 #ifdef NU_IMPL
@@ -113,6 +115,59 @@ nulang__find_callable (nulang__analyzer_t *analyzer,
 {
     return NULANG_ERROR_NONE;
 }
+
+typedef enum
+{
+    NULANG_MEMBER_PRIMITIVE_FUNCTION,
+    NULANG_MEMBER_MODULE_FUNCTION,
+    NULANG_MEMBER_FIELD_LOOKUP
+} nulang__member_type_t;
+
+typedef struct
+{
+    nulang__member_type_t    type;
+    nulang__string_t         ident;
+    nu_archetype_t           archetype;
+    nu_field_t               field;
+    const nulang__builtin_t *builtin;
+} nulang__member_t;
+
+static nulang__error_t
+nulang__analyze_member_lookup (nulang__analyzer_t *analyzer,
+                               nulang__node_id_t   member_id,
+                               nulang__member_t   *out)
+{
+    nulang__error_t   error;
+    nulang__node_t   *member   = &analyzer->ast->nodes[member_id];
+    nulang__node_id_t child_id = member->first_child;
+    nulang__node_t   *child    = &analyzer->ast->nodes[child_id];
+    switch (child->type)
+    {
+        case AST_SYMBOL: {
+            nulang__symbol_t *sym
+                = &analyzer->symbols->symbols[child->value.symbol];
+            switch (sym->type)
+            {
+                case SYMBOL_VARIABLE: {
+                    if (sym->value.variable.vartype.primitive
+                        == NU_PRIMITIVE_ENTITY)
+                    {
+                        out->type = NULANG_MEMBER_FIELD_LOOKUP;
+                    }
+                }
+                break;
+                default:
+                    analyzer->error_data->span = member->span;
+                    return NULANG_ERROR_UNKNOWN_SYMBOL_TYPE;
+            }
+        }
+        break;
+        default:
+            NU_UNREACHABLE;
+            break;
+    }
+    return NULANG_ERROR_NONE;
+}
 static nulang__error_t
 nulang__analyzer_call (nulang__analyzer_t *analyzer,
                        nulang__node_id_t   call,
@@ -130,9 +185,23 @@ nulang__analyzer_call (nulang__analyzer_t *analyzer,
     switch (pcallee->type)
     {
         case AST_SYMBOL:
-        case AST_PRIMITIVE:
-        case AST_FIELDLOOKUP:
             break;
+        case AST_BUILTIN: {
+            switch (pcallee->value.builtin.type)
+            {
+                case BUILTIN_CONSTRUCTOR:
+                    out->primitive = pcallee->value.builtin.value.constructor;
+                    break;
+                case BUILTIN_CONSTANT:
+                    /* TODO: INVALID */
+                    break;
+                case BUILTIN_FUNCTION:
+                    out->primitive
+                        = pcallee->value.builtin.value.function->return_type;
+                    break;
+            }
+        }
+        break;
         default:
             break;
     }
@@ -198,10 +267,10 @@ nulang__analyze_expr (nulang__analyzer_t *analyzer,
             }
         }
         break;
-        case AST_FIELDLOOKUP: {
-        }
-        break;
+            break;
         case AST_CALL: {
+            error = nulang__analyzer_call(analyzer, expr, type);
+            NULANG_ERROR_CHECK(error);
         }
         break;
         case AST_SINGLETON:
@@ -276,7 +345,7 @@ nulang__analyze_vardecl (nulang__analyzer_t *analyzer,
     else
     {
         analyzer->error_data->span = node->span;
-        return NULANG_ERROR_UNKNOWN_SYMBOL_TYPE;
+        return NULANG_ERROR_UNRESOLVED_SYMBOL_TYPE;
     }
 }
 static nulang__error_t

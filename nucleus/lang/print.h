@@ -1,6 +1,7 @@
 #ifndef NULANG_PRINT_H
 #define NULANG_PRINT_H
 
+#include <nucleus/lang/ast.h>
 #include <nucleus/lang/compiler.h>
 #include <nucleus/lang/error.h>
 
@@ -217,6 +218,9 @@ nulang_print_status (const nulang_compiler_t *compiler)
         case NULANG_ERROR_ARCHETYPE_NOT_FOUND:
             printf("archetype not found");
             break;
+        case NULANG_ERROR_UNRESOLVED_SYMBOL_TYPE:
+            printf("unresolved symbol type");
+            break;
 
         case NULANG_ERROR_NONE:
             break;
@@ -264,6 +268,25 @@ nulang__print_symbol_table (const nulang__symbol_table_t *table)
     }
 }
 static void
+nulang__print_builtin (nulang__builtin_t builtin)
+{
+    switch (builtin.type)
+    {
+        case BUILTIN_CONSTRUCTOR:
+            printf("constructor=%s ",
+                   NU_PRIMITIVE_NAMES[builtin.value.constructor]);
+            break;
+        case BUILTIN_CONSTANT:
+            printf("constant= ");
+            break;
+        case BUILTIN_FUNCTION:
+            printf("primitive=%s function=%s ",
+                   NU_PRIMITIVE_NAMES[builtin.value.function->primitive],
+                   builtin.value.function->name);
+            break;
+    }
+}
+static void
 nulang__print_node (const nulang__symbol_table_t *symbols,
                     const nulang__ast_t          *ast,
                     nu_u16_t                      depth,
@@ -289,8 +312,11 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
         case AST_UNOP:
             printf("%s", NULANG_UNOP_NAMES[node->value.unop]);
             break;
-        case AST_FIELDLOOKUP:
-            nulang__print_string(node->value.fieldlookup);
+        case AST_MEMBER:
+            nulang__print_string(node->value.member);
+            break;
+        case AST_BUILTIN:
+            nulang__print_builtin(node->value.builtin);
             break;
         case AST_INSERT:
             printf("archetype(%d) ", node->value.archetype);

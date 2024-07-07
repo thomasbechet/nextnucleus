@@ -1,6 +1,7 @@
 #ifndef NULANG_AST_H
 #define NULANG_AST_H
 
+#include <nucleus/lang/builtin.h>
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/lexer.h>
 #include <nucleus/lang/symbol.h>
@@ -11,8 +12,8 @@
     AST(COMPOUND)               \
     AST(LITERAL)                \
     AST(SYMBOL)                 \
-    AST(PRIMITIVE)              \
-    AST(FIELDLOOKUP)            \
+    AST(MEMBER)                 \
+    AST(BUILTIN)                \
     AST(BREAK)                  \
     AST(CONTINUE)               \
     AST(RETURN)                 \
@@ -83,10 +84,11 @@ typedef union
     nulang__binop_t     binop;
     nulang__unop_t      unop;
     nulang__vartype_t   vartype;
-    nu_primitive_t      primitive;
     nulang__symbol_id_t symbol;
-    nulang__string_t    fieldlookup;
     nu_archetype_t      archetype;
+    nulang__builtin_t   builtin;
+    nu_primitive_t      constructor;
+    nulang__string_t    member;
 } nulang__node_value_t;
 
 typedef struct
@@ -204,8 +206,8 @@ nulang__is_expression (nulang__node_type_t t)
 {
     nu_size_t                        i;
     static const nulang__node_type_t expressions[]
-        = { AST_LITERAL, AST_SYMBOL,    AST_FIELDLOOKUP, AST_CALL,
-            AST_INSERT,  AST_SINGLETON, AST_BINOP,       AST_UNOP };
+        = { AST_LITERAL, AST_SYMBOL,    AST_MEMBER, AST_BUILTIN, AST_CALL,
+            AST_INSERT,  AST_SINGLETON, AST_BINOP,  AST_UNOP };
     for (i = 0; i < NU_ARRAY_SIZE(expressions); ++i)
     {
         if (t == expressions[i])

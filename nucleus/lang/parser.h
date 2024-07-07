@@ -201,28 +201,68 @@ nulang__parse_function_argument_list (
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t
-nulang__parse_field_lookup_chain (nulang__parser_t  *parser,
-                                  nulang__node_id_t  child,
-                                  nulang__node_id_t *parent)
+nulang__parse_member_chain (nulang__parser_t  *parser,
+                            nulang__node_id_t  child,
+                            nulang__node_id_t *parent)
 {
     nulang__error_t   error;
-    nulang__node_id_t node;
     nulang__token_t   tok;
+    nulang__node_id_t node;
     error = nulang__parser_expect(parser, TOKEN_DOT, &tok);
     NULANG_ERROR_CHECK(error);
     error = nulang__parser_expect(parser, TOKEN_IDENTIFIER, &tok);
     NULANG_ERROR_CHECK(error);
-    error = nulang__ast_add_node(parser->ast, &node);
-    NULANG_ERROR_CHECK(error);
-    parser->ast->nodes[node].type              = AST_FIELDLOOKUP;
-    parser->ast->nodes[node].span              = tok.span;
-    parser->ast->nodes[node].value.fieldlookup = tok.value.identifier;
-    nulang__ast_append_child(parser->ast, node, child);
+
+    {
+        nulang__node_t *pchild = &parser->ast->nodes[child];
+        switch (pchild->type)
+        {
+            case AST_MEMBER:
+            case AST_SYMBOL: {
+                error = nulang__ast_add_node(parser->ast, &node);
+                NULANG_ERROR_CHECK(error);
+                parser->ast->nodes[node].span         = tok.span;
+                parser->ast->nodes[node].type         = AST_MEMBER;
+                parser->ast->nodes[node].value.member = tok.value.identifier;
+                nulang__ast_append_child(parser->ast, node, child);
+            }
+            break;
+            case AST_BUILTIN: {
+                switch (pchild->value.builtin.type)
+                {
+                    case BUILTIN_CONSTRUCTOR: {
+                        /* promote to primitive builtin function */
+                        const nulang__builtin_function_t *function
+                            = nulang__find_builtin_function(
+                                pchild->value.builtin.value.constructor,
+                                tok.value.identifier);
+                        if (!function)
+                        {
+                            parser->error->span = tok.span;
+                            return NULANG_ERROR_UNKNOWN_SYMBOL_TYPE;
+                        }
+                        parser->ast->nodes[child].value.builtin.type
+                            = BUILTIN_FUNCTION;
+                        parser->ast->nodes[child].value.builtin.value.function
+                            = function;
+                        node = child;
+                    }
+                    break;
+                    default:
+                        parser->error->span = tok.span;
+                        return NULANG_ERROR_UNKNOWN_SYMBOL_TYPE;
+                }
+            }
+            default:
+                break;
+        }
+    }
+
     error = nulang__parser_peek(parser, 0, &tok);
     NULANG_ERROR_CHECK(error);
     if (tok.type == TOKEN_DOT)
     {
-        return nulang__parse_field_lookup_chain(parser, node, parent);
+        return nulang__parse_member_chain(parser, node, parent);
     }
     else
     {
@@ -231,9 +271,9 @@ nulang__parse_field_lookup_chain (nulang__parser_t  *parser,
     }
 }
 static nulang__error_t
-nulang__try_parse_field_lookup_chain (nulang__parser_t  *parser,
-                                      nulang__node_id_t  node,
-                                      nulang__node_id_t *parent)
+nulang__try_parse_member_chain (nulang__parser_t  *parser,
+                                nulang__node_id_t  node,
+                                nulang__node_id_t *parent)
 {
     nulang__error_t error;
     nulang__token_t tok;
@@ -241,7 +281,7 @@ nulang__try_parse_field_lookup_chain (nulang__parser_t  *parser,
     NULANG_ERROR_CHECK(error);
     if (tok.type == TOKEN_DOT)
     {
-        return nulang__parse_field_lookup_chain(parser, node, parent);
+        return nulang__parse_member_chain(parser, node, parent);
     }
     else
     {
@@ -388,7 +428,7 @@ nulang__parse_atom (nulang__parser_t  *parser,
             /* TODO: lookup for builtin functions */
             error = nulang__parse_symbol(parser, block, node);
             NULANG_ERROR_CHECK(error);
-            error = nulang__try_parse_field_lookup_chain(parser, *node, node);
+            error = nulang__try_parse_member_chain(parser, *node, node);
             NULANG_ERROR_CHECK(error);
             error = nulang__try_parse_call(parser, *node, block, node);
             NULANG_ERROR_CHECK(error);
@@ -407,10 +447,13 @@ nulang__parse_atom (nulang__parser_t  *parser,
             NULANG_ERROR_CHECK(error);
             error = nulang__ast_add_node(parser->ast, node);
             NULANG_ERROR_CHECK(error);
-            parser->ast->nodes[*node].type            = AST_PRIMITIVE;
-            parser->ast->nodes[*node].span            = tok.span;
-            parser->ast->nodes[*node].value.primitive = tok.value.primitive;
-            error = nulang__try_parse_field_lookup_chain(parser, *node, node);
+            /* by default, we expect a builtin constructor */
+            parser->ast->nodes[*node].type               = AST_BUILTIN;
+            parser->ast->nodes[*node].span               = tok.span;
+            parser->ast->nodes[*node].value.builtin.type = BUILTIN_CONSTRUCTOR;
+            parser->ast->nodes[*node].value.builtin.value.constructor
+                = tok.value.primitive;
+            error = nulang__try_parse_member_chain(parser, *node, node);
             NULANG_ERROR_CHECK(error);
             error = nulang__try_parse_call(parser, *node, block, node);
             NULANG_ERROR_CHECK(error);
@@ -767,7 +810,7 @@ nulang__parse_statement (nulang__parser_t  *parser,
         case TOKEN_IDENTIFIER:
             error = nulang__parse_symbol(parser, block, &ident);
             NULANG_ERROR_CHECK(error);
-            error = nulang__try_parse_field_lookup_chain(parser, ident, &ident);
+            error = nulang__try_parse_member_chain(parser, ident, &ident);
             NULANG_ERROR_CHECK(error);
             error = nulang__parser_peek(parser, 0, &tok);
             NULANG_ERROR_CHECK(error);

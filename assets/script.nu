@@ -1,2 +1,3 @@
 let b = insert(player) 
-let c = singleton(player) 
+print(b.hello, b)
+let c = vec2.norm(b)
