@@ -174,11 +174,11 @@ nulang_print_status (const nulang_compiler_t *compiler)
             break;
         case NULANG_ERROR_OUT_OF_SYMBOL:
             printf("out of symbols (capacity: %d)",
-                   compiler->symbols.symbol_capacity);
+                   compiler->symtab.symbol_capacity);
             break;
         case NULANG_ERROR_OUT_OF_BLOCK:
             printf("out of blocks (capacity: %d)",
-                   compiler->symbols.block_capacity);
+                   compiler->symtab.block_capacity);
             break;
         case NULANG_ERROR_OUT_OF_MEMORY:
             printf("out of memory");
@@ -389,14 +389,14 @@ void
 nulang_print_symbols (const nulang_compiler_t *compiler)
 {
     printf("==== SYMBOLS ====\n");
-    nulang__print_symbol_table(&compiler->symbols);
+    nulang__print_symbol_table(&compiler->symtab);
 }
 void
 nulang_print_ast (const nulang_compiler_t *compiler)
 {
     printf("==== NODES ====\n");
     nulang__print_node(
-        &compiler->symbols, &compiler->ast, 0, compiler->ast.root);
+        &compiler->symtab, &compiler->ast, 0, compiler->ast.root);
 }
 
 #endif

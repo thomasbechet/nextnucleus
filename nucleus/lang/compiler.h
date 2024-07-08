@@ -18,7 +18,7 @@ typedef struct
 typedef struct
 {
     struct nu__vm         *vm;
-    nulang__symbol_table_t symbols;
+    nulang__symbol_table_t symtab;
     nulang__ast_t          ast;
     const nu_char_t       *source;
     nulang__error_t        error;
@@ -68,7 +68,7 @@ nulang_compiler_init (const nulang_compiler_info_t *info,
     compiler->error = nulang__symbol_table_init(info->symbol_capacity,
                                                 info->block_capacity,
                                                 &compiler->vm->allocator,
-                                                &compiler->symbols);
+                                                &compiler->symtab);
     if (compiler->error != NULANG_ERROR_NONE)
     {
         return NULANG_FAILURE;
@@ -93,7 +93,7 @@ nulang_compiler_free (nulang_compiler_t *compiler)
 static void
 nulang__compiler_prepare (nulang_compiler_t *compiler)
 {
-    nulang__symbol_table_clear(&compiler->symbols);
+    nulang__symbol_table_clear(&compiler->symtab);
     nulang__ast_clear(&compiler->ast);
 }
 #include <nucleus/lang/print.h>
@@ -110,7 +110,7 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
     nulang__parser_init(compiler->vm,
                         &lexer,
                         &compiler->ast,
-                        &compiler->symbols,
+                        &compiler->symtab,
                         &compiler->error_data,
                         &parser);
     compiler->source = source;
@@ -123,12 +123,12 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
     }
 
     nulang__print_node(
-        &compiler->symbols, &compiler->ast, 0, compiler->ast.root);
-    nulang__print_symbol_table(&compiler->symbols);
+        &compiler->symtab, &compiler->ast, 0, compiler->ast.root);
+    nulang__print_symbol_table(&compiler->symtab);
 
     /* analyze */
     nulang__analyzer_init(
-        &analyzer, &compiler->ast, &compiler->symbols, &compiler->error_data);
+        &analyzer, &compiler->ast, &compiler->symtab, &compiler->error_data);
     compiler->error = nulang__analyze(&analyzer);
     if (compiler->error != NULANG_ERROR_NONE)
     {

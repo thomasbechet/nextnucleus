@@ -17,7 +17,7 @@ typedef struct
     nulang__error_data_t   *error;
     nulang__lexer_t        *lexer;
     nulang__ast_t          *ast;
-    nulang__symbol_table_t *symbols;
+    nulang__symbol_table_t *symtab;
 } nulang__parser_t;
 
 static nulang__error_t nulang__parse_expression(nulang__parser_t *parser,
@@ -275,7 +275,7 @@ nulang__parse_symbol (nulang__parser_t  *parser,
     if (tok.type == TOKEN_IDENTIFIER)
     {
         error = nulang__lookup_symbol(
-            parser->symbols, tok.value.identifier, tok.span, block, &symbol);
+            parser->symtab, tok.value.identifier, tok.span, block, &symbol);
         NULANG_ERROR_CHECK(error);
     }
     else
@@ -575,7 +575,7 @@ nulang__parse_variable_declaration (nulang__parser_t  *parser,
     error = nulang__parse_expression(parser, 0, block, &expr);
     NULANG_ERROR_CHECK(error);
     symbol_value.variable.vartype = vartype;
-    error                         = nulang__define_symbol(parser->symbols,
+    error                         = nulang__define_symbol(parser->symtab,
                                   SYMBOL_VARIABLE,
                                   symbol_value,
                                   ident.value.identifier,
@@ -604,7 +604,7 @@ nulang__parse_and_append_if_body (nulang__parser_t  *parser,
     nulang__error_t    error;
     nulang__token_t    tok;
     nulang__node_id_t  body;
-    error = nulang__add_block(parser->symbols, BLOCK_IF, block, &if_block);
+    error = nulang__add_block(parser->symtab, BLOCK_IF, block, &if_block);
     NULANG_ERROR_CHECK(error);
     error = nulang__ast_add_node(parser->ast, &body);
     NULANG_ERROR_CHECK(error);
@@ -713,8 +713,7 @@ nulang__parse_while_statement (nulang__parser_t  *parser,
     nulang__block_id_t while_block;
     error = nulang__parser_expect(parser, TOKEN_WHILE, &tok);
     NULANG_ERROR_CHECK(error);
-    error
-        = nulang__add_block(parser->symbols, BLOCK_WHILE, block, &while_block);
+    error = nulang__add_block(parser->symtab, BLOCK_WHILE, block, &while_block);
     NULANG_ERROR_CHECK(error);
     error = nulang__parse_expression(parser, 0, block, &expr);
     NULANG_ERROR_CHECK(error);
@@ -760,7 +759,7 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
 
     error = nulang__parser_expect(parser, TOKEN_FUNCTION, &tok);
     NULANG_ERROR_CHECK(error);
-    if (parser->symbols->blocks[block].type != BLOCK_GLOBAL)
+    if (parser->symtab->blocks[block].type != BLOCK_GLOBAL)
     {
         parser->error->span = tok.span;
         return NULANG_ERROR_FUNCTION_OUTSIDE_GLOBAL_SCOPE;
@@ -770,13 +769,13 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
     NULANG_ERROR_CHECK(error);
 
     error = nulang__add_block(
-        parser->symbols, BLOCK_FUNCTION, block, &function_block);
+        parser->symtab, BLOCK_FUNCTION, block, &function_block);
     NULANG_ERROR_CHECK(error);
     symbol_value.function.return_type.primitive = NU_PRIMITIVE_UNKNOWN;
     symbol_value.function.exported              = exported;
     symbol_value.function.first_arg             = NULANG_NODE_NULL;
     symbol_value.function.block                 = function_block;
-    error = nulang__define_symbol(parser->symbols,
+    error = nulang__define_symbol(parser->symtab,
                                   SYMBOL_FUNCTION,
                                   symbol_value,
                                   tok.value.identifier,
@@ -784,7 +783,7 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
                                   block,
                                   &function_symbol);
     NULANG_ERROR_CHECK(error);
-    parser->symbols->blocks[function_block].value.function = function_symbol;
+    parser->symtab->blocks[function_block].value.function = function_symbol;
     error = nulang__ast_add_node(parser->ast, node);
     NULANG_ERROR_CHECK(error);
     parser->ast->nodes[*node].type         = AST_FUNCTION;
@@ -807,7 +806,7 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
             NULANG_ERROR_CHECK(error);
 
             /* check duplicated argument */
-            if (nulang__find_symbol_in_block(parser->symbols,
+            if (nulang__find_symbol_in_block(parser->symtab,
                                              function_block,
                                              tok.value.identifier,
                                              &argument))
@@ -824,9 +823,9 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
             symbol_value.argument.vartype  = type;
             symbol_value.argument.function = function_symbol;
             symbol_value.argument.next
-                = parser->symbols->symbols[function_symbol]
+                = parser->symtab->symbols[function_symbol]
                       .value.function.first_arg;
-            error = nulang__define_symbol(parser->symbols,
+            error = nulang__define_symbol(parser->symtab,
                                           SYMBOL_ARGUMENT,
                                           symbol_value,
                                           tok.value.identifier,
@@ -834,7 +833,7 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
                                           function_block,
                                           &argument);
             NULANG_ERROR_CHECK(error);
-            parser->symbols->symbols[function_symbol].value.function.first_arg
+            parser->symtab->symbols[function_symbol].value.function.first_arg
                 = argument;
 
             error = nulang__parser_accept(parser, TOKEN_COMMA, &tok, &found);
@@ -853,7 +852,7 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
     NULANG_ERROR_CHECK(error);
     if (found)
     {
-        parser->symbols->symbols[function_symbol].value.function.return_type
+        parser->symtab->symbols[function_symbol].value.function.return_type
             = type;
     }
 
@@ -997,7 +996,7 @@ nulang__parse (nulang__parser_t *parser)
             break;
         }
         error = nulang__parse_statement(
-            parser, parser->symbols->block_global, &stmt);
+            parser, parser->symtab->block_global, &stmt);
         NULANG_ERROR_CHECK(error);
         nulang__ast_append_child(parser->ast, parser->ast->root, stmt);
     }
@@ -1010,15 +1009,15 @@ static void
 nulang__parser_init (const struct nu__vm    *vm,
                      nulang__lexer_t        *lexer,
                      nulang__ast_t          *ast,
-                     nulang__symbol_table_t *symbols,
+                     nulang__symbol_table_t *symtab,
                      nulang__error_data_t   *error,
                      nulang__parser_t       *parser)
 {
-    parser->vm      = vm;
-    parser->error   = error;
-    parser->lexer   = lexer;
-    parser->ast     = ast;
-    parser->symbols = symbols;
+    parser->vm     = vm;
+    parser->error  = error;
+    parser->lexer  = lexer;
+    parser->ast    = ast;
+    parser->symtab = symtab;
 }
 
 #endif
