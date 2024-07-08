@@ -124,7 +124,7 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
 
     nulang__print_node(
         &compiler->symtab, &compiler->ast, 0, compiler->ast.root);
-    nulang__print_symbol_table(&compiler->symtab);
+    nulang__print_symbols(&compiler->symtab);
 
     /* analyze */
     nulang__analyzer_init(

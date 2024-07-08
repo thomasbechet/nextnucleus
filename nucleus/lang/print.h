@@ -292,7 +292,7 @@ nulang_print_status (const nulang_compiler_t *compiler)
 }
 
 static void
-nulang__print_symbol_table (const nulang__symbol_table_t *table)
+nulang__print_symbols (const nulang__symbol_table_t *table)
 {
     nu_size_t i;
     for (i = 0; i < table->symbol_count; ++i)
@@ -300,6 +300,20 @@ nulang__print_symbol_table (const nulang__symbol_table_t *table)
         printf("[%ld] ", i);
         nulang__print_symbol(table, i);
         printf("\n");
+    }
+}
+static void
+nulang__print_blocks (const nulang__symbol_table_t *table)
+{
+    nu_size_t i;
+    for (i = 0; i < table->block_count; ++i)
+    {
+        const nulang__block_t *block = &table->blocks[i];
+        printf("[%ld] %s parent=block(%d) previous_scope=symbol(%d)\n",
+               i,
+               NULANG_BLOCK_NAMES[block->type],
+               block->parent,
+               block->previous_scope_symbol);
     }
 }
 static void
@@ -389,7 +403,13 @@ void
 nulang_print_symbols (const nulang_compiler_t *compiler)
 {
     printf("==== SYMBOLS ====\n");
-    nulang__print_symbol_table(&compiler->symtab);
+    nulang__print_symbols(&compiler->symtab);
+}
+void
+nulang_print_blocks (const nulang_compiler_t *compiler)
+{
+    printf("==== BLOCKS ====\n");
+    nulang__print_blocks(&compiler->symtab);
 }
 void
 nulang_print_ast (const nulang_compiler_t *compiler)
