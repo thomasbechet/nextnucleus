@@ -608,7 +608,8 @@ nulang__parse_and_append_if_body (nulang__parser_t  *parser,
     NULANG_ERROR_CHECK(error);
     error = nulang__ast_add_node(parser->ast, &body);
     NULANG_ERROR_CHECK(error);
-    parser->ast->nodes[body].type = AST_IFBODY;
+    parser->ast->nodes[body].type           = AST_IFBODY;
+    parser->ast->nodes[body].value.if_block = if_block;
     for (;;)
     {
         nulang__node_id_t stmt;
@@ -719,8 +720,9 @@ nulang__parse_while_statement (nulang__parser_t  *parser,
     NULANG_ERROR_CHECK(error);
     error = nulang__ast_add_node(parser->ast, node);
     NULANG_ERROR_CHECK(error);
-    parser->ast->nodes[*node].type = AST_WHILE;
-    parser->ast->nodes[*node].span = tok.span;
+    parser->ast->nodes[*node].type              = AST_WHILE;
+    parser->ast->nodes[*node].span              = tok.span;
+    parser->ast->nodes[*node].value.while_block = while_block;
     nulang__ast_append_child(parser->ast, *node, expr);
     error = nulang__parser_expect(parser, TOKEN_DO, &tok);
     NULANG_ERROR_CHECK(error);
@@ -767,9 +769,13 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
     error = nulang__parser_expect(parser, TOKEN_IDENTIFIER, &tok);
     NULANG_ERROR_CHECK(error);
 
+    error = nulang__add_block(
+        parser->symbols, BLOCK_FUNCTION, block, &function_block);
+    NULANG_ERROR_CHECK(error);
     symbol_value.function.return_type.primitive = NU_PRIMITIVE_UNKNOWN;
     symbol_value.function.exported              = exported;
     symbol_value.function.first_arg             = NULANG_NODE_NULL;
+    symbol_value.function.block                 = function_block;
     error = nulang__define_symbol(parser->symbols,
                                   SYMBOL_FUNCTION,
                                   symbol_value,
@@ -778,9 +784,7 @@ nulang__parse_function_declaration (nulang__parser_t  *parser,
                                   block,
                                   &function_symbol);
     NULANG_ERROR_CHECK(error);
-    error = nulang__add_block(
-        parser->symbols, BLOCK_FUNCTION, block, &function_block);
-    NULANG_ERROR_CHECK(error);
+    parser->symbols->blocks[function_block].value.function = function_symbol;
     error = nulang__ast_add_node(parser->ast, node);
     NULANG_ERROR_CHECK(error);
     parser->ast->nodes[*node].type         = AST_FUNCTION;
@@ -966,13 +970,9 @@ nulang__parse_statement (nulang__parser_t  *parser,
 static nulang__error_t
 nulang__parse (nulang__parser_t *parser)
 {
-    nulang__block_id_t global_block;
-    nulang__error_t    error;
-    nulang__node_id_t  stmt;
-    nulang__token_t    tok;
-    error = nulang__add_block(
-        parser->symbols, BLOCK_GLOBAL, NULANG_BLOCK_NULL, &global_block);
-    NULANG_ERROR_CHECK(error);
+    nulang__error_t   error;
+    nulang__node_id_t stmt;
+    nulang__token_t   tok;
     for (;;)
     {
         error = nulang__parser_peek(parser, 0, &tok);
@@ -996,7 +996,8 @@ nulang__parse (nulang__parser_t *parser)
         {
             break;
         }
-        error = nulang__parse_statement(parser, global_block, &stmt);
+        error = nulang__parse_statement(
+            parser, parser->symbols->block_global, &stmt);
         NULANG_ERROR_CHECK(error);
         nulang__ast_append_child(parser->ast, parser->ast->root, stmt);
     }

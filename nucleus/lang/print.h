@@ -253,6 +253,9 @@ nulang_print_status (const nulang_compiler_t *compiler)
         case NULANG_ERROR_NON_BOOLEAN_EXPRESSION:
             printf("expect a boolean expression");
             break;
+        case NULANG_ERROR_RETURN_OUTSIDE_FUNCTION:
+            printf("return outside function");
+            break;
 
         case NULANG_ERROR_NONE:
             break;

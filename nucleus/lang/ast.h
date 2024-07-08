@@ -90,6 +90,9 @@ typedef union
     nulang__builtin_t   builtin;
     nu_primitive_t      constructor;
     nulang__string_t    member;
+    nulang__block_id_t  if_block;
+    nulang__block_id_t  while_block;
+    nulang__block_id_t  loop_block;
 } nulang__node_value_t;
 
 typedef struct

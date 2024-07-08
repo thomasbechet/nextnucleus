@@ -1,7 +1,6 @@
 #ifndef NULANG_SYMBOL_H
 #define NULANG_SYMBOL_H
 
-#include <math.h>
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/token.h>
 #include <nucleus/vm/table.h>
@@ -75,6 +74,7 @@ typedef struct
     nulang__vartype_t   return_type;
     nulang__symbol_id_t first_arg;
     nu_bool_t           exported;
+    nulang__block_id_t  block;
 } nulang__symbol_function_t;
 typedef struct
 {
@@ -108,14 +108,6 @@ typedef union
 
 typedef struct
 {
-    nulang__block_type_t type;
-    nulang__block_id_t   parent;
-    nulang__block_id_t   last;
-    nulang__block_id_t   previous_scope_symbol;
-} nulang__block_t;
-
-typedef struct
-{
     nulang__symbol_type_t  type;
     nulang__symbol_value_t value;
     nulang__string_t       ident;
@@ -125,18 +117,44 @@ typedef struct
     nulang__symbol_id_t    previous_in_scope;
 } nulang__symbol_t;
 
+typedef union
+{
+    nulang__symbol_id_t function;
+} nulang__block_value_t;
+
 typedef struct
 {
-    nulang__symbol_t *symbols;
-    nu_u32_t          symbol_count;
-    nu_u32_t          symbol_capacity;
-    nulang__block_t  *blocks;
-    nu_u32_t          block_count;
-    nu_u32_t          block_capacity;
+    nulang__block_type_t  type;
+    nulang__block_value_t value;
+    nulang__block_id_t    parent;
+    nulang__block_id_t    last;
+    nulang__block_id_t    previous_scope_symbol;
+} nulang__block_t;
+
+typedef struct
+{
+    nulang__symbol_t  *symbols;
+    nu_u32_t           symbol_count;
+    nu_u32_t           symbol_capacity;
+    nulang__block_t   *blocks;
+    nu_u32_t           block_count;
+    nu_u32_t           block_capacity;
+    nulang__block_id_t block_global;
 } nulang__symbol_table_t;
 
 #ifdef NU_IMPL
 
+static void
+nulang__symbol_table_clear (nulang__symbol_table_t *table)
+{
+    table->symbol_count                    = 0;
+    table->block_count                     = 1;
+    table->blocks[0].type                  = BLOCK_GLOBAL;
+    table->blocks[0].parent                = NULANG_BLOCK_NULL;
+    table->blocks[0].last                  = NULANG_BLOCK_NULL;
+    table->blocks[0].previous_scope_symbol = NULANG_BLOCK_NULL;
+    table->block_global                    = 0;
+}
 static nulang__error_t
 nulang__symbol_table_init (nu_size_t               symbol_capacity,
                            nu_size_t               block_capacity,
@@ -162,13 +180,9 @@ nulang__symbol_table_init (nu_size_t               symbol_capacity,
     table->block_capacity = block_capacity;
     table->block_count    = 0;
 
+    nulang__symbol_table_clear(table);
+
     return NULANG_ERROR_NONE;
-}
-static void
-nulang__symbol_table_clear (nulang__symbol_table_t *table)
-{
-    table->symbol_count = 0;
-    table->block_count  = 0;
 }
 static nulang__error_t
 nulang__symbol_add (nulang__symbol_table_t *table,
@@ -277,14 +291,17 @@ nulang__check_in_loop (const nulang__symbol_table_t *table,
 }
 static nu_bool_t
 nulang__check_in_function (const nulang__symbol_table_t *table,
-                           nulang__block_id_t            block)
+                           nulang__block_id_t            block,
+                           nulang__symbol_id_t          *function)
 {
     while (block != NULANG_BLOCK_NULL)
     {
         if (table->blocks[block].type == BLOCK_FUNCTION)
         {
-            block = table->blocks[block].parent;
+            *function = table->blocks[block].value.function;
+            return NU_TRUE;
         }
+        block = table->blocks[block].parent;
     }
     return NU_FALSE;
 }
@@ -413,6 +430,10 @@ nulang__vartype_compatible (nulang__vartype_t var, nulang__vartype_t expr)
             {
                 return NU_TRUE;
             }
+        }
+        else
+        {
+            return NU_TRUE;
         }
     }
     return NU_FALSE;

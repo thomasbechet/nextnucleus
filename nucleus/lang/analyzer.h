@@ -403,6 +403,37 @@ nulang__analyze_assign (nulang__analyzer_t *analyzer, nulang__node_id_t assign)
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t
+nulang__analyze_return_statement (nulang__analyzer_t *analyzer,
+                                  nulang__block_id_t  block,
+                                  nulang__node_id_t   node)
+{
+    nulang__symbol_id_t function, expr;
+    nu_bool_t           in_function;
+    nulang__vartype_t   vartype;
+    nulang__error_t     error;
+    in_function
+        = nulang__check_in_function(analyzer->symbols, block, &function);
+    if (!in_function)
+    {
+        analyzer->error_data->span = analyzer->ast->nodes[node].span;
+        return NULANG_ERROR_RETURN_OUTSIDE_FUNCTION;
+    }
+    nulang__first_child(analyzer->ast, node, &expr);
+    error = nulang__analyze_expr(analyzer, expr, &vartype);
+    NULANG_ERROR_CHECK(error);
+    if (!nulang__vartype_compatible(
+            analyzer->symbols->symbols[function].value.function.return_type,
+            vartype))
+    {
+        analyzer->error_data->span = analyzer->ast->nodes[expr].span;
+        analyzer->error_data->vartype_expect
+            = analyzer->symbols->symbols[function].value.function.return_type;
+        analyzer->error_data->vartype_got = vartype;
+        return NULANG_ERROR_INCOMPATIBLE_TYPE;
+    }
+    return NULANG_ERROR_NONE;
+}
+static nulang__error_t
 nulang__resolve_symbols (nulang__analyzer_t *analyzer)
 {
     nu_size_t i;
@@ -417,9 +448,11 @@ nulang__resolve_symbols (nulang__analyzer_t *analyzer)
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t nulang__analyze_statement(nulang__analyzer_t *analyzer,
+                                                 nulang__block_id_t  block,
                                                  nulang__node_id_t   stmt);
 static nulang__error_t
 nulang__analyze_child_statements (nulang__analyzer_t *analyzer,
+                                  nulang__block_id_t  block,
                                   nulang__node_id_t   parent)
 {
     nulang__error_t   error;
@@ -429,14 +462,16 @@ nulang__analyze_child_statements (nulang__analyzer_t *analyzer,
     node = nulang__first_child(analyzer->ast, parent, &child);
     while (node)
     {
-        error = nulang__analyze_statement(analyzer, child);
+        error = nulang__analyze_statement(analyzer, block, child);
         NULANG_ERROR_CHECK(error);
         node = nulang__sibling(analyzer->ast, child, &child);
     }
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t
-nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
+nulang__analyze_statement (nulang__analyzer_t *analyzer,
+                           nulang__block_id_t  block,
+                           nulang__node_id_t   stmt)
 {
     nulang__error_t   error;
     nulang__vartype_t type;
@@ -445,6 +480,8 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
     switch (node->type)
     {
         case AST_RETURN:
+            error = nulang__analyze_return_statement(analyzer, block, stmt);
+            NULANG_ERROR_CHECK(error);
             break;
         case AST_IF: {
             nulang__node_id_t child;
@@ -453,7 +490,8 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
             {
                 if (node->type == AST_IFBODY) /* detect else body */
                 {
-                    error = nulang__analyze_child_statements(analyzer, child);
+                    error = nulang__analyze_child_statements(
+                        analyzer, node->value.if_block, child);
                     NULANG_ERROR_CHECK(error);
                     break;
                 }
@@ -468,7 +506,8 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
                     }
                     node = nulang__sibling(analyzer->ast, child, &child);
                     NU_ASSERT(node);
-                    error = nulang__analyze_child_statements(analyzer, child);
+                    error = nulang__analyze_child_statements(
+                        analyzer, node->value.if_block, child);
                     NULANG_ERROR_CHECK(error);
                     node = nulang__sibling(analyzer->ast, child, &child);
                 }
@@ -487,16 +526,21 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
                 analyzer->error_data->span = node->span;
                 return NULANG_ERROR_NON_BOOLEAN_EXPRESSION;
             }
-            error = nulang__analyze_child_statements(analyzer, child);
+            error = nulang__analyze_child_statements(
+                analyzer, node->value.while_block, child);
             NULANG_ERROR_CHECK(error);
         }
         break;
         case AST_LOOP: {
-            error = nulang__analyze_child_statements(analyzer, stmt);
+            error = nulang__analyze_child_statements(
+                analyzer, node->value.loop_block, stmt);
             NULANG_ERROR_CHECK(error);
         }
         case AST_FUNCTION: {
-            error = nulang__analyze_child_statements(analyzer, stmt);
+            nulang__block_id_t block
+                = analyzer->symbols->symbols[node->value.symbol]
+                      .value.function.block;
+            error = nulang__analyze_child_statements(analyzer, block, stmt);
             NULANG_ERROR_CHECK(error);
         }
         break;
@@ -520,17 +564,15 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
 static nulang__error_t
 nulang__analyze (nulang__analyzer_t *analyzer)
 {
-    nulang__error_t   error;
-    nulang__node_t   *node;
-    nulang__node_id_t id;
-    nulang__vartype_t type;
+    nulang__error_t error;
 
     /* resolve symbols */
     error = nulang__resolve_symbols(analyzer);
     NULANG_ERROR_CHECK(error);
 
     /* check statements */
-    error = nulang__analyze_child_statements(analyzer, analyzer->ast->root);
+    error = nulang__analyze_child_statements(
+        analyzer, analyzer->symbols->block_global, analyzer->ast->root);
     NULANG_ERROR_CHECK(error);
 
     return NULANG_ERROR_NONE;
