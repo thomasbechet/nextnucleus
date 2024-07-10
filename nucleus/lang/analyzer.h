@@ -137,12 +137,11 @@ nulang__analyze_member_lookup (nulang__analyzer_t *analyzer,
     switch (child->type)
     {
         case AST_SYMREF: {
-            nulang__symbol_t *sym
-                = &analyzer->symtab->symbols[child->value.symref.symbol];
+            nulang__node_t *sym = &analyzer->ast->nodes[child->value.symref];
             switch (sym->type)
             {
-                case SYMBOL_VARIABLE: {
-                    if (sym->value.variable.vartype.primitive
+                case AST_VARDECL: {
+                    if (sym->value.vardecl.type.primitive
                         == NU_PRIMITIVE_ENTITY)
                     {
                         out->type = NULANG_MEMBER_FIELD_LOOKUP;
@@ -174,19 +173,11 @@ nulang__analyze_call (nulang__analyzer_t *analyzer,
     switch (pcallee->type)
     {
         case AST_SYMREF: {
-            const nulang__symbol_t *sym
-                = &analyzer->symtab->symbols[pcallee->value.symref.symbol];
+            const nulang__node_t *sym
+                = &analyzer->ast->nodes[pcallee->value.symref];
             switch (sym->type)
             {
-                case SYMBOL_FUNCTION:
-                    break;
-                case SYMBOL_EXTERNAL:
-                    /* TODO */
-                    return NULANG_ERROR_NOT_CALLABLE_SYMBOL;
-                    break;
-                case SYMBOL_UNKNOWN:
-                    analyzer->error->span = pcallee->span;
-                    return NULANG_ERROR_UNRESOLVED_SYMBOL;
+                case AST_FUNDECL:
                     break;
                 default:
                     analyzer->error->span = pcallee->span;
@@ -257,21 +248,15 @@ nulang__analyze_expr (nulang__analyzer_t *analyzer,
         }
         break;
         case AST_SYMREF: {
-            nulang__symbol_t *sym
-                = &analyzer->symtab->symbols[node->value.symref.symbol];
+            nulang__node_t *sym = &analyzer->ast->nodes[node->value.symref];
             switch (sym->type)
             {
-                case SYMBOL_ARGUMENT:
-                    *type = sym->value.argument.vartype;
+                case AST_ARGDECL:
+                    *type = sym->value.argdecl.type;
                     break;
-                case SYMBOL_VARIABLE:
-                    *type = sym->value.variable.vartype;
+                case AST_VARDECL:
+                    *type = sym->value.vardecl.type;
                     break;
-                case SYMBOL_EXTERNAL:
-                    break;
-                case SYMBOL_UNKNOWN:
-                    analyzer->error->span = node->span;
-                    return NULANG_ERROR_UNKNOWN_SYMBOL_TYPE;
                 default:
                     break;
             }
@@ -322,25 +307,21 @@ nulang__analyze_vardecl (nulang__analyzer_t *analyzer,
 {
     nulang__node_id_t expr;
     nulang__node_t   *node;
-    nulang__symbol_t *symbol;
     nulang__vartype_t vartype;
     nulang__error_t   error;
 
     node = &analyzer->ast->nodes[vardecl];
     nulang__first_child(analyzer->ast, vardecl, &expr);
 
-    symbol = &analyzer->symtab->symbols[node->value.vardecl.symbol];
-
     error = nulang__analyze_expr(analyzer, expr, &vartype);
     NULANG_ERROR_CHECK(error);
 
-    if (symbol->value.variable.vartype.primitive != NU_PRIMITIVE_UNKNOWN)
+    if (node->value.vardecl.type.primitive != NU_PRIMITIVE_UNKNOWN)
     {
-        if (!nulang__vartype_compatible(symbol->value.variable.vartype,
-                                        vartype))
+        if (!nulang__vartype_compatible(node->value.vardecl.type, vartype))
         {
             analyzer->error->vartype_got    = vartype;
-            analyzer->error->vartype_expect = symbol->value.variable.vartype;
+            analyzer->error->vartype_expect = node->value.vardecl.type;
             analyzer->error->span           = node->span;
             return NULANG_ERROR_INCOMPATIBLE_TYPE;
         }
@@ -348,7 +329,7 @@ nulang__analyze_vardecl (nulang__analyzer_t *analyzer,
     }
     else if (vartype.primitive != NU_PRIMITIVE_UNKNOWN)
     {
-        symbol->value.variable.vartype = vartype;
+        node->value.vardecl.type = vartype;
         return NULANG_ERROR_NONE;
     }
     else
@@ -361,26 +342,25 @@ static nulang__error_t
 nulang__analyze_assign (nulang__analyzer_t *analyzer, nulang__node_id_t assign)
 {
     nulang__node_id_t var, expr;
-    nulang__node_t   *pvar;
-    nulang__symbol_t *symbol;
+    nulang__node_t   *pvar, *sym;
     nulang__vartype_t assign_vartype, expr_vartype;
     nulang__error_t   error;
 
     pvar = nulang__first_child(analyzer->ast, assign, &var);
     nulang__sibling(analyzer->ast, var, &expr);
 
-    symbol = &analyzer->symtab->symbols[pvar->value.symref.symbol];
+    sym = &analyzer->ast->nodes[pvar->value.symref];
 
     error = nulang__analyze_expr(analyzer, expr, &expr_vartype);
     NULANG_ERROR_CHECK(error);
 
-    switch (symbol->type)
+    switch (sym->type)
     {
-        case SYMBOL_ARGUMENT:
-            assign_vartype = symbol->value.argument.vartype;
+        case AST_ARGDECL:
+            assign_vartype = sym->value.argdecl.type;
             break;
-        case SYMBOL_VARIABLE:
-            assign_vartype = symbol->value.variable.vartype;
+        case AST_VARDECL:
+            assign_vartype = sym->value.vardecl.type;
             break;
         default:
             NU_UNREACHABLE;
@@ -479,7 +459,7 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
             node = nulang__first_child(analyzer->ast, stmt, &child);
             while (node)
             {
-                if (node->type == AST_COMPOUND) /* detect else body */
+                if (node->type == AST_IFBODY) /* detect else body */
                 {
                     error = nulang__analyze_child_statements(analyzer, child);
                     NULANG_ERROR_CHECK(error);
@@ -545,6 +525,12 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
     }
     return NULANG_ERROR_NONE;
 }
+/**
+ * TODOLIST:
+ * - resolve symbols (+ duplicated symbols)
+ * - check types
+ * - check return statements
+ */
 static nulang__error_t
 nulang__analyze (nulang__analyzer_t *analyzer)
 {

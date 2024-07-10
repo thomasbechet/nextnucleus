@@ -9,8 +9,8 @@
 
 #define NULANG_FOREACH_AST(AST) \
     AST(ROOT)                   \
-    AST(COMPOUND)               \
     AST(FUNDECL)                \
+    AST(ARGDECL)                \
     AST(LITERAL)                \
     AST(SYMREF)                 \
     AST(MEMBER)                 \
@@ -19,6 +19,7 @@
     AST(CONTINUE)               \
     AST(RETURN)                 \
     AST(IF)                     \
+    AST(IFBODY)                 \
     AST(FOR)                    \
     AST(WHILE)                  \
     AST(LOOP)                   \
@@ -80,18 +81,19 @@ typedef nu_u32_t nulang__node_id_t;
 
 typedef struct
 {
-    nulang__symbol_id_t symbol;
+    nulang__vartype_t return_type;
+    nu_bool_t         exported;
 } nulang__node_fundecl_t;
 
 typedef struct
 {
-    nulang__symbol_id_t symbol;
-} nulang__node_vardecl_t;
+    nulang__vartype_t type;
+} nulang__node_argdecl_t;
 
 typedef struct
 {
-    nulang__symbol_id_t symbol;
-} nulang__node_symref_t;
+    nulang__vartype_t type;
+} nulang__node_vardecl_t;
 
 typedef struct
 {
@@ -106,9 +108,10 @@ typedef struct
 typedef union
 {
     nulang__node_fundecl_t   fundecl;
+    nulang__node_argdecl_t   argdecl;
     nulang__node_vardecl_t   vardecl;
     nulang__lit_t            literal;
-    nulang__node_symref_t    symref;
+    nulang__node_id_t        symref;
     nulang__binop_t          binop;
     nulang__unop_t           unop;
     nulang__node_insert_t    insert;

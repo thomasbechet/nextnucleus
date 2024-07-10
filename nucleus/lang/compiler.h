@@ -127,13 +127,13 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
     nulang__print_symbols(&compiler->symtab);
 
     /* analyze */
-    nulang__analyzer_init(
+    /* nulang__analyzer_init(
         &analyzer, &compiler->ast, &compiler->symtab, &compiler->error_data);
     compiler->error = nulang__analyze(&analyzer);
     if (compiler->error != NULANG_ERROR_NONE)
     {
         return NULANG_FAILURE;
-    }
+    } */
 
     return NULANG_SUCCESS;
 }
