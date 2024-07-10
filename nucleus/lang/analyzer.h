@@ -136,9 +136,9 @@ nulang__analyze_member_lookup (nulang__analyzer_t *analyzer,
     nulang__node_t   *child    = &analyzer->ast->nodes[child_id];
     switch (child->type)
     {
-        case AST_SYMBOL: {
+        case AST_SYMREF: {
             nulang__symbol_t *sym
-                = &analyzer->symtab->symbols[child->value.symbol];
+                = &analyzer->symtab->symbols[child->value.symref.symbol];
             switch (sym->type)
             {
                 case SYMBOL_VARIABLE: {
@@ -173,9 +173,9 @@ nulang__analyze_call (nulang__analyzer_t *analyzer,
 
     switch (pcallee->type)
     {
-        case AST_SYMBOL: {
+        case AST_SYMREF: {
             const nulang__symbol_t *sym
-                = &analyzer->symtab->symbols[pcallee->value.symbol];
+                = &analyzer->symtab->symbols[pcallee->value.symref.symbol];
             switch (sym->type)
             {
                 case SYMBOL_FUNCTION:
@@ -256,9 +256,9 @@ nulang__analyze_expr (nulang__analyzer_t *analyzer,
             }
         }
         break;
-        case AST_SYMBOL: {
+        case AST_SYMREF: {
             nulang__symbol_t *sym
-                = &analyzer->symtab->symbols[node->value.symbol];
+                = &analyzer->symtab->symbols[node->value.symref.symbol];
             switch (sym->type)
             {
                 case SYMBOL_ARGUMENT:
@@ -285,7 +285,7 @@ nulang__analyze_expr (nulang__analyzer_t *analyzer,
         case AST_SINGLETON:
         case AST_INSERT: {
             type->primitive = NU_PRIMITIVE_ENTITY;
-            type->archetype = node->value.archetype;
+            type->archetype = node->value.insert.archetype;
         }
         break;
         case AST_BINOP: {
@@ -329,7 +329,7 @@ nulang__analyze_vardecl (nulang__analyzer_t *analyzer,
     node = &analyzer->ast->nodes[vardecl];
     nulang__first_child(analyzer->ast, vardecl, &expr);
 
-    symbol = &analyzer->symtab->symbols[node->value.symbol];
+    symbol = &analyzer->symtab->symbols[node->value.vardecl.symbol];
 
     error = nulang__analyze_expr(analyzer, expr, &vartype);
     NULANG_ERROR_CHECK(error);
@@ -369,7 +369,7 @@ nulang__analyze_assign (nulang__analyzer_t *analyzer, nulang__node_id_t assign)
     pvar = nulang__first_child(analyzer->ast, assign, &var);
     nulang__sibling(analyzer->ast, var, &expr);
 
-    symbol = &analyzer->symtab->symbols[pvar->value.symbol];
+    symbol = &analyzer->symtab->symbols[pvar->value.symref.symbol];
 
     error = nulang__analyze_expr(analyzer, expr, &expr_vartype);
     NULANG_ERROR_CHECK(error);
@@ -400,9 +400,8 @@ nulang__analyze_assign (nulang__analyzer_t *analyzer, nulang__node_id_t assign)
 
     return NULANG_ERROR_NONE;
 }
-static nulang__error_t
+/* static nulang__error_t
 nulang__analyze_return_statement (nulang__analyzer_t *analyzer,
-                                  nulang__block_id_t  block,
                                   nulang__node_id_t   node)
 {
     nulang__symbol_id_t function, expr;
@@ -429,7 +428,7 @@ nulang__analyze_return_statement (nulang__analyzer_t *analyzer,
         return NULANG_ERROR_INCOMPATIBLE_TYPE;
     }
     return NULANG_ERROR_NONE;
-}
+} */
 static nulang__error_t
 nulang__resolve_symbols (nulang__analyzer_t *analyzer)
 {
@@ -445,11 +444,9 @@ nulang__resolve_symbols (nulang__analyzer_t *analyzer)
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t nulang__analyze_statement(nulang__analyzer_t *analyzer,
-                                                 nulang__block_id_t  block,
                                                  nulang__node_id_t   stmt);
 static nulang__error_t
 nulang__analyze_child_statements (nulang__analyzer_t *analyzer,
-                                  nulang__block_id_t  block,
                                   nulang__node_id_t   parent)
 {
     nulang__error_t   error;
@@ -459,16 +456,14 @@ nulang__analyze_child_statements (nulang__analyzer_t *analyzer,
     node = nulang__first_child(analyzer->ast, parent, &child);
     while (node)
     {
-        error = nulang__analyze_statement(analyzer, block, child);
+        error = nulang__analyze_statement(analyzer, child);
         NULANG_ERROR_CHECK(error);
         node = nulang__sibling(analyzer->ast, child, &child);
     }
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t
-nulang__analyze_statement (nulang__analyzer_t *analyzer,
-                           nulang__block_id_t  block,
-                           nulang__node_id_t   stmt)
+nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
 {
     nulang__error_t   error;
     nulang__vartype_t type;
@@ -477,18 +472,16 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer,
     switch (node->type)
     {
         case AST_RETURN:
-            error = nulang__analyze_return_statement(analyzer, block, stmt);
-            NULANG_ERROR_CHECK(error);
+            return NULANG_ERROR_NONE;
             break;
         case AST_IF: {
             nulang__node_id_t child;
             node = nulang__first_child(analyzer->ast, stmt, &child);
             while (node)
             {
-                if (node->type == AST_IFBODY) /* detect else body */
+                if (node->type == AST_COMPOUND) /* detect else body */
                 {
-                    error = nulang__analyze_child_statements(
-                        analyzer, node->value.if_block, child);
+                    error = nulang__analyze_child_statements(analyzer, child);
                     NULANG_ERROR_CHECK(error);
                     break;
                 }
@@ -503,8 +496,7 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer,
                     }
                     node = nulang__sibling(analyzer->ast, child, &child);
                     NU_ASSERT(node);
-                    error = nulang__analyze_child_statements(
-                        analyzer, node->value.if_block, child);
+                    error = nulang__analyze_child_statements(analyzer, child);
                     NULANG_ERROR_CHECK(error);
                     node = nulang__sibling(analyzer->ast, child, &child);
                 }
@@ -523,21 +515,16 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer,
                 analyzer->error->span = node->span;
                 return NULANG_ERROR_NON_BOOLEAN_EXPRESSION;
             }
-            error = nulang__analyze_child_statements(
-                analyzer, node->value.while_block, child);
+            error = nulang__analyze_child_statements(analyzer, child);
             NULANG_ERROR_CHECK(error);
         }
         break;
         case AST_LOOP: {
-            error = nulang__analyze_child_statements(
-                analyzer, node->value.loop_block, stmt);
+            error = nulang__analyze_child_statements(analyzer, stmt);
             NULANG_ERROR_CHECK(error);
         }
-        case AST_FUNCTION: {
-            nulang__block_id_t block
-                = analyzer->symtab->symbols[node->value.symbol]
-                      .value.function.block;
-            error = nulang__analyze_child_statements(analyzer, block, stmt);
+        case AST_FUNDECL: {
+            error = nulang__analyze_child_statements(analyzer, stmt);
             NULANG_ERROR_CHECK(error);
         }
         break;
@@ -568,8 +555,7 @@ nulang__analyze (nulang__analyzer_t *analyzer)
     NULANG_ERROR_CHECK(error);
 
     /* check statements */
-    error = nulang__analyze_child_statements(
-        analyzer, analyzer->symtab->block_global, analyzer->ast->root);
+    error = nulang__analyze_child_statements(analyzer, analyzer->ast->root);
     NULANG_ERROR_CHECK(error);
 
     return NULANG_ERROR_NONE;

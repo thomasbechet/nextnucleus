@@ -347,16 +347,16 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
     switch (node->type)
     {
         case AST_VARDECL:
-            printf("symbol(%d) ", node->value.symbol);
+            printf("symbol(%d) ", node->value.vardecl.symbol);
             break;
-        case AST_SYMBOL:
-            printf("symbol(%d) ", node->value.symbol);
+        case AST_SYMREF:
+            printf("symbol(%d) ", node->value.symref.symbol);
             break;
         case AST_LITERAL:
             nulang__print_literal(&node->value.literal);
             break;
-        case AST_FUNCTION:
-            printf("symbol(%d) ", node->value.symbol);
+        case AST_FUNDECL:
+            printf("symbol(%d) ", node->value.fundecl.symbol);
             break;
         case AST_BINOP:
             printf("%s", NULANG_BINOP_NAMES[node->value.binop]);
@@ -371,10 +371,10 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
             nulang__print_builtin(node->value.builtin);
             break;
         case AST_INSERT:
-            printf("archetype(%d) ", node->value.archetype);
+            printf("archetype(%d) ", node->value.insert.archetype);
             break;
         case AST_SINGLETON:
-            printf("archetype(%d) ", node->value.archetype);
+            printf("archetype(%d) ", node->value.singleton.archetype);
             break;
         default:
             break;

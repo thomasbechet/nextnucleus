@@ -9,17 +9,16 @@
 
 #define NULANG_FOREACH_AST(AST) \
     AST(ROOT)                   \
-    AST(FUNCTION)               \
     AST(COMPOUND)               \
+    AST(FUNDECL)                \
     AST(LITERAL)                \
-    AST(SYMBOL)                 \
+    AST(SYMREF)                 \
     AST(MEMBER)                 \
     AST(BUILTIN)                \
     AST(BREAK)                  \
     AST(CONTINUE)               \
     AST(RETURN)                 \
     AST(IF)                     \
-    AST(IFBODY)                 \
     AST(FOR)                    \
     AST(WHILE)                  \
     AST(LOOP)                   \
@@ -79,20 +78,44 @@ typedef nu_u32_t nulang__node_id_t;
 
 #ifdef NU_IMPL
 
+typedef struct
+{
+    nulang__symbol_id_t symbol;
+} nulang__node_fundecl_t;
+
+typedef struct
+{
+    nulang__symbol_id_t symbol;
+} nulang__node_vardecl_t;
+
+typedef struct
+{
+    nulang__symbol_id_t symbol;
+} nulang__node_symref_t;
+
+typedef struct
+{
+    nu_archetype_t archetype;
+} nulang__node_insert_t;
+
+typedef struct
+{
+    nu_archetype_t archetype;
+} nulang__node_singleton_t;
+
 typedef union
 {
-    nulang__lit_t       literal;
-    nulang__binop_t     binop;
-    nulang__unop_t      unop;
-    nulang__vartype_t   vartype;
-    nulang__symbol_id_t symbol;
-    nu_archetype_t      archetype;
-    nulang__builtin_t   builtin;
-    nu_primitive_t      constructor;
-    nulang__string_t    member;
-    nulang__block_id_t  if_block;
-    nulang__block_id_t  while_block;
-    nulang__block_id_t  loop_block;
+    nulang__node_fundecl_t   fundecl;
+    nulang__node_vardecl_t   vardecl;
+    nulang__lit_t            literal;
+    nulang__node_symref_t    symref;
+    nulang__binop_t          binop;
+    nulang__unop_t           unop;
+    nulang__node_insert_t    insert;
+    nulang__node_singleton_t singleton;
+    nulang__builtin_t        builtin;
+    nu_primitive_t           constructor;
+    nulang__string_t         member;
 } nulang__node_value_t;
 
 typedef struct
@@ -194,8 +217,8 @@ nulang__is_statement (nulang__node_type_t t)
 {
     nu_size_t                        i;
     static const nulang__node_type_t statements[]
-        = { AST_COMPOUND, AST_FUNCTION, AST_RETURN,  AST_IF,    AST_FOR,
-            AST_WHILE,    AST_LOOP,     AST_VARDECL, AST_ASSIGN };
+        = { AST_FUNDECL, AST_RETURN, AST_IF,      AST_FOR,
+            AST_WHILE,   AST_LOOP,   AST_VARDECL, AST_ASSIGN };
     for (i = 0; i < NU_ARRAY_SIZE(statements); ++i)
     {
         if (t == statements[i])
@@ -210,7 +233,7 @@ nulang__is_expression (nulang__node_type_t t)
 {
     nu_size_t                        i;
     static const nulang__node_type_t expressions[]
-        = { AST_LITERAL, AST_SYMBOL,    AST_MEMBER, AST_BUILTIN, AST_CALL,
+        = { AST_LITERAL, AST_SYMREF,    AST_MEMBER, AST_BUILTIN, AST_CALL,
             AST_INSERT,  AST_SINGLETON, AST_BINOP,  AST_UNOP };
     for (i = 0; i < NU_ARRAY_SIZE(expressions); ++i)
     {
