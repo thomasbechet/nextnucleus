@@ -59,6 +59,22 @@ nulang__print_literal (const nulang__lit_t *lit)
     }
 }
 static void
+nulang__print_vartype (const struct nu__vm *vm, nulang__vartype_t type)
+{
+    printf("%s", NU_PRIMITIVE_NAMES[type.primitive]);
+    if (type.primitive == NU_PRIMITIVE_ENTITY)
+    {
+        if (type.archetype != NU_ARCHETYPE_NULL)
+        {
+            printf("(archetype=%d) ", type.archetype);
+        }
+        else
+        {
+            printf("(archetype=UNRESOLVED) ");
+        }
+    }
+}
+static void
 nulang__print_token (const nulang__token_t *tok)
 {
     printf("%s ", NULANG_TOKEN_NAMES[tok->type]);
@@ -253,7 +269,8 @@ nulang__print_builtin (nulang__builtin_t builtin)
     }
 }
 static void
-nulang__print_node (const nulang__ast_t *ast,
+nulang__print_node (const struct nu__vm *vm,
+                    const nulang__ast_t *ast,
                     nu_u16_t             depth,
                     nulang__node_id_t    id)
 {
@@ -263,13 +280,27 @@ nulang__print_node (const nulang__ast_t *ast,
     switch (node->type)
     {
         case AST_VARDECL:
+            printf("name=");
+            nulang__print_string(node->value.vardecl.name);
+            printf(" type=");
+            nulang__print_vartype(vm, node->value.vardecl.type);
+            break;
+        case AST_FUNDECL:
+            printf("name=");
+            nulang__print_string(node->value.fundecl.name);
+            printf(" type=");
+            nulang__print_vartype(vm, node->value.fundecl.return_type);
+            break;
+        case AST_ARGDECL:
+            printf("name=");
+            nulang__print_string(node->value.argdecl.name);
+            printf(" type=");
+            nulang__print_vartype(vm, node->value.argdecl.type);
             break;
         case AST_SYMREF:
             break;
         case AST_LITERAL:
             nulang__print_literal(&node->value.literal);
-            break;
-        case AST_FUNDECL:
             break;
         case AST_BINOP:
             printf("%s", NULANG_BINOP_NAMES[node->value.binop]);
@@ -295,11 +326,11 @@ nulang__print_node (const nulang__ast_t *ast,
     printf("\n");
     if (node->first_child != NULANG_NODE_NULL)
     {
-        nulang__print_node(ast, depth + 1, node->first_child);
+        nulang__print_node(vm, ast, depth + 1, node->first_child);
     }
     if (node->next_sibling != NULANG_NODE_NULL)
     {
-        nulang__print_node(ast, depth, node->next_sibling);
+        nulang__print_node(vm, ast, depth, node->next_sibling);
     }
 }
 
@@ -316,7 +347,7 @@ void
 nulang_print_ast (const nulang_compiler_t *compiler)
 {
     printf("==== NODES ====\n");
-    nulang__print_node(&compiler->ast, 0, compiler->ast.root);
+    nulang__print_node(compiler->vm, &compiler->ast, 0, compiler->ast.root);
 }
 
 #endif

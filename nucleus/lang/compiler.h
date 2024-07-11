@@ -105,7 +105,7 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
         return NULANG_FAILURE;
     }
 
-    nulang__print_node(&compiler->ast, 0, compiler->ast.root);
+    nulang__print_node(compiler->vm, &compiler->ast, 0, compiler->ast.root);
 
     /* analyze */
     /* nulang__analyzer_init(

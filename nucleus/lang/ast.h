@@ -105,17 +105,20 @@ typedef union
 
 typedef struct
 {
+    nulang__string_t  name;
     nulang__vartype_t return_type;
     nu_bool_t         exported;
 } nulang__node_fundecl_t;
 
 typedef struct
 {
+    nulang__string_t  name;
     nulang__vartype_t type;
 } nulang__node_argdecl_t;
 
 typedef struct
 {
+    nulang__string_t  name;
     nulang__vartype_t type;
 } nulang__node_vardecl_t;
 

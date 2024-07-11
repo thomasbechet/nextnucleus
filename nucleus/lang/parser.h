@@ -546,6 +546,7 @@ nulang__parse_vardecl (nulang__parser_t *parser, nulang__node_id_t *node)
     NULANG_ERROR_CHECK(error);
     parser->ast->nodes[*node].type               = AST_VARDECL;
     parser->ast->nodes[*node].span               = ident.span;
+    parser->ast->nodes[*node].value.vardecl.name = ident.value.identifier;
     parser->ast->nodes[*node].value.vardecl.type = vartype;
     nulang__append_child(parser->ast, *node, expr);
     return NULANG_ERROR_NONE;
@@ -703,6 +704,7 @@ nulang__parse_fundecl (nulang__parser_t  *parser,
     NULANG_ERROR_CHECK(error);
     parser->ast->nodes[*node].type                   = AST_FUNDECL;
     parser->ast->nodes[*node].span                   = tok.span;
+    parser->ast->nodes[*node].value.fundecl.name     = tok.value.identifier;
     parser->ast->nodes[*node].value.fundecl.exported = exported;
     parser->ast->nodes[*node].value.fundecl.return_type.primitive
         = NU_PRIMITIVE_UNKNOWN;
@@ -731,6 +733,7 @@ nulang__parse_fundecl (nulang__parser_t  *parser,
             NULANG_ERROR_CHECK(error);
             parser->ast->nodes[arg].type               = AST_ARGDECL;
             parser->ast->nodes[arg].span               = tok.span;
+            parser->ast->nodes[arg].value.argdecl.name = tok.value.identifier;
             parser->ast->nodes[arg].value.argdecl.type = type;
             nulang__append_child(parser->ast, *node, arg);
 
