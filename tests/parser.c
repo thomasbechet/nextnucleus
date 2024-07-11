@@ -53,8 +53,6 @@ main (int argc, char *argv[])
     status = nulang_compile(&compiler, source);
     nulang_print_status(&compiler);
     NU_ASSERT(status == NULANG_SUCCESS);
-    nulang_print_symbols(&compiler);
-    nulang_print_blocks(&compiler);
     nulang_print_ast(&compiler);
 
     nulang_compiler_free(&compiler);

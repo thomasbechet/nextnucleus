@@ -1,8 +1,7 @@
 #ifndef NULANG_REPORT_H
 #define NULANG_REPORT_H
 
-#include <nucleus/lang/symbol.h>
-#include <nucleus/lang/token.h>
+#include <nucleus/lang/ast.h>
 
 typedef struct
 {

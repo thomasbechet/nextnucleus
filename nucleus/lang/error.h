@@ -6,8 +6,6 @@ typedef enum
     NULANG_ERROR_NONE,
     /* allocation error */
     NULANG_ERROR_OUT_OF_NODE,
-    NULANG_ERROR_OUT_OF_SYMBOL,
-    NULANG_ERROR_OUT_OF_BLOCK,
     NULANG_ERROR_OUT_OF_MEMORY,
     /* lexer error */
     NULANG_ERROR_ILLEGAL_CHARACTER,

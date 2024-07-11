@@ -17,12 +17,11 @@ typedef struct
 
 typedef struct
 {
-    struct nu__vm         *vm;
-    nulang__symbol_table_t symtab;
-    nulang__ast_t          ast;
-    const nu_char_t       *source;
-    nulang__error_t        error;
-    nulang__error_data_t   error_data;
+    struct nu__vm       *vm;
+    nulang__ast_t        ast;
+    const nu_char_t     *source;
+    nulang__error_t      error;
+    nulang__error_data_t error_data;
 } nulang_compiler_t;
 
 NU_API void            nulang_compiler_info_default(nu_vm_t                 vm,
@@ -65,15 +64,6 @@ nulang_compiler_init (const nulang_compiler_info_t *info,
 {
     compiler->vm = info->vm;
 
-    compiler->error = nulang__symbol_table_init(info->symbol_capacity,
-                                                info->block_capacity,
-                                                &compiler->vm->allocator,
-                                                &compiler->symtab);
-    if (compiler->error != NULANG_ERROR_NONE)
-    {
-        return NULANG_FAILURE;
-    }
-
     compiler->error = nulang__ast_init(
         info->node_capacity, &compiler->vm->allocator, &compiler->ast);
     if (compiler->error != NULANG_ERROR_NONE)
@@ -93,7 +83,6 @@ nulang_compiler_free (nulang_compiler_t *compiler)
 static void
 nulang__compiler_prepare (nulang_compiler_t *compiler)
 {
-    nulang__symbol_table_clear(&compiler->symtab);
     nulang__ast_clear(&compiler->ast);
 }
 #include <nucleus/lang/print.h>
@@ -107,24 +96,16 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
     /* prepare compiler */
     nulang__compiler_prepare(compiler);
     nulang__lexer_init(source, &compiler->error_data, &lexer);
-    nulang__parser_init(compiler->vm,
-                        &lexer,
-                        &compiler->ast,
-                        &compiler->symtab,
-                        &compiler->error_data,
-                        &parser);
-    compiler->source = source;
 
     /* parse source */
-    compiler->error = nulang__parse(&parser);
+    compiler->error = nulang__parse(
+        compiler->vm, &lexer, &compiler->ast, &compiler->error_data);
     if (compiler->error != NULANG_ERROR_NONE)
     {
         return NULANG_FAILURE;
     }
 
-    nulang__print_node(
-        &compiler->symtab, &compiler->ast, 0, compiler->ast.root);
-    nulang__print_symbols(&compiler->symtab);
+    nulang__print_node(&compiler->ast, 0, compiler->ast.root);
 
     /* analyze */
     /* nulang__analyzer_init(

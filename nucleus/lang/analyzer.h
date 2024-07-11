@@ -5,7 +5,7 @@
 #include <nucleus/lang/builtin.h>
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/report.h>
-#include <nucleus/lang/symbol.h>
+#include <nucleus/vm.h>
 #include <nucleus/vm/table.h>
 #include <nucleus/vm/types.h>
 
@@ -19,9 +19,9 @@ typedef struct
 
 typedef struct
 {
-    nulang__ast_t          *ast;
-    nulang__symbol_table_t *symtab;
-    nulang__error_data_t   *error;
+    const struct nu__vm  *vm;
+    nulang__ast_t        *ast;
+    nulang__error_data_t *error;
 } nulang__analyzer_t;
 
 typedef enum
@@ -114,16 +114,6 @@ nulang__check_binop (nulang__binop_t       op,
             break;
     }
     return NULANG_ERROR_NONE;
-}
-static void
-nulang__analyzer_init (nulang__analyzer_t     *analyzer,
-                       nulang__ast_t          *ast,
-                       nulang__symbol_table_t *symtab,
-                       nulang__error_data_t   *error)
-{
-    analyzer->ast    = ast;
-    analyzer->symtab = symtab;
-    analyzer->error  = error;
 }
 
 static nulang__error_t
@@ -412,7 +402,7 @@ nulang__analyze_return_statement (nulang__analyzer_t *analyzer,
 static nulang__error_t
 nulang__resolve_symbols (nulang__analyzer_t *analyzer)
 {
-    nu_size_t i;
+    /* nu_size_t i;
     for (i = 0; i < analyzer->symtab->symbol_count; ++i)
     {
         if (analyzer->symtab->symbols[i].type == SYMBOL_UNKNOWN)
@@ -420,7 +410,7 @@ nulang__resolve_symbols (nulang__analyzer_t *analyzer)
             analyzer->error->span = analyzer->symtab->symbols[i].span;
             return NULANG_ERROR_UNRESOLVED_SYMBOL;
         }
-    }
+    } */
     return NULANG_ERROR_NONE;
 }
 static nulang__error_t nulang__analyze_statement(nulang__analyzer_t *analyzer,
@@ -532,16 +522,23 @@ nulang__analyze_statement (nulang__analyzer_t *analyzer, nulang__node_id_t stmt)
  * - check return statements
  */
 static nulang__error_t
-nulang__analyze (nulang__analyzer_t *analyzer)
+nulang__analyze (nulang__ast_t        *ast,
+                 const nu_vm_t         vm,
+                 nulang__error_data_t *error_data)
 {
-    nulang__error_t error;
+    nulang__error_t    error;
+    nulang__analyzer_t analyzer;
+
+    analyzer.vm    = vm;
+    analyzer.ast   = ast;
+    analyzer.error = error_data;
 
     /* resolve symbols */
-    error = nulang__resolve_symbols(analyzer);
+    error = nulang__resolve_symbols(&analyzer);
     NULANG_ERROR_CHECK(error);
 
     /* check statements */
-    error = nulang__analyze_child_statements(analyzer, analyzer->ast->root);
+    error = nulang__analyze_child_statements(&analyzer, analyzer.ast->root);
     NULANG_ERROR_CHECK(error);
 
     return NULANG_ERROR_NONE;

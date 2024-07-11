@@ -4,7 +4,7 @@
 #include <nucleus/lang/builtin.h>
 #include <nucleus/lang/error.h>
 #include <nucleus/lang/lexer.h>
-#include <nucleus/lang/symbol.h>
+#include <nucleus/vm/table.h>
 #include <nucleus/vm/types.h>
 
 #define NULANG_FOREACH_AST(AST) \
@@ -76,6 +76,30 @@ static const nu_char_t *NULANG_UNOP_NAMES[]
 
 typedef nu_u32_t nulang__node_id_t;
 #define NULANG_NODE_NULL 0xffffffff
+
+typedef struct
+{
+    nu_primitive_t primitive;
+    nu_archetype_t archetype;
+} nulang__vartype_t;
+
+typedef union
+{
+    nu_bool_t   b;
+    nu_int_t    i;
+    nu_fix_t    f;
+    nu_ivec2_t  ivec2;
+    nu_ivec3_t  ivec3;
+    nu_ivec4_t  ivec4;
+    nu_vec2_t   vec2;
+    nu_vec3_t   vec3;
+    nu_vec4_t   vec4;
+    nu_mat3_t   mat3;
+    nu_mat4_t   mat4;
+    nu_quat_t   quat;
+    nu_entity_t entity;
+    nu_handle_t handle;
+} nulang__value_t;
 
 #ifdef NU_IMPL
 
@@ -174,7 +198,7 @@ nulang__ast_clear (nulang__ast_t *ast)
     ast->nodes[0].next_sibling = NULANG_NODE_NULL;
 }
 static nulang__error_t
-nulang__ast_add_node (nulang__ast_t *ast, nulang__node_id_t *id)
+nulang__add_node (nulang__ast_t *ast, nulang__node_id_t *id)
 {
     nulang__node_t *node;
     if (ast->node_count >= ast->node_capacity)
@@ -191,9 +215,9 @@ nulang__ast_add_node (nulang__ast_t *ast, nulang__node_id_t *id)
 }
 
 static void
-nulang__ast_append_child (nulang__ast_t    *ast,
-                          nulang__node_id_t parent,
-                          nulang__node_id_t child)
+nulang__append_child (nulang__ast_t    *ast,
+                      nulang__node_id_t parent,
+                      nulang__node_id_t child)
 {
     nulang__node_id_t last_child;
     NU_ASSERT(child != 0);
@@ -419,6 +443,27 @@ nulang__sibling (nulang__ast_t     *ast,
     {
         return NU_NULL;
     }
+}
+
+static nu_bool_t
+nulang__vartype_compatible (nulang__vartype_t var, nulang__vartype_t expr)
+{
+    if (var.primitive == expr.primitive)
+    {
+        if (var.primitive == NU_PRIMITIVE_ENTITY)
+        {
+            if (var.archetype == expr.archetype
+                || expr.archetype == NU_ARCHETYPE_NULL)
+            {
+                return NU_TRUE;
+            }
+        }
+        else
+        {
+            return NU_TRUE;
+        }
+    }
+    return NU_FALSE;
 }
 
 #endif

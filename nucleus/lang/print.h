@@ -8,7 +8,6 @@
 #ifdef NU_STDLIB
 
 NU_API void nulang_print_tokens(const nu_char_t *source);
-NU_API void nulang_print_symbols(const nulang_compiler_t *compiler);
 NU_API void nulang_print_ast(const nulang_compiler_t *compiler);
 NU_API void nulang_print_status(const nulang_compiler_t *compiler);
 
@@ -107,55 +106,6 @@ nulang__print_depth (nu_u16_t depth)
         d--;
     }
 }
-static void
-nulang__print_symbol (const nulang__symbol_table_t *symbols,
-                      nulang__symbol_id_t           symbol)
-{
-    const nulang__symbol_t *sym = &symbols->symbols[symbol];
-    printf("'%.*s' type=%s",
-           (int)sym->ident.n,
-           sym->ident.p,
-           NULANG_SYMBOL_NAMES[sym->type]);
-    switch (symbols->symbols[symbol].type)
-    {
-        case SYMBOL_VARIABLE:
-            printf(" block=%d primitive=%s",
-                   sym->block,
-                   NU_PRIMITIVE_NAMES[sym->value.variable.vartype.primitive]);
-            if (sym->value.variable.vartype.primitive == NU_PRIMITIVE_ENTITY)
-            {
-                printf(" archetype=%d", sym->value.variable.vartype.archetype);
-            }
-            break;
-        case SYMBOL_FUNCTION:
-            printf(
-                " first_arg=symbol(%d) return_type=%s",
-                sym->value.function.first_arg,
-                NU_PRIMITIVE_NAMES[sym->value.function.return_type.primitive]);
-            if (sym->value.function.return_type.primitive
-                == NU_PRIMITIVE_ENTITY)
-            {
-                printf(" archetype=%d",
-                       sym->value.function.return_type.archetype);
-            }
-            break;
-        case SYMBOL_ARGUMENT:
-            printf(" next=symbol(%d) primitive=%s",
-                   sym->value.argument.next,
-                   NU_PRIMITIVE_NAMES[sym->value.argument.vartype.primitive]);
-            if (sym->value.argument.vartype.primitive == NU_PRIMITIVE_ENTITY)
-            {
-                printf(" archetype=%d", sym->value.argument.vartype.archetype);
-            }
-            break;
-        case SYMBOL_MODULE:
-            break;
-        case SYMBOL_EXTERNAL:
-            break;
-        case SYMBOL_UNKNOWN:
-            break;
-    }
-}
 
 void
 nulang_print_status (const nulang_compiler_t *compiler)
@@ -171,14 +121,6 @@ nulang_print_status (const nulang_compiler_t *compiler)
     {
         case NULANG_ERROR_OUT_OF_NODE:
             printf("out of nodes (capacity: %d)", compiler->ast.node_capacity);
-            break;
-        case NULANG_ERROR_OUT_OF_SYMBOL:
-            printf("out of symbols (capacity: %d)",
-                   compiler->symtab.symbol_capacity);
-            break;
-        case NULANG_ERROR_OUT_OF_BLOCK:
-            printf("out of blocks (capacity: %d)",
-                   compiler->symtab.block_capacity);
             break;
         case NULANG_ERROR_OUT_OF_MEMORY:
             printf("out of memory");
@@ -292,31 +234,6 @@ nulang_print_status (const nulang_compiler_t *compiler)
 }
 
 static void
-nulang__print_symbols (const nulang__symbol_table_t *table)
-{
-    nu_size_t i;
-    for (i = 0; i < table->symbol_count; ++i)
-    {
-        printf("[%ld] ", i);
-        nulang__print_symbol(table, i);
-        printf("\n");
-    }
-}
-static void
-nulang__print_blocks (const nulang__symbol_table_t *table)
-{
-    nu_size_t i;
-    for (i = 0; i < table->block_count; ++i)
-    {
-        const nulang__block_t *block = &table->blocks[i];
-        printf("[%ld] %s parent=block(%d) previous_scope=symbol(%d)\n",
-               i,
-               NULANG_BLOCK_NAMES[block->type],
-               block->parent,
-               block->previous_scope_symbol);
-    }
-}
-static void
 nulang__print_builtin (nulang__builtin_t builtin)
 {
     switch (builtin.type)
@@ -336,10 +253,9 @@ nulang__print_builtin (nulang__builtin_t builtin)
     }
 }
 static void
-nulang__print_node (const nulang__symbol_table_t *symbols,
-                    const nulang__ast_t          *ast,
-                    nu_u16_t                      depth,
-                    nulang__node_id_t             id)
+nulang__print_node (const nulang__ast_t *ast,
+                    nu_u16_t             depth,
+                    nulang__node_id_t    id)
 {
     nulang__node_t *node = &ast->nodes[id];
     nulang__print_depth(depth);
@@ -379,11 +295,11 @@ nulang__print_node (const nulang__symbol_table_t *symbols,
     printf("\n");
     if (node->first_child != NULANG_NODE_NULL)
     {
-        nulang__print_node(symbols, ast, depth + 1, node->first_child);
+        nulang__print_node(ast, depth + 1, node->first_child);
     }
     if (node->next_sibling != NULANG_NODE_NULL)
     {
-        nulang__print_node(symbols, ast, depth, node->next_sibling);
+        nulang__print_node(ast, depth, node->next_sibling);
     }
 }
 
@@ -397,23 +313,10 @@ nulang_print_tokens (const nu_char_t *source)
     nulang__lexer_print_tokens(&lexer);
 }
 void
-nulang_print_symbols (const nulang_compiler_t *compiler)
-{
-    printf("==== SYMBOLS ====\n");
-    nulang__print_symbols(&compiler->symtab);
-}
-void
-nulang_print_blocks (const nulang_compiler_t *compiler)
-{
-    printf("==== BLOCKS ====\n");
-    nulang__print_blocks(&compiler->symtab);
-}
-void
 nulang_print_ast (const nulang_compiler_t *compiler)
 {
     printf("==== NODES ====\n");
-    nulang__print_node(
-        &compiler->symtab, &compiler->ast, 0, compiler->ast.root);
+    nulang__print_node(&compiler->ast, 0, compiler->ast.root);
 }
 
 #endif
