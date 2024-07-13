@@ -8,8 +8,10 @@
 #include <nucleus/vm/types.h>
 
 #define NULANG_FOREACH_AST(AST) \
-    AST(ROOT)                   \
+    AST(MODULE)                 \
+    AST(IMPORT)                 \
     AST(FUNDECL)                \
+    AST(COMPOUND)               \
     AST(ARGDECL)                \
     AST(LITERAL)                \
     AST(SYMREF)                 \
@@ -19,7 +21,6 @@
     AST(CONTINUE)               \
     AST(RETURN)                 \
     AST(IF)                     \
-    AST(IFBODY)                 \
     AST(FOR)                    \
     AST(WHILE)                  \
     AST(LOOP)                   \
@@ -79,8 +80,9 @@ typedef nu_u32_t nulang__node_id_t;
 
 typedef struct
 {
-    nu_primitive_t primitive;
-    nu_archetype_t archetype;
+    nu_primitive_t   primitive;
+    nu_archetype_t   archetype;
+    nulang__string_t archetype_name;
 } nulang__vartype_t;
 
 typedef union
@@ -124,13 +126,21 @@ typedef struct
 
 typedef struct
 {
-    nu_archetype_t archetype;
+    nu_archetype_t   archetype;
+    nulang__string_t archetype_name;
 } nulang__node_insert_t;
 
 typedef struct
 {
-    nu_archetype_t archetype;
+    nu_archetype_t   archetype;
+    nulang__string_t archetype_name;
 } nulang__node_singleton_t;
+
+typedef struct
+{
+    nulang__node_id_t node;
+    nulang__string_t  name;
+} nulang__node_symref_t;
 
 typedef union
 {
@@ -138,7 +148,7 @@ typedef union
     nulang__node_argdecl_t   argdecl;
     nulang__node_vardecl_t   vardecl;
     nulang__lit_t            literal;
-    nulang__node_id_t        symref;
+    nulang__node_symref_t    symref;
     nulang__binop_t          binop;
     nulang__unop_t           unop;
     nulang__node_insert_t    insert;
@@ -182,7 +192,7 @@ nulang__ast_init (nu_u32_t         node_capacity,
     }
     ast->node_capacity         = node_capacity;
     ast->node_count            = 1;
-    ast->nodes[0].type         = AST_ROOT;
+    ast->nodes[0].type         = AST_MODULE;
     ast->nodes[0].parent       = NULANG_NODE_NULL;
     ast->nodes[0].first_child  = NULANG_NODE_NULL;
     ast->nodes[0].last_child   = NULANG_NODE_NULL;
@@ -243,12 +253,10 @@ nulang__append_child (nulang__ast_t    *ast,
 }
 
 static nu_bool_t
-nulang__is_statement (nulang__node_type_t t)
+nulang__is_mod_stmt (nulang__node_type_t t)
 {
     nu_size_t                        i;
-    static const nulang__node_type_t statements[]
-        = { AST_FUNDECL, AST_RETURN, AST_IF,      AST_FOR,
-            AST_WHILE,   AST_LOOP,   AST_VARDECL, AST_ASSIGN };
+    static const nulang__node_type_t statements[] = { AST_FUNDECL, AST_IMPORT };
     for (i = 0; i < NU_ARRAY_SIZE(statements); ++i)
     {
         if (t == statements[i])
@@ -259,7 +267,23 @@ nulang__is_statement (nulang__node_type_t t)
     return NU_FALSE;
 }
 static nu_bool_t
-nulang__is_expression (nulang__node_type_t t)
+nulang__is_stmt (nulang__node_type_t t)
+{
+    nu_size_t                        i;
+    static const nulang__node_type_t statements[]
+        = { AST_RETURN, AST_IF,      AST_FOR,   AST_WHILE,
+            AST_LOOP,   AST_VARDECL, AST_ASSIGN };
+    for (i = 0; i < NU_ARRAY_SIZE(statements); ++i)
+    {
+        if (t == statements[i])
+        {
+            return NU_TRUE;
+        }
+    }
+    return NU_FALSE;
+}
+static nu_bool_t
+nulang__is_expr (nulang__node_type_t t)
 {
     nu_size_t                        i;
     static const nulang__node_type_t expressions[]
@@ -467,6 +491,45 @@ nulang__vartype_compatible (nulang__vartype_t var, nulang__vartype_t expr)
         }
     }
     return NU_FALSE;
+}
+
+static nulang__node_t *
+nulang__iter_childs (nulang__ast_t     *ast,
+                     nulang__node_id_t  parent,
+                     nulang__node_id_t *child)
+{
+    NU_ASSERT(child);
+    if (*child == NULANG_NODE_NULL)
+    {
+        return nulang__first_child(ast, parent, child);
+    }
+    else
+    {
+        return nulang__sibling(ast, *child, child);
+    }
+}
+
+typedef nulang__error_t (*nulang__foreach_callback_t)(nulang__ast_t    *ast,
+                                                      nulang__node_id_t id,
+                                                      nulang__node_t   *node,
+                                                      void             *data);
+
+static nulang__error_t
+nulang__ast_foreach_childs (nulang__ast_t             *ast,
+                            nulang__node_id_t          parent,
+                            nulang__foreach_callback_t callback,
+                            void                      *data)
+{
+    nulang__error_t   error;
+    nulang__node_id_t child;
+    child = NULANG_NODE_NULL;
+    while (nulang__iter_childs(ast, parent, &child))
+    {
+        nulang__node_t *node = &ast->nodes[child];
+        error                = callback(ast, child, node, data);
+        NULANG_ERROR_CHECK(error);
+    }
+    return NULANG_ERROR_NONE;
 }
 
 #endif

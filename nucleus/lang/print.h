@@ -276,7 +276,7 @@ nulang__print_node (const struct nu__vm *vm,
 {
     nulang__node_t *node = &ast->nodes[id];
     nulang__print_depth(depth);
-    printf("%s ", NULANG_AST_NAMES[node->type]);
+    printf("[%d] %s ", id, NULANG_AST_NAMES[node->type]);
     switch (node->type)
     {
         case AST_VARDECL:
@@ -298,6 +298,9 @@ nulang__print_node (const struct nu__vm *vm,
             nulang__print_vartype(vm, node->value.argdecl.type);
             break;
         case AST_SYMREF:
+            printf("name=");
+            nulang__print_string(node->value.symref.name);
+            printf(" node=%d", node->value.symref.node);
             break;
         case AST_LITERAL:
             nulang__print_literal(&node->value.literal);
@@ -346,7 +349,7 @@ nulang_print_tokens (const nu_char_t *source)
 void
 nulang_print_ast (const nulang_compiler_t *compiler)
 {
-    printf("==== NODES ====\n");
+    printf("==== AST ====\n");
     nulang__print_node(compiler->vm, &compiler->ast, 0, compiler->ast.root);
 }
 

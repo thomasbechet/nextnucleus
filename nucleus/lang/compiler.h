@@ -81,23 +81,22 @@ nulang_compiler_free (nulang_compiler_t *compiler)
     return NULANG_SUCCESS;
 }
 static void
-nulang__compiler_prepare (nulang_compiler_t *compiler)
+nulang__compiler_prepare (nulang_compiler_t *compiler, const nu_char_t *source)
 {
     nulang__ast_clear(&compiler->ast);
+    compiler->source = source;
 }
 #include <nucleus/lang/print.h>
 nulang_status_t
 nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
 {
-    nulang__lexer_t    lexer;
-    nulang__parser_t   parser;
-    nulang__analyzer_t analyzer;
+    nulang__lexer_t lexer;
 
     /* prepare compiler */
-    nulang__compiler_prepare(compiler);
+    nulang__compiler_prepare(compiler, source);
     nulang__lexer_init(source, &compiler->error_data, &lexer);
 
-    /* parse source */
+    /* parsing */
     compiler->error = nulang__parse(
         compiler->vm, &lexer, &compiler->ast, &compiler->error_data);
     if (compiler->error != NULANG_ERROR_NONE)
@@ -107,14 +106,13 @@ nulang_compile (nulang_compiler_t *compiler, const nu_char_t *source)
 
     nulang__print_node(compiler->vm, &compiler->ast, 0, compiler->ast.root);
 
-    /* analyze */
-    /* nulang__analyzer_init(
-        &analyzer, &compiler->ast, &compiler->symtab, &compiler->error_data);
-    compiler->error = nulang__analyze(&analyzer);
+    /* resolve symbols */
+    compiler->error
+        = nulang__analyze(&compiler->ast, compiler->vm, &compiler->error_data);
     if (compiler->error != NULANG_ERROR_NONE)
     {
         return NULANG_FAILURE;
-    } */
+    }
 
     return NULANG_SUCCESS;
 }

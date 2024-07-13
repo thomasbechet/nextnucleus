@@ -46,7 +46,7 @@ main (void)
                    token.value.literal.value.s.p);
         }
 
-        printf("%s\n", NULANG_AST_NAMES[AST_ROOT]);
+        printf("%s\n", NULANG_AST_NAMES[AST_MODULE]);
     }
 
     return 0;
